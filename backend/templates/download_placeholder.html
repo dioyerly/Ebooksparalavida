@@ -1,0 +1,3 @@
+{% extends "base.html" %}
+{% block title %}Descarga preparada{% endblock %}
+{% block content %}<section class="success-page wrap"><div class="success-mark">↓</div><p class="eyebrow">Archivo listo</p><h1>{{ product.name }}<br><em>está en camino.</em></h1><p>La demo local validó tu token correctamente. Colocá el PDF real en <strong>storage/ebooks/</strong> y repetí la descarga para servirlo de forma privada.</p><a class="button button-primary" href="{{ url_for('home') }}">Volver a la tienda</a></section>{% endblock %}

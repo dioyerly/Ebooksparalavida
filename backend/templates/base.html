@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Ebooks para la vida{% endblock %} · Simplifica tus días</title>
+  <meta name="description" content="Ebooks prácticos sobre TDAH, hogar y productividad para vivir con más calma.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="topline">Envío inmediato a tu email · Lectura en cualquier dispositivo</div>
+  <header class="site-header">
+    <a class="brand" href="{{ url_for('home') }}"><img class="brand-logo" src="{{ url_for('static', filename='images/logo-ebooks-para-la-vida.jpeg') }}" alt=""><span>Ebooks <em>para la vida</em></span></a>
+    <nav class="main-nav" aria-label="Navegación principal">
+      <a href="{{ url_for('shop') }}">Tienda</a>
+      <a href="{{ url_for('home') }}#como-funciona">Cómo funciona</a>
+      <a href="{{ url_for('home') }}#faq">Preguntas</a>
+    </nav>
+    <a class="cart-link" href="{{ url_for('cart') }}" aria-label="Ver carrito">Carrito <span>{{ cart_count }}</span></a>
+  </header>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}<div class="flash-stack">{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">
+    <div><a class="brand footer-brand" href="{{ url_for('home') }}"><img class="brand-logo" src="{{ url_for('static', filename='images/logo-ebooks-para-la-vida.jpeg') }}" alt=""><span>Ebooks <em>para la vida</em></span></a><p>Ideas prácticas para hacer lugar a lo que importa.</p></div>
+    <div class="footer-links"><a href="https://www.tiktok.com/" target="_blank" rel="noreferrer">TikTok</a><a href="https://www.amazon.com/" target="_blank" rel="noreferrer">Amazon KDP</a><a href="mailto:hola@ebooksparalavida.com">Contacto</a></div>
+    <p class="copyright">© {{ current_year }} Ebooks para la vida</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,4 @@
+Integraciones futuras:
+- mercadopago_service.py: crea preferencias y valida pagos por API.
+- paypal_service.py: crea/captura órdenes y valida webhooks.
+- email_service.py: envía el enlace de descarga.

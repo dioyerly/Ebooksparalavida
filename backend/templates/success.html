@@ -1,0 +1,3 @@
+{% extends "base.html" %}
+{% block title %}Compra confirmada{% endblock %}
+{% block content %}<section class="success-page wrap"><div class="success-mark">✓</div><p class="eyebrow">Compra confirmada</p><h1>Tu próximo capítulo<br><em>empieza ahora.</em></h1><p>Gracias, {{ order.buyer_name }}. Preparamos tu lectura y la enviamos a <strong>{{ order.buyer_email }}</strong>.</p><a class="button button-primary" href="{{ url_for('download', token=order.download_token) }}">Descargar mi ebook <span>↓</span></a><small class="expiry-note">Tu ebook es tuyo. Podés descargarlo y conservarlo para volver a leerlo cuando quieras.</small></section>{% endblock %}
