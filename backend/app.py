@@ -284,29 +284,27 @@ def checkout():
         # Crear preferencia de pago según método
         if payment_method == "mercadopago":
             token = app.config.get("MP_ACCESS_TOKEN", "")
-            print(f"DEBUG: MP_ACCESS_TOKEN = {token[:20]}..." if token else "DEBUG: MP_ACCESS_TOKEN is empty")
             mp_service = MercadoPagoService(token)
             payment_result = mp_service.create_preference(order.id, buyer_name, buyer_email, total, items)
-            print(f"DEBUG: payment_result = {payment_result}")
         else:  # paypal
             pp_service = PayPalService(app.config["PAYPAL_CLIENT_ID"], app.config["PAYPAL_CLIENT_SECRET"])
             payment_result = pp_service.create_order(order.id, buyer_email, total, items)
 
-        # En demo o si hay error, marcar como pagado y ir a success
-        if payment_result.get("is_demo") or not payment_result.get("success"):
-            order.status = "paid_demo"
-            db.session.commit()
+        # Si hay éxito y no es demo, redirigir a plataforma real
+        if payment_result.get("success") and not payment_result.get("is_demo"):
             session["cart"] = []
+            return redirect(payment_result.get("checkout_url"))
 
-            # Enviar email de descarga (demo)
-            email_service = EmailService(app.config["SENDGRID_API_KEY"])
-            email_service.send_download_link(buyer_email, [p.name for p in products], order.download_token)
-
-            return redirect(url_for("success", order_id=order.id))
-
-        # Si es pago real, redirigir a plataforma de pago
+        # Si es demo O si hay error, marcar como pagado y ir a success
+        order.status = "paid_demo"
+        db.session.commit()
         session["cart"] = []
-        return redirect(payment_result.get("checkout_url"))
+
+        # Enviar email de descarga (demo)
+        email_service = EmailService(app.config["SENDGRID_API_KEY"])
+        email_service.send_download_link(buyer_email, [p.name for p in products], order.download_token)
+
+        return redirect(url_for("success", order_id=order.id))
 
     return render_template("checkout.html", products=products, total=total)
 
