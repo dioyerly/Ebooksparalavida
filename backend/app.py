@@ -1,9 +1,11 @@
+import os
 import secrets
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
 
 from flask import Flask, abort, flash, redirect, render_template, request, session, url_for, send_from_directory
+from werkzeug.utils import secure_filename
 
 from backend.config import Config
 from backend.models import db, Product, Order, OrderItem, ProductClick, PageVisit
@@ -308,14 +310,45 @@ def admin_dashboard():
 @app.post("/admin/products")
 @admin_required
 def admin_create_product():
+    slug = request.form["slug"].strip()
+    name = request.form["name"].strip()
+
+    # Guardar archivo PDF
+    pdf_file = request.files.get("ebook_file")
+    file_name = None
+    if pdf_file and pdf_file.filename.endswith(".pdf"):
+        ebooks_dir = Path(__file__).parent.parent / "storage" / "ebooks"
+        ebooks_dir.mkdir(parents=True, exist_ok=True)
+        filename = secure_filename(f"{slug}.pdf")
+        pdf_file.save(str(ebooks_dir / filename))
+        file_name = filename
+
+    # Guardar imagen de portada
+    cover_file = request.files.get("cover_image")
+    cover_image = None
+    if cover_file and cover_file.filename:
+        images_dir = Path(__file__).parent.parent / "frontend" / "assets" / "images"
+        images_dir.mkdir(parents=True, exist_ok=True)
+        ext = Path(cover_file.filename).suffix
+        filename = secure_filename(f"{slug}{ext}")
+        cover_file.save(str(images_dir / filename))
+        cover_image = filename
+
     product = Product(
-        slug=request.form["slug"].strip(), name=request.form["name"].strip(), description=request.form["description"].strip(),
-        category=request.form["category"].strip(), price_ars=int(request.form["price_ars"]), cover_class=request.form.get("cover_class", "coral"),
-        accent=request.form.get("accent", "#C9756B"), featured=request.form.get("featured") == "on",
+        slug=slug,
+        name=name,
+        description=request.form["description"].strip(),
+        category=request.form["category"].strip(),
+        price_ars=int(request.form["price_ars"]),
+        cover_class=request.form.get("cover_class", "coral"),
+        accent=request.form.get("accent", "#C9756B"),
+        featured=request.form.get("featured") == "on",
+        file_name=file_name,
+        cover_image=cover_image,
     )
     db.session.add(product)
     db.session.commit()
-    flash("Producto creado.", "success")
+    flash(f"✅ Producto '{name}' creado exitosamente.", "success")
     return redirect(url_for("admin_dashboard"))
 
 

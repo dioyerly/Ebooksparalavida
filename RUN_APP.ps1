@@ -12,9 +12,9 @@ if (-not (Test-Path ".\.venv")) {
 Write-Host "⚙️  Activando ambiente..." -ForegroundColor Yellow
 & ".\\.venv\Scripts\Activate.ps1"
 
-# 3. Instalar dependencias
+# 3. Instalar dependencias desde requirements.txt
 Write-Host "📥 Instalando dependencias..." -ForegroundColor Yellow
-pip install -q flask flask-sqlalchemy
+pip install -q -r requirements.txt
 
 # 4. Crear .env si no existe
 if (-not (Test-Path ".\.env")) {
