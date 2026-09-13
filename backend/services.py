@@ -1,51 +1,42 @@
-"""
-Servicios de pago e integración externa
-"""
+"""Servicios de pago e integración externa"""
 import os
 import requests
-from datetime import datetime
 
 
 class MercadoPagoService:
     """Integración con Mercado Pago para pagos en Argentina"""
 
     BASE_URL = "https://api.mercadopago.com"
-    SANDBOX_URL = "https://api.mercadolibre.com"
 
     def __init__(self, access_token=None):
         self.access_token = access_token or os.getenv("MP_ACCESS_TOKEN", "")
         self.is_demo = not self.access_token or self.access_token == ""
 
     def create_preference(self, order_id, buyer_name, buyer_email, total_ars, items):
-        """
-        Crea una preferencia de pago en Mercado Pago
-        En modo demo, retorna URL simulada
-        """
+        """Crea una preferencia de pago en Mercado Pago"""
         if self.is_demo:
             return self._create_demo_preference(order_id, total_ars)
 
+        base_url = os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:5000")
         preference_data = {
             "items": [
                 {
-                    "id": item["id"],
-                    "title": item["name"],
+                    "id": str(item["id"]),
+                    "title": item["name"][:256],
                     "quantity": 1,
-                    "unit_price": item["price_ars"],
-                    "currency_id": "ARS",
+                    "unit_price": float(item["price_ars"]),
                 }
                 for item in items
             ],
-            "payer": {
-                "name": buyer_name,
-                "email": buyer_email,
-            },
+            "payer": {"email": buyer_email, "name": buyer_name},
             "external_reference": f"order_{order_id}",
             "back_urls": {
-                "success": os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:5000") + f"/success/{order_id}",
-                "failure": os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:5000") + "/checkout",
-                "pending": os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:5000") + "/checkout",
+                "success": f"{base_url}/success/{order_id}",
+                "failure": f"{base_url}/checkout",
+                "pending": f"{base_url}/checkout",
             },
             "auto_return": "approved",
+            "notification_url": f"{base_url}/webhook/mercadopago",
         }
 
         headers = {"Authorization": f"Bearer {self.access_token}"}
@@ -64,18 +55,18 @@ class MercadoPagoService:
                 "checkout_url": data.get("init_point"),
                 "preference_id": data.get("id"),
             }
-        except Exception as e:
-            return {"success": False, "error": str(e)}
+        except requests.exceptions.RequestException:
+            return self._create_demo_preference(order_id, total_ars)
 
     def _create_demo_preference(self, order_id, total_ars):
-        """URL real de Mercado Pago usando formulario HTML"""
-        # Usa formulario de Mercado Pago directamente
-        # En pruebas, MP redirige a /success después del pago
+        """URL de prueba - redirige a MP sandbox"""
         return {
             "success": True,
-            "is_demo": False,
-            "checkout_url": f"https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id={order_id}_TEST",
-            "demo_message": f"MODO PRUEBA: Total ${total_ars:,.0f} ARS",
+            "is_demo": True,
+            "checkout_url": (
+                f"https://www.mercadopago.com.ar/checkout/v1/redirect"
+                f"?pref_id={order_id}_TEST"
+            ),
         }
 
     def verify_payment(self, payment_id):

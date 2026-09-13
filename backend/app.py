@@ -219,19 +219,20 @@ def product_detail(slug):
 @app.post("/cart/add/<int:product_id>")
 def add_to_cart(product_id):
     Product.query.get_or_404(product_id)
-    cart = session.setdefault("cart", [])
-    if product_id not in cart:
-        cart.append(product_id)
+    cart_list = session.setdefault("cart", [])
+    if product_id not in cart_list:
+        cart_list.append(product_id)
         session.modified = True
         flash("Ebook agregado a tu carrito.", "success")
-    return redirect(request.form.get("next") or request.referrer or url_for("shop"))
+    next_url = request.form.get("next") or request.referrer or url_for("shop")
+    return redirect(next_url)
 
 
 @app.post("/cart/remove/<int:product_id>")
 def remove_from_cart(product_id):
-    cart = session.get("cart", [])
-    if product_id in cart:
-        cart.remove(product_id)
+    cart_list = session.get("cart", [])
+    if product_id in cart_list:
+        cart_list.remove(product_id)
         session.modified = True
     return redirect(url_for("cart"))
 
