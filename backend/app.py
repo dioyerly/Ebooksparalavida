@@ -283,8 +283,11 @@ def checkout():
 
         # Crear preferencia de pago según método
         if payment_method == "mercadopago":
-            mp_service = MercadoPagoService(app.config["MP_ACCESS_TOKEN"])
+            token = app.config.get("MP_ACCESS_TOKEN", "")
+            print(f"DEBUG: MP_ACCESS_TOKEN = {token[:20]}..." if token else "DEBUG: MP_ACCESS_TOKEN is empty")
+            mp_service = MercadoPagoService(token)
             payment_result = mp_service.create_preference(order.id, buyer_name, buyer_email, total, items)
+            print(f"DEBUG: payment_result = {payment_result}")
         else:  # paypal
             pp_service = PayPalService(app.config["PAYPAL_CLIENT_ID"], app.config["PAYPAL_CLIENT_SECRET"])
             payment_result = pp_service.create_order(order.id, buyer_email, total, items)
