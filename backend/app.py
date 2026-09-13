@@ -30,20 +30,56 @@ db.init_app(app)
 
 SEED_PRODUCTS = [
     {
-        "slug": "mente-en-calma", "name": "Mente en calma", "description": "Herramientas amables para entender tu TDAH, bajar el ruido y recuperar foco.",
-        "category": "VIDA & BIENESTAR", "price_ars": 8900, "cover_class": "coral", "accent": "#C9756B", "featured": True,
+        "slug": "mente-en-calma",
+        "name": "Mente en calma",
+        "description": (
+            "Herramientas amables para entender tu TDAH, bajar el ruido y "
+            "recuperar foco."
+        ),
+        "category": "VIDA & BIENESTAR",
+        "price_ars": 8900,
+        "cover_class": "coral",
+        "accent": "#C9756B",
+        "featured": True,
     },
     {
-        "slug": "casa-en-flujo", "name": "Casa en flujo", "description": "Un sistema realista para ordenar tu hogar sin convertirlo en otro trabajo de tiempo completo.",
-        "category": "VIDA & BIENESTAR", "price_ars": 7900, "cover_class": "teal", "accent": "#3A5F5F", "featured": True,
+        "slug": "casa-en-flujo",
+        "name": "Casa en flujo",
+        "description": (
+            "Un sistema realista para ordenar tu hogar sin convertirlo en "
+            "otro trabajo de tiempo completo."
+        ),
+        "category": "VIDA & BIENESTAR",
+        "price_ars": 7900,
+        "cover_class": "teal",
+        "accent": "#3A5F5F",
+        "featured": True,
     },
     {
-        "slug": "semana-liviana", "name": "Semana liviana", "description": "Planifica tus días con menos listas imposibles y más espacio para lo importante.",
-        "category": "TRABAJO & CARRERA", "price_ars": 6900, "cover_class": "sun", "accent": "#D98B7E", "featured": True,
+        "slug": "semana-liviana",
+        "name": "Semana liviana",
+        "description": (
+            "Planifica tus días con menos listas imposibles y más espacio "
+            "para lo importante."
+        ),
+        "category": "TRABAJO & CARRERA",
+        "price_ars": 6900,
+        "cover_class": "sun",
+        "accent": "#D98B7E",
+        "featured": True,
     },
     {
-        "slug": "rutinas-sin-culpa", "name": "Rutinas sin culpa", "description": "Pequeños rituales que se adaptan a tu energía, tus tiempos y tu vida verdadera.",
-        "category": "APRENDER & DOMINAR", "price_ars": 6500, "cover_class": "lavender", "accent": "#7E8E8E", "featured": False,
+        "slug": "rutinas-sin-culpa",
+        "name": "Rutinas sin culpa",
+        "description": (
+            "Pequeños rituales que se adaptan a tu energía, tus tiempos y "
+            "tu vida verdadera."
+        ),
+        "category": "APRENDER & DOMINAR",
+        "price_ars": 6500,
+        "cover_class": "lavender",
+        "accent": "#7E8E8E",
+        "featured": False,
     },
 ]
 
@@ -74,7 +110,11 @@ REAL_PRODUCTS = [
     {
         "slug": "kit-primero-tu-mente-despues-tu-hogar",
         "name": "KIT: Primero tu mente, después tu hogar",
-        "description": REAL_DESCRIPTION + "\n\nIncluye el ebook principal y los tres bonus: Modo Supervivencia, Mi Casa Funciona Así y Tarjetas Antibloqueo.",
+        "description": (
+            REAL_DESCRIPTION + "\n\nIncluye el ebook principal y los "
+            "tres bonus: Modo Supervivencia, Mi Casa Funciona Así y "
+            "Tarjetas Antibloqueo."
+        ),
         "category": "VIDA & BIENESTAR",
         "price_ars": 7999,
         "cover_class": "coral",
@@ -99,8 +139,14 @@ REAL_PRODUCTS = [
     {
         "slug": "kit-convivir-sin-apagar-incendios",
         "name": "KIT: Convivir sin apagar incendios",
-        "description": CONVIVIR_DESCRIPTION + "\n\nIncluye el ebook oficial y todos los bonus del KIT.",
-        "short_description": "El ebook completo con todos los bonus para construir una convivencia más previsible y calmada.",
+        "description": (
+            CONVIVIR_DESCRIPTION + "\n\nIncluye el ebook oficial y "
+            "todos los bonus del KIT."
+        ),
+        "short_description": (
+            "El ebook completo con todos los bonus para construir una "
+            "convivencia más previsible y calmada."
+        ),
         "category": "VIDA & BIENESTAR",
         "price_ars": 7999,
         "cover_class": "coral",
