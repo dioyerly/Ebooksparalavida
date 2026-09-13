@@ -3,22 +3,27 @@ Ebooksparalavida - Flask application for selling digital ebooks.
 Handles product catalog, shopping cart, checkout, and payments.
 """
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path
 
 from flask import (
-    Flask, abort, flash, redirect, render_template, request, session, url_for,
-    send_from_directory
+    Flask, abort, flash, redirect, render_template, request, session,
+    url_for, send_from_directory
 )
 from werkzeug.utils import secure_filename
 
 from backend.config import Config
-from backend.models import db, Product, Order, OrderItem, ProductClick, PageVisit
-from backend.services import MercadoPagoService, PayPalService, EmailService
+from backend.models import (
+    db, Product, Order, OrderItem, ProductClick, PageVisit
+)
+from backend.services import (
+    MercadoPagoService, PayPalService, EmailService
+)
 
 
-app = Flask(__name__, template_folder="templates", static_folder="../frontend/assets")
+app = Flask(__name__, template_folder="templates",
+            static_folder="../frontend/assets")
 app.config.from_object(Config)
 db.init_app(app)
 
@@ -120,6 +125,7 @@ CATEGORIES = [
 
 
 def seed_products():
+    """Seed Products."""
     if Product.query.count() == 0:
         for data in SEED_PRODUCTS:
             db.session.add(Product(**data))
@@ -138,8 +144,10 @@ def seed_products():
         if changed:
             db.session.commit()
 
-    demo_slugs = ["mente-en-calma", "casa-en-flujo", "semana-liviana", "rutinas-sin-culpa"]
-    Product.query.filter(Product.slug.in_(demo_slugs)).delete(synchronize_session=False)
+    demo_slugs = ["mente-en-calma", "casa-en-flujo",
+                  "semana-liviana", "rutinas-sin-culpa"]
+    Product.query.filter(Product.slug.in_(demo_slugs)
+                         ).delete(synchronize_session=False)
 
     for data in REAL_PRODUCTS:
         product = Product.query.filter_by(slug=data["slug"]).first()
@@ -152,16 +160,21 @@ def seed_products():
 
 
 def migrate_product_columns():
-    columns = {row[1] for row in db.session.execute(db.text("PRAGMA table_info(product)"))}
+    """Migrate Product Columns."""
+    columns = {row[1] for row in db.session.execute(
+        db.text("PRAGMA table_info(product)"))}
     if "short_description" not in columns:
-        db.session.execute(db.text("ALTER TABLE product ADD COLUMN short_description VARCHAR(280)"))
+        db.session.execute(
+            db.text("ALTER TABLE product ADD COLUMN short_description VARCHAR(280)"))
         db.session.commit()
     if "cover_image" not in columns:
-        db.session.execute(db.text("ALTER TABLE product ADD COLUMN cover_image VARCHAR(255)"))
+        db.session.execute(
+            db.text("ALTER TABLE product ADD COLUMN cover_image VARCHAR(255)"))
         db.session.commit()
 
 
 def cart_products():
+    """Cart Products."""
     ids = session.get("cart", [])
     if not ids:
         return []
@@ -171,8 +184,10 @@ def cart_products():
 
 
 def admin_required(view):
+    """Admin Required."""
     @wraps(view)
     def wrapped(*args, **kwargs):
+        """Wrapped."""
         if not session.get("is_admin"):
             return redirect(url_for("admin_login", next=request.path))
         return view(*args, **kwargs)
@@ -181,7 +196,9 @@ def admin_required(view):
 
 @app.context_processor
 def inject_globals():
+    """Inject Globals."""
     def converted_price(price_ars, rate):
+        """Converted Price."""
         return f"{price_ars / rate:,.2f}"
 
     return {
@@ -194,22 +211,28 @@ def inject_globals():
 
 @app.route("/")
 def home():
-    featured = Product.query.filter(Product.featured.is_(True), ~Product.slug.in_(KIT_SLUGS)).all()
-    products = Product.query.filter(~Product.slug.in_(KIT_SLUGS)).order_by(Product.created_at.desc()).all()
+    """Render home page with featured and recent products."""
+    featured = Product.query.filter(Product.featured.is_(
+        True), ~Product.slug.in_(KIT_SLUGS)).all()
+    products = Product.query.filter(~Product.slug.in_(
+        KIT_SLUGS)).order_by(Product.created_at.desc()).all()
     return render_template("home.html", featured=featured, products=products)
 
 
 @app.route("/shop")
 def shop():
+    """Render shop page with filterable products."""
     category = request.args.get("category", "Todas")
     base_query = Product.query.filter(~Product.slug.in_(KIT_SLUGS))
-    products = base_query.filter_by(category=category).all() if category != "Todas" else base_query.all()
+    products = base_query.filter_by(category=category).all(
+    ) if category != "Todas" else base_query.all()
     categories = CATEGORIES
     return render_template("shop.html", products=products, categories=categories, selected_category=category)
 
 
 @app.route("/product/<slug>")
 def product_detail(slug):
+    """Product Detail."""
     product = Product.query.filter_by(slug=slug).first_or_404()
     kit_slug = f"kit-{slug}" if not slug.startswith("kit-") else None
     kit = Product.query.filter_by(slug=kit_slug).first() if kit_slug else None
@@ -218,6 +241,7 @@ def product_detail(slug):
 
 @app.post("/cart/add/<int:product_id>")
 def add_to_cart(product_id):
+    """Add To Cart."""
     Product.query.get_or_404(product_id)
     cart_list = session.setdefault("cart", [])
     if product_id not in cart_list:
@@ -230,6 +254,7 @@ def add_to_cart(product_id):
 
 @app.post("/cart/remove/<int:product_id>")
 def remove_from_cart(product_id):
+    """Remove From Cart."""
     cart_list = session.get("cart", [])
     if product_id in cart_list:
         cart_list.remove(product_id)
@@ -239,12 +264,14 @@ def remove_from_cart(product_id):
 
 @app.route("/cart")
 def cart():
+    """Cart."""
     products = cart_products()
     return render_template("cart.html", products=products, total=sum(item.price_ars for item in products))
 
 
 @app.route("/checkout", methods=["GET", "POST"])
 def checkout():
+    """Checkout."""
     products = cart_products()
     if not products:
         return redirect(url_for("shop"))
@@ -280,16 +307,20 @@ def checkout():
         db.session.commit()
 
         # Preparar items para pago
-        items = [{"id": p.id, "name": p.name, "price_ars": p.price_ars} for p in products]
+        items = [{"id": p.id, "name": p.name, "price_ars": p.price_ars}
+                 for p in products]
 
         # Crear preferencia de pago según método
         if payment_method == "mercadopago":
             token = app.config.get("MP_ACCESS_TOKEN", "")
             mp_service = MercadoPagoService(token)
-            payment_result = mp_service.create_preference(order.id, buyer_name, buyer_email, total, items)
+            payment_result = mp_service.create_preference(
+                order.id, buyer_name, buyer_email, total, items)
         else:  # paypal
-            pp_service = PayPalService(app.config["PAYPAL_CLIENT_ID"], app.config["PAYPAL_CLIENT_SECRET"])
-            payment_result = pp_service.create_order(order.id, buyer_email, total, items)
+            pp_service = PayPalService(
+                app.config["PAYPAL_CLIENT_ID"], app.config["PAYPAL_CLIENT_SECRET"])
+            payment_result = pp_service.create_order(
+                order.id, buyer_email, total, items)
 
         # Si hay éxito y no es demo, redirigir a plataforma real
         if payment_result.get("success") and not payment_result.get("is_demo"):
@@ -303,7 +334,8 @@ def checkout():
 
         # Enviar email de descarga (demo)
         email_service = EmailService(app.config["SENDGRID_API_KEY"])
-        email_service.send_download_link(buyer_email, [p.name for p in products], order.download_token)
+        email_service.send_download_link(
+            buyer_email, [p.name for p in products], order.download_token)
 
         return redirect(url_for("success", order_id=order.id))
 
@@ -312,6 +344,7 @@ def checkout():
 
 @app.route("/success/<int:order_id>")
 def success(order_id):
+    """Success."""
     order = Order.query.get_or_404(order_id)
     if order.status not in {"paid_demo", "paid"}:
         abort(403)
@@ -320,10 +353,12 @@ def success(order_id):
 
 @app.route("/download/<token>")
 def download(token):
+    """Download."""
     order = Order.query.filter_by(download_token=token).first_or_404()
     if order.status not in {"paid_demo", "paid"}:
         abort(403, description="Esta descarga no está disponible para esta orden.")
-    product = Product.query.filter_by(id=order.items[0].product_id).first_or_404()
+    product = Product.query.filter_by(
+        id=order.items[0].product_id).first_or_404()
     downloads_dir = Path(app.root_path).parent / "storage" / "ebooks"
     if product.file_name and (downloads_dir / product.file_name).exists():
         return send_from_directory(downloads_dir, product.file_name, as_attachment=True)
@@ -332,6 +367,7 @@ def download(token):
 
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
+    """Admin Login."""
     if request.method == "POST":
         if request.form.get("email") == app.config["ADMIN_EMAIL"] and request.form.get("password") == app.config["ADMIN_PASSWORD"]:
             session["is_admin"] = True
@@ -342,6 +378,7 @@ def admin_login():
 
 @app.get("/admin/logout")
 def admin_logout():
+    """Admin Logout."""
     session.pop("is_admin", None)
     return redirect(url_for("home"))
 
@@ -349,14 +386,17 @@ def admin_logout():
 @app.get("/admin")
 @admin_required
 def admin_dashboard():
+    """Admin Dashboard."""
     orders = Order.query.order_by(Order.created_at.desc()).all()
-    revenue = sum(order.total_ars for order in orders if order.status in {"paid", "paid_demo"})
+    revenue = sum(order.total_ars for order in orders if order.status in {
+                  "paid", "paid_demo"})
     return render_template("admin/dashboard.html", orders=orders, revenue=revenue, products=Product.query.all(), categories=CATEGORIES)
 
 
 @app.post("/admin/products")
 @admin_required
 def admin_create_product():
+    """Admin Create Product."""
     slug = request.form["slug"].strip()
     name = request.form["name"].strip()
 
@@ -374,7 +414,8 @@ def admin_create_product():
     cover_file = request.files.get("cover_image")
     cover_image = None
     if cover_file and cover_file.filename:
-        images_dir = Path(__file__).parent.parent / "frontend" / "assets" / "images"
+        images_dir = Path(__file__).parent.parent / \
+            "frontend" / "assets" / "images"
         images_dir.mkdir(parents=True, exist_ok=True)
         ext = Path(cover_file.filename).suffix
         filename = secure_filename(f"{slug}{ext}")
@@ -401,6 +442,7 @@ def admin_create_product():
 
 @app.post("/api/track-click")
 def track_product_click():
+    """Track Product Click."""
     data = request.get_json() or {}
     product_id = data.get("product_id")
     product_name = data.get("product_name", "Unknown")
@@ -423,6 +465,7 @@ def track_product_click():
 
 @app.post("/api/track-visit")
 def track_page_visit():
+    """Track Page Visit."""
     data = request.get_json() or {}
     page_path = data.get("page_path", request.path)
 
@@ -444,8 +487,7 @@ def track_page_visit():
 @app.get("/api/admin/stats")
 @admin_required
 def get_admin_stats():
-    from datetime import datetime, timedelta
-
+    """Return analytics stats for admin dashboard."""
     # Órdenes y ingresos
     all_orders = Order.query.all()
     paid_orders = [o for o in all_orders if o.status in {"paid", "paid_demo"}]
@@ -463,9 +505,11 @@ def get_admin_stats():
     product_sales = {}
     for order in paid_orders:
         for item in order.items:
-            product_sales[item.product_name] = product_sales.get(item.product_name, 0) + 1
+            product_sales[item.product_name] = product_sales.get(
+                item.product_name, 0) + 1
 
-    top_products = sorted(product_sales.items(), key=lambda x: x[1], reverse=True)[:5]
+    top_products = sorted(product_sales.items(),
+                          key=lambda x: x[1], reverse=True)[:5]
 
     # Productos más clicleados
     clicks = ProductClick.query.all()
@@ -474,10 +518,12 @@ def get_admin_stats():
         key = click.product_name
         product_clicks[key] = product_clicks.get(key, 0) + 1
 
-    top_clicked = sorted(product_clicks.items(), key=lambda x: x[1], reverse=True)[:5]
+    top_clicked = sorted(product_clicks.items(),
+                         key=lambda x: x[1], reverse=True)[:5]
 
     # Visitas últimos 30 días
-    recent_visits = PageVisit.query.filter(PageVisit.visited_at >= thirty_days_ago).all()
+    recent_visits = PageVisit.query.filter(
+        PageVisit.visited_at >= thirty_days_ago).all()
     total_visits = len(recent_visits)
     unique_visits = len(set(v.user_session_id for v in recent_visits))
 
@@ -508,6 +554,7 @@ def get_admin_stats():
 @app.get("/api/admin/orders")
 @admin_required
 def get_admin_orders():
+    """Get Admin Orders."""
     orders = Order.query.order_by(Order.created_at.desc()).all()
     return {
         "orders": [
@@ -529,6 +576,7 @@ def get_admin_orders():
 @app.get("/api/admin/products-analytics")
 @admin_required
 def get_products_analytics():
+    """Get Products Analytics."""
     products = Product.query.all()
     clicks = ProductClick.query.all()
 
