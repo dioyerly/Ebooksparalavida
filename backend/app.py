@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 
 from backend.config import Config
 from backend.models import db, Product, Order, OrderItem, ProductClick, PageVisit
+from backend.services import MercadoPagoService, PayPalService, EmailService
 
 
 app = Flask(__name__, template_folder="templates", static_folder="../frontend/assets")
@@ -245,21 +246,59 @@ def checkout():
         buyer_name = request.form.get("buyer_name", "").strip()
         buyer_email = request.form.get("buyer_email", "").strip().lower()
         payment_method = request.form.get("payment_method", "mercadopago")
+
         if not buyer_name or "@" not in buyer_email:
             flash("Completá tu nombre y un email válido.", "error")
             return render_template("checkout.html", products=products, total=total)
+
+        # Crear orden
         order = Order(
-            buyer_name=buyer_name, buyer_email=buyer_email, total_ars=total,
-            payment_method=payment_method, status="paid_demo",
+            buyer_name=buyer_name,
+            buyer_email=buyer_email,
+            total_ars=total,
+            payment_method=payment_method,
+            status="pending",
             download_token=secrets.token_urlsafe(32),
         )
         db.session.add(order)
         db.session.flush()
+
         for product in products:
-            db.session.add(OrderItem(order_id=order.id, product_id=product.id, product_name=product.name, unit_price_ars=product.price_ars))
+            db.session.add(OrderItem(
+                order_id=order.id,
+                product_id=product.id,
+                product_name=product.name,
+                unit_price_ars=product.price_ars,
+            ))
         db.session.commit()
+
+        # Preparar items para pago
+        items = [{"id": p.id, "name": p.name, "price_ars": p.price_ars} for p in products]
+
+        # Crear preferencia de pago según método
+        if payment_method == "mercadopago":
+            mp_service = MercadoPagoService(app.config["MP_ACCESS_TOKEN"])
+            payment_result = mp_service.create_preference(order.id, buyer_name, buyer_email, total, items)
+        else:  # paypal
+            pp_service = PayPalService(app.config["PAYPAL_CLIENT_ID"], app.config["PAYPAL_CLIENT_SECRET"])
+            payment_result = pp_service.create_order(order.id, buyer_email, total, items)
+
+        # En demo o si hay error, marcar como pagado y ir a success
+        if payment_result.get("is_demo") or not payment_result.get("success"):
+            order.status = "paid_demo"
+            db.session.commit()
+            session["cart"] = []
+
+            # Enviar email de descarga (demo)
+            email_service = EmailService(app.config["SENDGRID_API_KEY"])
+            email_service.send_download_link(buyer_email, [p.name for p in products], order.download_token)
+
+            return redirect(url_for("success", order_id=order.id))
+
+        # Si es pago real, redirigir a plataforma de pago
         session["cart"] = []
-        return redirect(url_for("success", order_id=order.id))
+        return redirect(payment_result.get("checkout_url"))
+
     return render_template("checkout.html", products=products, total=total)
 
 

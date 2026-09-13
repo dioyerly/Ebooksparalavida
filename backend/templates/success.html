@@ -1,3 +1,312 @@
 {% extends "base.html" %}
 {% block title %}Compra confirmada{% endblock %}
-{% block content %}<section class="success-page wrap"><div class="success-mark">✓</div><p class="eyebrow">Compra confirmada</p><h1>Tu próximo capítulo<br><em>empieza ahora.</em></h1><p>Gracias, {{ order.buyer_name }}. Preparamos tu lectura y la enviamos a <strong>{{ order.buyer_email }}</strong>.</p><a class="button button-primary" href="{{ url_for('download', token=order.download_token) }}">Descargar mi ebook <span>↓</span></a><small class="expiry-note">Tu ebook es tuyo. Podés descargarlo y conservarlo para volver a leerlo cuando quieras.</small></section>{% endblock %}
+{% block content %}
+<section class="success-page wrap">
+  <div class="success-mark">✓</div>
+  <p class="eyebrow">Compra confirmada</p>
+  <h1>Tu próximo capítulo<br><em>empieza ahora.</em></h1>
+
+  <div class="success-message">
+    <p>Gracias, <strong>{{ order.buyer_name }}</strong>.</p>
+    <p>Tu compra fue procesada correctamente. Enviamos un email de confirmación y tu enlace de descarga a <strong>{{ order.buyer_email }}</strong>.</p>
+  </div>
+
+  <div class="order-summary">
+    <div class="summary-header">
+      <h2>Resumen de tu orden</h2>
+      <span class="order-id">#{{ order.id }}</span>
+    </div>
+
+    <div class="order-details">
+      <div class="detail-row">
+        <span>Fecha</span>
+        <strong>{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Método de pago</span>
+        <strong>{{ 'Mercado Pago' if order.payment_method == 'mercadopago' else 'PayPal' }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Estado</span>
+        <strong class="status-badge">{{ 'Pagado' if order.status in ['paid', 'paid_demo'] else 'Pendiente' }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Total</span>
+        <strong>${{ '{:,.0f}'.format(order.total_ars).replace(',', '.') }} ARS</strong>
+      </div>
+    </div>
+
+    <div class="products-purchased">
+      <h3>Tus ebooks</h3>
+      <ul>
+        {% for item in order.items %}
+        <li>
+          <span>{{ item.product_name }}</span>
+          <strong>${{ '{:,.0f}'.format(item.unit_price_ars).replace(',', '.') }} ARS</strong>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="download-section">
+    <a class="button button-primary full" href="{{ url_for('download', token=order.download_token) }}">
+      ↓ Descargar mis ebooks
+    </a>
+    <small class="download-note">
+      Tu enlace de descarga es personal y no caduca. Podés usarlo cuando quieras.
+    </small>
+  </div>
+
+  <div class="next-steps">
+    <h3>¿Qué sigue?</h3>
+    <ul class="steps-list">
+      <li>
+        <span class="step-num">1</span>
+        <span>Descargá tu ebook haciendo click arriba</span>
+      </li>
+      <li>
+        <span class="step-num">2</span>
+        <span>Abrilo en cualquier dispositivo (tablet, notebook, celular)</span>
+      </li>
+      <li>
+        <span class="step-num">3</span>
+        <span>¡Disfrutá tu lectura!</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="email-notification">
+    <p>📧 También enviamos un email de confirmación a <strong>{{ order.buyer_email }}</strong> con todos los detalles de tu compra.</p>
+  </div>
+
+  <div class="action-links">
+    <a href="{{ url_for('shop') }}" class="text-link">← Seguir comprando</a>
+    <a href="{{ url_for('home') }}" class="text-link">← Volver al inicio</a>
+  </div>
+</section>
+
+<style>
+  .success-page {
+    padding-top: 70px;
+    padding-bottom: 110px;
+  }
+
+  .success-mark {
+    font-size: 80px;
+    color: #3A5F5F;
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: 800;
+  }
+
+  .success-message {
+    background: #F4E8DD;
+    padding: 30px;
+    border-radius: 10px;
+    margin: 40px 0;
+    text-align: center;
+  }
+
+  .success-message p {
+    margin: 10px 0;
+    font-size: 16px;
+  }
+
+  .order-summary {
+    background: white;
+    border: 1px solid #E8E0D5;
+    border-radius: 10px;
+    margin: 40px 0;
+    overflow: hidden;
+  }
+
+  .summary-header {
+    background: #F9F9F9;
+    padding: 20px;
+    border-bottom: 1px solid #E8E0D5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .summary-header h2 {
+    font-size: 18px;
+    color: #3A5F5F;
+    margin: 0;
+  }
+
+  .order-id {
+    background: #3A5F5F;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .order-details {
+    padding: 20px;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #F0F0F0;
+  }
+
+  .detail-row:last-child {
+    border-bottom: none;
+  }
+
+  .detail-row span {
+    color: #999;
+    font-size: 14px;
+  }
+
+  .detail-row strong {
+    color: #2C2C2C;
+    font-weight: 600;
+  }
+
+  .status-badge {
+    background: #d4f4dd;
+    color: #2d5c35;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  .products-purchased {
+    padding: 20px;
+    border-top: 1px solid #F0F0F0;
+  }
+
+  .products-purchased h3 {
+    color: #3A5F5F;
+    font-size: 14px;
+    margin: 0 0 15px 0;
+  }
+
+  .products-purchased ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .products-purchased li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #F0F0F0;
+  }
+
+  .products-purchased li:last-child {
+    border-bottom: none;
+  }
+
+  .products-purchased span {
+    color: #2C2C2C;
+  }
+
+  .products-purchased strong {
+    color: #3A5F5F;
+    font-weight: 600;
+  }
+
+  .download-section {
+    text-align: center;
+    margin: 40px 0;
+  }
+
+  .download-section .button {
+    font-size: 16px;
+    padding: 16px 24px;
+  }
+
+  .download-note {
+    display: block;
+    color: #999;
+    font-size: 12px;
+    margin-top: 10px;
+  }
+
+  .next-steps {
+    background: #F9F9F9;
+    padding: 30px;
+    border-radius: 10px;
+    margin: 40px 0;
+  }
+
+  .next-steps h3 {
+    color: #3A5F5F;
+    margin: 0 0 20px 0;
+  }
+
+  .steps-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .steps-list li {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    font-size: 14px;
+  }
+
+  .steps-list li:last-child {
+    margin-bottom: 0;
+  }
+
+  .step-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: #3A5F5F;
+    color: white;
+    border-radius: 50%;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .email-notification {
+    background: #FFF9E6;
+    border-left: 4px solid #D98B7E;
+    padding: 15px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    margin: 30px 0;
+  }
+
+  .action-links {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 40px;
+  }
+
+  @media (max-width: 768px) {
+    .summary-header {
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .detail-row {
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .steps-list li {
+      gap: 12px;
+    }
+
+    .action-links {
+      flex-direction: column;
+    }
+  }
+</style>
+{% endblock %}
