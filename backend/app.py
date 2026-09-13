@@ -1,3 +1,7 @@
+"""
+Ebooksparalavida - Flask application for selling digital ebooks.
+Handles product catalog, shopping cart, checkout, and payments.
+"""
 import secrets
 from datetime import datetime
 from functools import wraps
