@@ -1,3 +1,74 @@
 {% extends "base.html" %}
 {% block title %}{{ product.name }}{% endblock %}
-{% block content %}<section class="product-detail wrap"><div class="detail-cover">{% if product.cover_image %}<img class="real-cover" src="{{ url_for('static', filename='images/' + product.cover_image) }}" alt="Portada de {{ product.name }}">{% else %}<div class="book-cover book-{{ product.cover_class }}"><span class="book-small">EBOOK · {{ product.category }}</span><strong>{{ product.name }}</strong><small>Ebooks para<br>la vida</small><i>✦</i></div>{% endif %}</div><div class="detail-copy"><p class="eyebrow">{{ product.category }}</p><h1>{{ product.name }}</h1><div class="product-facts"><span>Idioma: <strong>Español</strong></span><span>Formato: <strong>PDF</strong></span><span>Entrega: <strong>Digital</strong></span></div><div class="detail-content-row"><div class="detail-description">{{ product.description }}</div><div class="purchase-column"><section class="unit-offer"><p class="offer-label">EBOOK INDIVIDUAL</p><div class="detail-price">${{ '{:,.0f}'.format(product.price_ars).replace(',', '.') }} <small>ARS</small><span class="currency-equivalents">≈ USD {{ price_usd(product.price_ars) }} · ≈ EUR {{ price_eur(product.price_ars) }}<small>Cotización orientativa</small></span></div><form method="post" action="{{ url_for('add_to_cart', product_id=product.id) }}"><input type="hidden" name="next" value="{{ url_for('cart') }}"><button class="button button-primary">Comprar ebook <span>→</span></button></form></section><ul class="detail-benefits"><li>✓ Descarga inmediata</li><li>✓ Formato PDF</li><li>✓ Lectura desde cualquier dispositivo</li></ul>{% if kit %}<section class="kit-offer"><p class="eyebrow">OFERTA ESPECIAL</p><h2>{{ kit.name }}</h2><p>Incluye el ebook principal y los 3 bonus: Modo Supervivencia, Mi Casa Funciona Así y Tarjetas Antibloqueo.</p><div class="kit-price">${{ '{:,.0f}'.format(kit.price_ars).replace(',', '.') }} <small>ARS</small><span>≈ USD {{ price_usd(kit.price_ars) }} · ≈ EUR {{ price_eur(kit.price_ars) }}</span></div><form method="post" action="{{ url_for('add_to_cart', product_id=kit.id) }}"><input type="hidden" name="next" value="{{ url_for('cart') }}"><button class="button button-secondary">Elegir el KIT <span>→</span></button></form></section>{% endif %}</div></div></div></section>{% endblock %}
+{% block content %}
+<section class="product-detail wrap" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}">
+  <div class="detail-cover">
+    {% if product.cover_image %}
+      <img class="real-cover" src="{{ url_for('static', filename='images/' + product.cover_image) }}" alt="Portada de {{ product.name }}">
+    {% else %}
+      <div class="book-cover book-{{ product.cover_class }}">
+        <span class="book-small">EBOOK · {{ product.category }}</span>
+        <strong>{{ product.name }}</strong>
+        <small>Ebooks para<br>la vida</small>
+        <i>✦</i>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="detail-copy">
+    <p class="eyebrow">{{ product.category }}</p>
+    <h1>{{ product.name }}</h1>
+
+    <div class="product-facts">
+      <span>Idioma: <strong>Español</strong></span>
+      <span>Formato: <strong>PDF</strong></span>
+      <span>Entrega: <strong>Digital</strong></span>
+    </div>
+
+    <div class="detail-content-row">
+      <div class="detail-description">{{ product.description }}</div>
+
+      <div class="purchase-column">
+        <section class="unit-offer">
+          <p class="offer-label">EBOOK INDIVIDUAL</p>
+          <div class="detail-price">
+            ${{ '{:,.0f}'.format(product.price_ars).replace(',', '.') }}
+            <small>ARS</small>
+            <span class="currency-equivalents">
+              ≈ USD {{ price_usd(product.price_ars) }} · ≈ EUR {{ price_eur(product.price_ars) }}
+              <small>Cotización orientativa</small>
+            </span>
+          </div>
+          <form method="post" action="{{ url_for('add_to_cart', product_id=product.id) }}">
+            <input type="hidden" name="next" value="{{ url_for('cart') }}">
+            <button class="button button-primary">Comprar ebook <span>→</span></button>
+          </form>
+        </section>
+
+        <ul class="detail-benefits">
+          <li>✓ Descarga inmediata</li>
+          <li>✓ Formato PDF</li>
+          <li>✓ Lectura desde cualquier dispositivo</li>
+        </ul>
+
+        {% if kit %}
+        <section class="kit-offer">
+          <p class="eyebrow">OFERTA ESPECIAL</p>
+          <h2>{{ kit.name }}</h2>
+          <p>Incluye el ebook principal y los 3 bonus: Modo Supervivencia, Mi Casa Funciona Así y Tarjetas Antibloqueo.</p>
+          <div class="kit-price">
+            ${{ '{:,.0f}'.format(kit.price_ars).replace(',', '.') }}
+            <small>ARS</small>
+            <span>≈ USD {{ price_usd(kit.price_ars) }} · ≈ EUR {{ price_eur(kit.price_ars) }}</span>
+          </div>
+          <form method="post" action="{{ url_for('add_to_cart', product_id=kit.id) }}">
+            <input type="hidden" name="next" value="{{ url_for('cart') }}">
+            <button class="button button-secondary">Elegir el KIT <span>→</span></button>
+          </form>
+        </section>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

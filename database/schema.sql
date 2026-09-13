@@ -33,3 +33,26 @@ CREATE TABLE order_item (
   product_name VARCHAR(160) NOT NULL,
   unit_price_ars INTEGER NOT NULL
 );
+
+CREATE TABLE product_click (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL,
+  product_name VARCHAR(160) NOT NULL,
+  clicked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  user_session_id VARCHAR(120),
+  referrer VARCHAR(255)
+);
+
+CREATE TABLE page_visit (
+  id INTEGER PRIMARY KEY,
+  page_path VARCHAR(255) NOT NULL,
+  visited_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  user_session_id VARCHAR(120),
+  user_agent VARCHAR(500),
+  referrer VARCHAR(255)
+);
+
+CREATE INDEX idx_product_click_product_id ON product_click(product_id);
+CREATE INDEX idx_product_click_date ON product_click(clicked_at);
+CREATE INDEX idx_page_visit_date ON page_visit(visited_at);
+CREATE INDEX idx_page_visit_path ON page_visit(page_path);

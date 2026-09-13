@@ -40,3 +40,21 @@ class OrderItem(db.Model):
     product_id = db.Column(db.Integer, nullable=False)
     product_name = db.Column(db.String(160), nullable=False)
     unit_price_ars = db.Column(db.Integer, nullable=False)
+
+
+class ProductClick(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False)
+    product_name = db.Column(db.String(160), nullable=False)
+    clicked_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_session_id = db.Column(db.String(120))
+    referrer = db.Column(db.String(255))
+
+
+class PageVisit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    page_path = db.Column(db.String(255), nullable=False)
+    visited_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_session_id = db.Column(db.String(120))
+    user_agent = db.Column(db.String(500))
+    referrer = db.Column(db.String(255))

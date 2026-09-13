@@ -33,5 +33,30 @@
     <div class="footer-links"><a href="https://www.tiktok.com/" target="_blank" rel="noreferrer">TikTok</a><a href="https://www.amazon.com/" target="_blank" rel="noreferrer">Amazon KDP</a><a href="mailto:hola@ebooksparalavida.com">Contacto</a></div>
     <p class="copyright">© {{ current_year }} Ebooks para la vida</p>
   </footer>
+
+  <!-- Tracking Analytics -->
+  <script>
+    // Trackear visita a la página
+    fetch('/api/track-visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page_path: window.location.pathname })
+    }).catch(e => console.log('Visit tracking failed:', e));
+
+    // Trackear clics en productos
+    document.addEventListener('click', function(e) {
+      const productCard = e.target.closest('[data-product-id]');
+      if (productCard) {
+        const productId = productCard.getAttribute('data-product-id');
+        const productName = productCard.getAttribute('data-product-name') || 'Unknown';
+
+        fetch('/api/track-click', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ product_id: productId, product_name: productName })
+        }).catch(e => console.log('Click tracking failed:', e));
+      }
+    });
+  </script>
 </body>
 </html>

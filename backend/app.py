@@ -6,7 +6,7 @@ from pathlib import Path
 from flask import Flask, abort, flash, redirect, render_template, request, session, url_for, send_from_directory
 
 from backend.config import Config
-from backend.models import db, Product, Order, OrderItem
+from backend.models import db, Product, Order, OrderItem, ProductClick, PageVisit
 
 
 app = Flask(__name__, template_folder="templates", static_folder="../frontend/assets")
@@ -317,6 +317,165 @@ def admin_create_product():
     db.session.commit()
     flash("Producto creado.", "success")
     return redirect(url_for("admin_dashboard"))
+
+
+@app.post("/api/track-click")
+def track_product_click():
+    data = request.get_json() or {}
+    product_id = data.get("product_id")
+    product_name = data.get("product_name", "Unknown")
+
+    if product_id:
+        session_id = session.get("session_id") or secrets.token_hex(16)
+        session["session_id"] = session_id
+
+        click = ProductClick(
+            product_id=product_id,
+            product_name=product_name,
+            user_session_id=session_id,
+            referrer=request.referrer
+        )
+        db.session.add(click)
+        db.session.commit()
+
+    return {"status": "ok"}
+
+
+@app.post("/api/track-visit")
+def track_page_visit():
+    data = request.get_json() or {}
+    page_path = data.get("page_path", request.path)
+
+    session_id = session.get("session_id") or secrets.token_hex(16)
+    session["session_id"] = session_id
+
+    visit = PageVisit(
+        page_path=page_path,
+        user_session_id=session_id,
+        user_agent=request.headers.get("User-Agent", "Unknown"),
+        referrer=request.referrer
+    )
+    db.session.add(visit)
+    db.session.commit()
+
+    return {"status": "ok"}
+
+
+@app.get("/api/admin/stats")
+@admin_required
+def get_admin_stats():
+    from datetime import datetime, timedelta
+
+    # Órdenes y ingresos
+    all_orders = Order.query.all()
+    paid_orders = [o for o in all_orders if o.status in {"paid", "paid_demo"}]
+    total_revenue = sum(o.total_ars for o in paid_orders)
+
+    # Clientes únicos
+    unique_customers = len(set(o.buyer_email for o in paid_orders))
+
+    # Últimos 30 días
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    recent_orders = [o for o in paid_orders if o.created_at >= thirty_days_ago]
+    recent_revenue = sum(o.total_ars for o in recent_orders)
+
+    # Productos más vendidos
+    product_sales = {}
+    for order in paid_orders:
+        for item in order.items:
+            product_sales[item.product_name] = product_sales.get(item.product_name, 0) + 1
+
+    top_products = sorted(product_sales.items(), key=lambda x: x[1], reverse=True)[:5]
+
+    # Productos más clicleados
+    clicks = ProductClick.query.all()
+    product_clicks = {}
+    for click in clicks:
+        key = click.product_name
+        product_clicks[key] = product_clicks.get(key, 0) + 1
+
+    top_clicked = sorted(product_clicks.items(), key=lambda x: x[1], reverse=True)[:5]
+
+    # Visitas últimos 30 días
+    recent_visits = PageVisit.query.filter(PageVisit.visited_at >= thirty_days_ago).all()
+    total_visits = len(recent_visits)
+    unique_visits = len(set(v.user_session_id for v in recent_visits))
+
+    # Ingresos por día (últimos 30)
+    revenue_by_day = {}
+    for order in recent_orders:
+        day = order.created_at.strftime("%Y-%m-%d")
+        revenue_by_day[day] = revenue_by_day.get(day, 0) + order.total_ars
+
+    revenue_by_day = sorted(revenue_by_day.items())
+
+    return {
+        "total_orders": len(paid_orders),
+        "total_revenue": total_revenue,
+        "total_customers": unique_customers,
+        "recent_orders": len(recent_orders),
+        "recent_revenue": recent_revenue,
+        "total_products": len(Product.query.all()),
+        "total_clicks": len(clicks),
+        "total_visits": total_visits,
+        "unique_visits": unique_visits,
+        "top_products": [{"name": name, "count": count} for name, count in top_products],
+        "top_clicked": [{"name": name, "count": count} for name, count in top_clicked],
+        "revenue_by_day": [{"date": date, "revenue": revenue} for date, revenue in revenue_by_day],
+    }
+
+
+@app.get("/api/admin/orders")
+@admin_required
+def get_admin_orders():
+    orders = Order.query.order_by(Order.created_at.desc()).all()
+    return {
+        "orders": [
+            {
+                "id": o.id,
+                "buyer_name": o.buyer_name,
+                "buyer_email": o.buyer_email,
+                "total_ars": o.total_ars,
+                "status": o.status,
+                "payment_method": o.payment_method,
+                "created_at": o.created_at.isoformat(),
+                "items": [{"product_name": item.product_name, "unit_price_ars": item.unit_price_ars} for item in o.items]
+            }
+            for o in orders
+        ]
+    }
+
+
+@app.get("/api/admin/products-analytics")
+@admin_required
+def get_products_analytics():
+    products = Product.query.all()
+    clicks = ProductClick.query.all()
+
+    product_data = {}
+    for product in products:
+        product_data[product.id] = {
+            "id": product.id,
+            "name": product.name,
+            "slug": product.slug,
+            "category": product.category,
+            "price_ars": product.price_ars,
+            "clicks": 0,
+            "sales": 0
+        }
+
+    # Contar clics por producto
+    for click in clicks:
+        if click.product_id in product_data:
+            product_data[click.product_id]["clicks"] += 1
+
+    # Contar ventas por producto
+    items = OrderItem.query.all()
+    for item in items:
+        if item.product_id in product_data:
+            product_data[item.product_id]["sales"] += 1
+
+    return {"products": sorted(product_data.values(), key=lambda x: x["clicks"], reverse=True)}
 
 
 with app.app_context():
