@@ -7,7 +7,10 @@ from datetime import datetime
 from functools import wraps
 from pathlib import Path
 
-from flask import Flask, abort, flash, redirect, render_template, request, session, url_for, send_from_directory
+from flask import (
+    Flask, abort, flash, redirect, render_template, request, session, url_for,
+    send_from_directory
+)
 from werkzeug.utils import secure_filename
 
 from backend.config import Config
