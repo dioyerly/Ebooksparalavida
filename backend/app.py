@@ -3,7 +3,7 @@ Ebooksparalavida - Flask application for selling digital ebooks.
 Handles product catalog, shopping cart, checkout, and payments.
 """
 import secrets
-from datetime import datetime, timedelta
+import datetime
 from functools import wraps
 from pathlib import Path
 
@@ -203,7 +203,7 @@ def inject_globals():
 
     return {
         "cart_count": len(session.get("cart", [])),
-        "current_year": datetime.now().year,
+        "current_year": datetime.datetime.now().year,
         "price_usd": lambda price: converted_price(price, app.config["ARS_PER_USD"]),
         "price_eur": lambda price: converted_price(price, app.config["ARS_PER_EUR"]),
     }
@@ -497,7 +497,8 @@ def get_admin_stats():
     unique_customers = len(set(o.buyer_email for o in paid_orders))
 
     # Últimos 30 días
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.datetime.utcnow() - datetime.timedelta(
+        days=30)
     recent_orders = [o for o in paid_orders if o.created_at >= thirty_days_ago]
     recent_revenue = sum(o.total_ars for o in recent_orders)
 
