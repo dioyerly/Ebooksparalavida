@@ -1,4 +1,4 @@
-"""
+﻿"""
 Ebooksparalavida - Flask application for selling digital ebooks.
 Handles product catalog, shopping cart, checkout, and payments.
 """
@@ -54,6 +54,7 @@ SEED_PRODUCTS = [
         "cover_class": "teal",
         "accent": "#3A5F5F",
         "featured": True,
+
     },
     {
         "slug": "semana-liviana",
