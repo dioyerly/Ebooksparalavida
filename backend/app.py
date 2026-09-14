@@ -847,7 +847,6 @@ def get_products_list():
 with app.app_context():
     db.create_all()
     migrate_product_columns()
-    seed_products()
 
 
 if __name__ == "__main__":
