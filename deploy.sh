@@ -25,7 +25,7 @@ chmod 755 storage/*
 
 echo "6. Creando .env para producción..."
 cat > .env << 'ENVEOF'
-DATABASE_URL=postgresql://ebooksadmin:Abc123!@#$%^&@localhost:5432/ebooks_store_
+DATABASE_URL=postgresql://ebooksadmin:Chiara0712.@localhost:5432/ebooks_store_
 SECRET_KEY=tu-clave-aleatoria-segura-aqui-cambiar
 ADMIN_EMAIL=admin@estrategia.site
 ADMIN_PASSWORD=contraseña-segura-cambiar
