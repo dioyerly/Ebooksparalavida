@@ -200,6 +200,24 @@
           <small style="color: var(--muted);">Sube una imagen JPG o PNG. Si no subis, se usa el diseño generado.</small>
         </div>
 
+        <div class="form-row">
+          <div>
+            <label class="checkbox">
+              <input type="checkbox" name="is_kit" id="isKitCheckbox">
+              📦 ¿Este ebook es un KIT con bonus?
+            </label>
+            <small style="color: var(--muted);">Marca si incluye otros ebooks o material bonus.</small>
+          </div>
+        </div>
+
+        <div class="form-row full" id="bonusSection" style="display: none;">
+          <label>📚 Ebooks/Bonus incluidos en el KIT</label>
+          <select name="kit_bonus_ids" id="kitBonusSelect" multiple style="min-height: 120px;">
+            <option value="">-- Selecciona los bonus --</option>
+          </select>
+          <small style="color: var(--muted);">Mantén Ctrl/Cmd presionado para seleccionar múltiples. Estos ebooks aparecerán en la página del producto.</small>
+        </div>
+
         <button class="button button-primary">Crear Producto →</button>
       </form>
     </div>
@@ -211,14 +229,39 @@ const productType = document.getElementById('productType');
 const ebookFile = document.getElementById('ebookFile');
 const ebookFileLabel = document.getElementById('ebookFileLabel');
 const ebookFileHelp = document.getElementById('ebookFileHelp');
+const isKitCheckbox = document.getElementById('isKitCheckbox');
+const bonusSection = document.getElementById('bonusSection');
+const kitBonusSelect = document.getElementById('kitBonusSelect');
+
+// Manejar cambio de tipo de producto
 function updateProductFileField() {
   const interactive = productType.value === 'html_interactive';
   ebookFile.accept = interactive ? '.html' : '.pdf,.epub';
   ebookFileLabel.textContent = interactive ? '🌐 Archivo HTML interactivo' : '📥 Archivo PDF/EPUB del Ebook';
   ebookFileHelp.textContent = interactive ? 'El HTML original se conserva intacto y se personaliza después del pago.' : 'Sube el archivo PDF o EPUB del ebook.';
 }
+
+// Mostrar/ocultar sección de bonus
+isKitCheckbox.addEventListener('change', function() {
+  bonusSection.style.display = this.checked ? 'block' : 'none';
+});
+
 productType.addEventListener('change', updateProductFileField);
 updateProductFileField();
+
+// Cargar lista de productos para bonus
+fetch('/api/admin/products-list')
+  .then(r => r.json())
+  .then(data => {
+    const products = data.products || [];
+    products.forEach(p => {
+      const option = document.createElement('option');
+      option.value = p.id;
+      option.textContent = `${p.name} (${p.price_ars} ARS)`;
+      kitBonusSelect.appendChild(option);
+    });
+  })
+  .catch(e => console.log('Productos no disponibles:', e));
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>

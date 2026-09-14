@@ -191,3 +191,4 @@ widgetsnbextension==4.0.16
 win10toast==0.9
 xlsxwriter==3.2.9
 zopfli==0.4.3
+PyMySQL==1.1.0

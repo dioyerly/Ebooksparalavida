@@ -586,32 +586,48 @@ def admin_create_product():
     slug = request.form["slug"].strip()
     name = request.form["name"].strip()
     product_type = request.form.get("product_type", "pdf")
+    is_kit = request.form.get("is_kit") == "on"
+    kit_bonus_ids = request.form.get("kit_bonus_ids", "")
 
     ebook_file = request.files.get("ebook_file")
     file_name = None
     source_html_path = None
-    extension = Path(ebook_file.filename).suffix.lower() if ebook_file and ebook_file.filename else ""
-    if product_type == "html_interactive" and extension == ".html":
-        interactive_dir = Path(__file__).parent.parent / "storage" / "interactive_ebooks"
-        interactive_dir.mkdir(parents=True, exist_ok=True)
-        file_name = secure_filename(f"{slug}.html")
-        ebook_file.save(str(interactive_dir / file_name))
-        source_html_path = str(Path("interactive_ebooks") / file_name)
-    elif product_type in {"pdf", "epub"} and extension in {".pdf", ".epub"}:
-        ebooks_dir = Path(__file__).parent.parent / "storage" / "ebooks"
-        ebooks_dir.mkdir(parents=True, exist_ok=True)
-        file_name = secure_filename(f"{slug}{extension}")
-        ebook_file.save(str(ebooks_dir / file_name))
-    else:
-        flash("El archivo no coincide con el tipo de producto elegido.", "error")
+    ebook_binary = None
+    extension = (Path(ebook_file.filename).suffix.lower()
+                 if ebook_file and ebook_file.filename else "")
+
+    if not ebook_file:
+        flash("Debes subir un archivo ebook.", "error")
         return redirect(url_for("admin_dashboard"))
 
-    # Guardar imagen de portada
+    if product_type == "html_interactive" and extension == ".html":
+        interactive_dir = (Path(__file__).parent.parent / "storage" /
+                          "interactive_ebooks")
+        interactive_dir.mkdir(parents=True, exist_ok=True)
+        file_name = secure_filename(f"{slug}.html")
+        ebook_binary = ebook_file.read()
+        ebook_file.seek(0)
+        ebook_file.save(str(interactive_dir / file_name))
+        source_html_path = str(Path("interactive_ebooks") / file_name)
+    elif product_type in {"pdf", "epub"} and extension in {".pdf",
+                                                             ".epub"}:
+        ebooks_dir = (Path(__file__).parent.parent / "storage" /
+                      "ebooks")
+        ebooks_dir.mkdir(parents=True, exist_ok=True)
+        file_name = secure_filename(f"{slug}{extension}")
+        ebook_binary = ebook_file.read()
+        ebook_file.seek(0)
+        ebook_file.save(str(ebooks_dir / file_name))
+    else:
+        flash(("El archivo no coincide con el tipo de producto "
+               "elegido."), "error")
+        return redirect(url_for("admin_dashboard"))
+
     cover_file = request.files.get("cover_image")
     cover_image = None
     if cover_file and cover_file.filename:
-        images_dir = Path(__file__).parent.parent / \
-            "frontend" / "assets" / "images"
+        images_dir = (Path(__file__).parent.parent / "frontend" /
+                      "assets" / "images")
         images_dir.mkdir(parents=True, exist_ok=True)
         ext = Path(cover_file.filename).suffix
         filename = secure_filename(f"{slug}{ext}")
@@ -631,10 +647,13 @@ def admin_create_product():
         cover_image=cover_image,
         product_type=product_type,
         source_html_path=source_html_path,
+        ebook_file=ebook_binary,
+        is_kit=is_kit,
+        kit_bonus_ids=kit_bonus_ids if is_kit else None,
     )
     db.session.add(product)
     db.session.commit()
-    flash(f"Producto '{name}' creado exitosamente.", "success")
+    flash(f"✅ Producto '{name}' creado exitosamente.", "success")
     return redirect(url_for("admin_dashboard"))
 
 
@@ -802,7 +821,27 @@ def get_products_analytics():
         if item.product_id in product_data:
             product_data[item.product_id]["sales"] += 1
 
-    return {"products": sorted(product_data.values(), key=lambda x: x["clicks"], reverse=True)}
+    return {"products": sorted(product_data.values(),
+                               key=lambda x: x["clicks"],
+                               reverse=True)}
+
+
+@app.get("/api/admin/products-list")
+@admin_required
+def get_products_list():
+    """Return list of products for kit bonus selection."""
+    products = Product.query.all()
+    return {
+        "products": [
+            {
+                "id": p.id,
+                "name": p.name,
+                "price_ars": p.price_ars,
+                "category": p.category,
+            }
+            for p in products
+        ]
+    }
 
 
 with app.app_context():

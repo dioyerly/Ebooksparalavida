@@ -21,6 +21,9 @@ class Product(db.Model):
     cover_image = db.Column(db.String(255))
     product_type = db.Column(db.String(30), nullable=False, default="pdf")
     source_html_path = db.Column(db.String(255))
+    ebook_file = db.Column(db.LargeBinary)
+    is_kit = db.Column(db.Boolean, default=False)
+    kit_bonus_ids = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
