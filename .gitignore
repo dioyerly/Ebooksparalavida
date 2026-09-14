@@ -13,6 +13,8 @@ storage/personalized_ebooks/*
 !storage/personalized_ebooks/.gitkeep
 !storage/ebooks/.gitkeep
 !storage/interactive_ebooks/.gitkeep
+!ebooks_github/
+!ebooks_github/*
 instance/
 .DS_Store
 *.log
