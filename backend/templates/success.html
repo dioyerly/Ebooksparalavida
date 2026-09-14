@@ -58,6 +58,14 @@
     </small>
   </div>
 
+  {% if order.ebook_type == 'html_interactive' %}
+  <div class="interactive-code-box">
+    <p>Tu código de acceso es:</p>
+    <strong>{{ order.access_code }}</strong>
+    <small>También lo enviamos junto con tu archivo HTML personalizado.</small>
+  </div>
+  {% endif %}
+
   <div class="next-steps">
     <h3>¿Qué sigue?</h3>
     <ul class="steps-list">
@@ -87,6 +95,23 @@
 </section>
 
 <style>
+  .interactive-code-box {
+    background: #F4E8DD;
+    border-left: 4px solid #C9756B;
+    padding: 20px 24px;
+    margin: 24px 0;
+    text-align: center;
+  }
+
+  .interactive-code-box p { margin: 0 0 8px; }
+  .interactive-code-box strong {
+    display: block;
+    color: #31595A;
+    font: 800 28px Manrope, sans-serif;
+    letter-spacing: .16em;
+  }
+  .interactive-code-box small { color: #7D827D; }
+
   .success-page {
     padding-top: 70px;
     padding-bottom: 110px;

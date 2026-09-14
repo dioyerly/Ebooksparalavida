@@ -149,6 +149,13 @@
 
         <div class="form-row">
           <div>
+            <label>Tipo de producto</label>
+            <select name="product_type" id="productType" required>
+              <option value="pdf">PDF/EPUB</option>
+              <option value="html_interactive">HTML Interactivo</option>
+            </select>
+          </div>
+          <div>
             <label>Categoría</label>
             <input name="category" required placeholder="VIDA & BIENESTAR">
           </div>
@@ -182,9 +189,9 @@
         </div>
 
         <div class="form-row full">
-          <label>📥 Archivo PDF del Ebook</label>
-          <input type="file" name="ebook_file" accept=".pdf" required>
-          <small style="color: var(--muted);">Sube el archivo PDF del ebook. Se guardará de forma segura.</small>
+          <label id="ebookFileLabel">📥 Archivo PDF/EPUB del Ebook</label>
+          <input type="file" name="ebook_file" id="ebookFile" accept=".pdf,.epub" required>
+          <small id="ebookFileHelp" style="color: var(--muted);">Sube el archivo PDF o EPUB del ebook.</small>
         </div>
 
         <div class="form-row full">
@@ -198,6 +205,21 @@
     </div>
   </div>
 </section>
+
+<script>
+const productType = document.getElementById('productType');
+const ebookFile = document.getElementById('ebookFile');
+const ebookFileLabel = document.getElementById('ebookFileLabel');
+const ebookFileHelp = document.getElementById('ebookFileHelp');
+function updateProductFileField() {
+  const interactive = productType.value === 'html_interactive';
+  ebookFile.accept = interactive ? '.html' : '.pdf,.epub';
+  ebookFileLabel.textContent = interactive ? '🌐 Archivo HTML interactivo' : '📥 Archivo PDF/EPUB del Ebook';
+  ebookFileHelp.textContent = interactive ? 'El HTML original se conserva intacto y se personaliza después del pago.' : 'Sube el archivo PDF o EPUB del ebook.';
+}
+productType.addEventListener('change', updateProductFileField);
+updateProductFileField();
+</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script>

@@ -45,3 +45,9 @@ Colocá los archivos en `storage/ebooks/` y asigná el nombre en `Product.file_n
 ## Despliegue sugerido
 
 Para un primer deploy podés usar Render, Railway o DigitalOcean con Gunicorn y PostgreSQL. Configurá `PUBLIC_BASE_URL`, las variables de pago, el almacenamiento privado de PDFs y los webhooks HTTPS. El archivo `database/schema.sql` sirve como referencia del modelo relacional.
+
+## Ebooks HTML interactivos
+
+Los productos con tipo `HTML Interactivo` usan un archivo HTML offline como origen. El archivo original se guarda en `storage/interactive_ebooks/` y nunca se modifica. Luego del pago demo, el servidor genera una copia en `storage/personalized_ebooks/` con el email del comprador y un código único de 8 caracteres; el login del archivo valida ambos datos mediante `localStorage` sin conexión a internet.
+
+El panel admin permite elegir `PDF/EPUB` o `HTML Interactivo`. Para enviar el archivo adjunto en producción, completá `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` y `SMTP_FROM` en `.env`. Sin SMTP configurado, el modo demo imprime el email y el código en la consola.

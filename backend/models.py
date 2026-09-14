@@ -19,6 +19,8 @@ class Product(db.Model):
     featured = db.Column(db.Boolean, default=False)
     file_name = db.Column(db.String(255))
     cover_image = db.Column(db.String(255))
+    product_type = db.Column(db.String(30), nullable=False, default="pdf")
+    source_html_path = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
@@ -30,6 +32,9 @@ class Order(db.Model):
     payment_method = db.Column(db.String(30), nullable=False)
     status = db.Column(db.String(30), default="pending")
     download_token = db.Column(db.String(120), unique=True)
+    access_code = db.Column(db.String(8), unique=True)
+    ebook_type = db.Column(db.String(30), nullable=False, default="pdf")
+    personalized_file_path = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     items = db.relationship("OrderItem", backref="order", lazy=True, cascade="all, delete-orphan")
 

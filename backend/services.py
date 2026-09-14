@@ -1,6 +1,127 @@
 """Servicios de pago e integración externa"""
 import os
+import re
+import secrets
+import string
+import json
+from pathlib import Path
+from email.message import EmailMessage
+import smtplib
 import requests
+
+
+def generate_access_code():
+    """Generate a unique-looking eight-character access code."""
+    alphabet = string.ascii_uppercase + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(8))
+
+
+def generate_personalized_html(
+    customer_email, html_original_path, access_code=None, output_path=None
+):
+    """Create an offline HTML copy with the buyer credentials embedded."""
+    original_path = Path(html_original_path)
+    html = original_path.read_text(encoding="utf-8")
+    escaped_email = customer_email.replace("\\", "\\\\").replace('"', '\\"')
+    access_code = access_code or generate_access_code()
+    escaped_code = access_code.replace("\\", "\\\\").replace('"', '\\"')
+
+    # The supplied file already has the offline login; replace only its credentials.
+    html = re.sub(
+        r'(const emailCorrecto\s*=\s*)"[^"]*"',
+        rf'\1"{escaped_email}"',
+        html,
+        count=1,
+    )
+    html = re.sub(
+        r'(const codigoCorrecto\s*=\s*)"[^"]*"',
+        rf'\1"{escaped_code}"',
+        html,
+        count=1,
+    )
+    html = re.sub(
+        r'(data\.email\s*===\s*)"[^"]*"',
+        rf'\1"{escaped_email}"',
+        html,
+        count=1,
+    )
+    html = re.sub(
+        r'(<input[^>]+id=["\']login-email["\'][^>]+value=["\'])[^"\']*(["\'])',
+        rf'\1{escaped_email}\2',
+        html,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+
+    if "id=\"personalized-login-screen\"" not in html:
+        email_json = json.dumps(customer_email)
+        code_json = json.dumps(access_code)
+        login_markup = f"""
+<style id="personalized-login-style">
+    #personalized-login-screen {{
+        position: fixed; inset: 0; z-index: 2147483647; display: flex;
+        align-items: center; justify-content: center; padding: 24px;
+        background: linear-gradient(135deg, #D8A5A5 0%, #C8B8D8 100%);
+        font-family: Arial, sans-serif;
+    }}
+    #personalized-login-screen .login-card {{
+        width: min(100%, 420px); background: #fff; padding: 32px;
+        border-radius: 12px; box-shadow: 0 16px 50px rgba(0,0,0,.18);
+    }}
+    #personalized-login-screen h2 {{ margin: 0 0 8px; color: #4A4A4A; }}
+    #personalized-login-screen p {{ color: #666; }}
+    #personalized-login-screen label {{ display:block; margin:14px 0 6px; color:#4A4A4A; font-weight:bold; }}
+    #personalized-login-screen input {{ width:100%; padding:12px; border:2px solid #A8D5D5; border-radius:6px; box-sizing:border-box; }}
+    #personalized-login-screen button {{ width:100%; margin-top:18px; padding:12px; border:0; border-radius:6px; background:#D8A5A5; color:#fff; font-weight:bold; cursor:pointer; }}
+    #personalized-login-error {{ min-height:20px; color:#B44E4E!important; font-size:13px; }}
+</style>
+<div id="personalized-login-screen">
+    <div class="login-card">
+        <h2>The Romance Reader Kit</h2>
+        <p>Ingresá el email de compra y tu código de acceso.</p>
+        <label for="personalized-login-email">Email</label>
+        <input id="personalized-login-email" type="email" autocomplete="email">
+        <label for="personalized-login-code">Código</label>
+        <input id="personalized-login-code" type="text" maxlength="8" autocomplete="off">
+        <button type="button" onclick="validatePersonalizedLogin()">Ingresar</button>
+        <p id="personalized-login-error"></p>
+    </div>
+</div>
+<script>
+(function() {{
+    const emailExpected = {email_json};
+    const codeExpected = {code_json};
+    const storageKey = 'ebooks-para-la-vida-auth-' + codeExpected;
+    window.validatePersonalizedLogin = function() {{
+        const email = document.getElementById('personalized-login-email').value.trim();
+        const code = document.getElementById('personalized-login-code').value.trim().toUpperCase();
+        const error = document.getElementById('personalized-login-error');
+        if (email === emailExpected && code === codeExpected) {{
+            localStorage.setItem(storageKey, JSON.stringify({{ email: email, code: code, validado: true }}));
+            document.getElementById('personalized-login-screen').remove();
+        }} else {{
+            error.textContent = 'Email o código incorrecto.';
+        }}
+    }};
+    try {{
+        const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+        if (saved && saved.validado && saved.email === emailExpected && saved.code === codeExpected) {{
+            document.getElementById('personalized-login-screen').remove();
+        }}
+    }} catch (error) {{
+        localStorage.removeItem(storageKey);
+    }}
+}})();
+</script>
+        """
+        html = html.replace("</body>", login_markup + "</body>", 1)
+
+    destination = Path(output_path or original_path.with_name(
+        f"{original_path.stem}-{customer_email}.html"
+    ))
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(html, encoding="utf-8")
+    return str(destination)
 
 
 class MercadoPagoService:
@@ -215,6 +336,38 @@ class EmailService:
         # Implementar con SendGrid cuando esté disponible
         return {"success": False, "message": "SendGrid not configured"}
 
+    def send_interactive_ebook(self, buyer_email, product_name, access_code, file_path):
+        """Send notification with access code (no file attachment)."""
+        subject = f"¡Tu compra de {product_name} está lista!"
+        body = (
+            f"Hola,\n\n"
+            f"¡Gracias por tu compra de {product_name}!\n\n"
+            f"Tu código de acceso es: {access_code}\n\n"
+            f"Descargá tu ebook desde tu cuenta y usa este código para acceder.\n\n"
+            f"Ebooks para la vida"
+        )
+        smtp_host = os.getenv("SMTP_HOST", "")
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        smtp_user = os.getenv("SMTP_USER", "")
+        smtp_password = os.getenv("SMTP_PASSWORD", "")
+        sender = os.getenv("SMTP_FROM", smtp_user)
+        smtp_configured = all([smtp_host, smtp_user, smtp_password, sender])
+
+        if not smtp_configured:
+            print(f"DEMO EMAIL TO: {buyer_email}\nSubject: {subject}\n\n{body}")
+            return {"success": True, "is_demo": True, "message": "Interactive email logged"}
+
+        message = EmailMessage()
+        message["Subject"] = subject
+        message["From"] = sender
+        message["To"] = buyer_email
+        message.set_content(body)
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as smtp:
+            smtp.starttls()
+            smtp.login(smtp_user, smtp_password)
+            smtp.send_message(message)
+        return {"success": True, "is_demo": False, "message": "Interactive email sent"}
+
     def _log_demo_email(self, buyer_email, product_names, download_token):
         """En modo demo, solo registra que se enviaría el email"""
         download_url = (
@@ -223,7 +376,7 @@ class EmailService:
         )
 
         email_content = f"""
-        ✅ DEMO - EMAIL QUE SE ENVIARÍA A: {buyer_email}
+        DEMO - EMAIL QUE SE ENVIARÍA A: {buyer_email}
 
         Asunto: ¡Tu ebook está listo para descargar!
 

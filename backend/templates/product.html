@@ -21,8 +21,8 @@
 
     <div class="product-facts">
       <span>Idioma: <strong>Español</strong></span>
-      <span>Formato: <strong>PDF</strong></span>
-      <span>Entrega: <strong>Digital</strong></span>
+      <span>Formato: <strong>{{ 'HTML interactivo' if product.product_type == 'html_interactive' else 'PDF/EPUB' }}</strong></span>
+      <span>Entrega: <strong>{{ 'Archivo personalizado' if product.product_type == 'html_interactive' else 'Digital' }}</strong></span>
     </div>
 
     <div class="detail-content-row">
@@ -47,7 +47,7 @@
 
         <ul class="detail-benefits">
           <li>✓ Descarga inmediata</li>
-          <li>✓ Formato PDF</li>
+          <li>✓ {{ 'Login offline personalizado' if product.product_type == 'html_interactive' else 'Formato PDF/EPUB' }}</li>
           <li>✓ Lectura desde cualquier dispositivo</li>
         </ul>
 

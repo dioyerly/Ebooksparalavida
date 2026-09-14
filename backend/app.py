@@ -18,7 +18,8 @@ from backend.models import (
     db, Product, Order, OrderItem, ProductClick, PageVisit
 )
 from backend.services import (
-    MercadoPagoService, PayPalService, EmailService
+    MercadoPagoService, PayPalService, EmailService,
+    generate_access_code, generate_personalized_html,
 )
 
 
@@ -203,6 +204,11 @@ def seed_products():
         else:
             for key, value in data.items():
                 setattr(product, key, value)
+    romance = Product.query.filter_by(slug="Descubre tu identidad como lectora").first()
+    if romance:
+        romance.product_type = "html_interactive"
+        romance.source_html_path = "interactive_ebooks/the-romance-reader-kit.html"
+        romance.file_name = "the-romance-reader-kit.html"
     db.session.commit()
 
 
@@ -218,6 +224,28 @@ def migrate_product_columns():
         db.session.execute(
             db.text("ALTER TABLE product ADD COLUMN cover_image VARCHAR(255)"))
         db.session.commit()
+    for column, definition in {
+        "product_type": "VARCHAR(30) NOT NULL DEFAULT 'pdf'",
+        "source_html_path": "VARCHAR(255)",
+    }.items():
+        if column not in columns:
+            db.session.execute(db.text(
+                f"ALTER TABLE product ADD COLUMN {column} {definition}"
+            ))
+            db.session.commit()
+    order_table = Order.__tablename__
+    order_columns = {row[1] for row in db.session.execute(
+        db.text(f"PRAGMA table_info(\"{order_table}\")"))}
+    for column, definition in {
+        "access_code": "VARCHAR(8)",
+        "ebook_type": "VARCHAR(30) NOT NULL DEFAULT 'pdf'",
+        "personalized_file_path": "VARCHAR(255)",
+    }.items():
+        if column not in order_columns:
+            db.session.execute(db.text(
+                f"ALTER TABLE \"{order_table}\" ADD COLUMN {column} {definition}"
+            ))
+            db.session.commit()
 
 
 def cart_products():
@@ -340,6 +368,9 @@ def checkout():
             payment_method=payment_method,
             status="pending",
             download_token=secrets.token_urlsafe(32),
+            ebook_type=("html_interactive" if any(
+                p.product_type == "html_interactive" for p in products
+            ) else "pdf"),
         )
         db.session.add(order)
         db.session.flush()
@@ -359,30 +390,53 @@ def checkout():
 
         # Crear preferencia de pago según método
         if payment_method == "mercadopago":
-            token = app.config.get("MP_ACCESS_TOKEN", "")
-            mp_service = MercadoPagoService(token)
-            payment_result = mp_service.create_preference(
-                order.id, buyer_name, buyer_email, total, items)
-        else:  # paypal
-            pp_service = PayPalService(
-                app.config["PAYPAL_CLIENT_ID"], app.config["PAYPAL_CLIENT_SECRET"])
-            payment_result = pp_service.create_order(
-                order.id, buyer_email, total, items)
+            session["cart"] = []
+            return redirect(url_for("payment_simulator", order_id=order.id))
 
-        # Si hay éxito y no es demo, redirigir a plataforma real
+        # PayPal: crear orden y redirigir
+        pp_service = PayPalService(
+            app.config["PAYPAL_CLIENT_ID"], app.config["PAYPAL_CLIENT_SECRET"])
+        payment_result = pp_service.create_order(
+            order.id, buyer_email, total, items)
+
         if payment_result.get("success") and not payment_result.get("is_demo"):
             session["cart"] = []
             return redirect(payment_result.get("checkout_url"))
 
-        # Si es demo O si hay error, marcar como pagado y ir a success
+        # PayPal demo: marcar como pagado y procesar
         order.status = "paid_demo"
         db.session.commit()
         session["cart"] = []
 
-        # Enviar email de descarga (demo)
         email_service = EmailService(app.config["SENDGRID_API_KEY"])
-        email_service.send_download_link(
-            buyer_email, [p.name for p in products], order.download_token)
+        interactive_product = next(
+            (p for p in products if p.product_type == "html_interactive"), None
+        )
+        if interactive_product:
+            access_code = generate_access_code()
+            while Order.query.filter_by(access_code=access_code).first():
+                access_code = generate_access_code()
+            source_path = Path(app.root_path).parent / "storage" / (
+                interactive_product.source_html_path or "interactive_ebooks/the-romance-reader-kit.html"
+            )
+            output_name = secure_filename(
+                f"{order.id}_{buyer_email}.html"
+            )
+            output_path = Path(app.root_path).parent / "storage" / "personalized_ebooks" / output_name
+            generate_personalized_html(
+                buyer_email, source_path, access_code, output_path
+            )
+            order.access_code = access_code
+            order.personalized_file_path = str(
+                Path("personalized_ebooks") / output_name
+            )
+            db.session.commit()
+            email_service.send_interactive_ebook(
+                buyer_email, interactive_product.name, access_code, output_path
+            )
+        else:
+            email_service.send_download_link(
+                buyer_email, [p.name for p in products], order.download_token)
 
         return redirect(url_for("success", order_id=order.id))
 
@@ -404,12 +458,97 @@ def download(token):
     order = Order.query.filter_by(download_token=token).first_or_404()
     if order.status not in {"paid_demo", "paid"}:
         abort(403, description="Esta descarga no está disponible para esta orden.")
+    if order.ebook_type == "html_interactive" and order.personalized_file_path:
+        personalized_path = Path(app.root_path).parent / "storage" / order.personalized_file_path
+        if personalized_path.exists():
+            return send_from_directory(
+                personalized_path.parent, personalized_path.name, as_attachment=True
+            )
+
     product = Product.query.filter_by(
         id=order.items[0].product_id).first_or_404()
     downloads_dir = Path(app.root_path).parent / "storage" / "ebooks"
     if product.file_name and (downloads_dir / product.file_name).exists():
         return send_from_directory(downloads_dir, product.file_name, as_attachment=True)
     return render_template("download_placeholder.html", product=product, order=order)
+
+
+@app.get("/pay/mercadopago/<int:order_id>")
+def payment_simulator(order_id):
+    """Simulador de pago de Mercado Pago para localhost."""
+    order = Order.query.get_or_404(order_id)
+    if order.status != "pending":
+        abort(403, description="Esta orden ya fue pagada.")
+    return render_template("payment_simulator.html", order=order)
+
+
+@app.post("/process-payment/<int:order_id>")
+def process_payment(order_id):
+    """Procesa el pago simulado de Mercado Pago."""
+    order = Order.query.get_or_404(order_id)
+    if order.status != "pending":
+        abort(403, description="Esta orden ya fue pagada.")
+
+    card_number = request.form.get("card_number", "").replace(" ", "")
+    expiry = request.form.get("expiry", "")
+    cvv = request.form.get("cvv", "")
+    cardholder = request.form.get("cardholder", "").strip()
+
+    if not all([card_number, expiry, cvv, cardholder]):
+        flash("Completá todos los datos de la tarjeta.", "error")
+        return redirect(url_for("payment_simulator", order_id=order_id))
+
+    valid_test_cards = [
+        "4111111111111111",  # Visa aprobada
+        "5425233430109903",  # MasterCard aprobada
+        "3782822463100005",  # Amex aprobada
+    ]
+
+    if card_number not in valid_test_cards:
+        flash("Tarjeta rechazada. Usa tarjetas de prueba válidas.", "error")
+        return redirect(url_for("payment_simulator", order_id=order_id))
+
+    order.status = "paid"
+    db.session.commit()
+
+    email_service = EmailService(app.config["SENDGRID_API_KEY"])
+    interactive_product = None
+    for item in order.items:
+        product = Product.query.get(item.product_id)
+        if product and product.product_type == "html_interactive":
+            interactive_product = product
+            break
+
+    if interactive_product:
+        access_code = generate_access_code()
+        while Order.query.filter_by(access_code=access_code).first():
+            access_code = generate_access_code()
+        source_path = Path(app.root_path).parent / "storage" / (
+            interactive_product.source_html_path or "interactive_ebooks/the-romance-reader-kit.html"
+        )
+        output_name = secure_filename(f"{order.id}_{order.buyer_email}.html")
+        output_path = Path(app.root_path).parent / "storage" / "personalized_ebooks" / output_name
+        generate_personalized_html(
+            order.buyer_email, source_path, access_code, output_path
+        )
+        order.access_code = access_code
+        order.personalized_file_path = str(
+            Path("personalized_ebooks") / output_name
+        )
+        db.session.commit()
+        email_service.send_interactive_ebook(
+            order.buyer_email, interactive_product.name, access_code, output_path
+        )
+    else:
+        product_names = [item.product_name for item in order.items]
+        email_service.send_download_link(
+            order.buyer_email,
+            product_names,
+            order.download_token
+        )
+
+    flash("Pago aprobado exitosamente.", "success")
+    return redirect(url_for("success", order_id=order_id))
 
 
 @app.route("/admin/login", methods=["GET", "POST"])
@@ -446,16 +585,26 @@ def admin_create_product():
     """Admin Create Product."""
     slug = request.form["slug"].strip()
     name = request.form["name"].strip()
+    product_type = request.form.get("product_type", "pdf")
 
-    # Guardar archivo PDF
-    pdf_file = request.files.get("ebook_file")
+    ebook_file = request.files.get("ebook_file")
     file_name = None
-    if pdf_file and pdf_file.filename.endswith(".pdf"):
+    source_html_path = None
+    extension = Path(ebook_file.filename).suffix.lower() if ebook_file and ebook_file.filename else ""
+    if product_type == "html_interactive" and extension == ".html":
+        interactive_dir = Path(__file__).parent.parent / "storage" / "interactive_ebooks"
+        interactive_dir.mkdir(parents=True, exist_ok=True)
+        file_name = secure_filename(f"{slug}.html")
+        ebook_file.save(str(interactive_dir / file_name))
+        source_html_path = str(Path("interactive_ebooks") / file_name)
+    elif product_type in {"pdf", "epub"} and extension in {".pdf", ".epub"}:
         ebooks_dir = Path(__file__).parent.parent / "storage" / "ebooks"
         ebooks_dir.mkdir(parents=True, exist_ok=True)
-        filename = secure_filename(f"{slug}.pdf")
-        pdf_file.save(str(ebooks_dir / filename))
-        file_name = filename
+        file_name = secure_filename(f"{slug}{extension}")
+        ebook_file.save(str(ebooks_dir / file_name))
+    else:
+        flash("El archivo no coincide con el tipo de producto elegido.", "error")
+        return redirect(url_for("admin_dashboard"))
 
     # Guardar imagen de portada
     cover_file = request.files.get("cover_image")
@@ -480,10 +629,12 @@ def admin_create_product():
         featured=request.form.get("featured") == "on",
         file_name=file_name,
         cover_image=cover_image,
+        product_type=product_type,
+        source_html_path=source_html_path,
     )
     db.session.add(product)
     db.session.commit()
-    flash(f"✅ Producto '{name}' creado exitosamente.", "success")
+    flash(f"Producto '{name}' creado exitosamente.", "success")
     return redirect(url_for("admin_dashboard"))
 
 

@@ -12,10 +12,12 @@ CREATE TABLE product (
   featured BOOLEAN DEFAULT 0,
   file_name VARCHAR(255),
   cover_image VARCHAR(255),
+  product_type VARCHAR(30) NOT NULL DEFAULT 'pdf',
+  source_html_path VARCHAR(255),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE order_record (
+CREATE TABLE "order" (
   id INTEGER PRIMARY KEY,
   buyer_name VARCHAR(120) NOT NULL,
   buyer_email VARCHAR(255) NOT NULL,
@@ -23,12 +25,15 @@ CREATE TABLE order_record (
   payment_method VARCHAR(30) NOT NULL,
   status VARCHAR(30) DEFAULT 'pending',
   download_token VARCHAR(120) UNIQUE,
+  access_code VARCHAR(8) UNIQUE,
+  ebook_type VARCHAR(30) NOT NULL DEFAULT 'pdf',
+  personalized_file_path VARCHAR(255),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE order_item (
   id INTEGER PRIMARY KEY,
-  order_id INTEGER NOT NULL,
+  order_id INTEGER NOT NULL REFERENCES "order"(id),
   product_id INTEGER NOT NULL,
   product_name VARCHAR(160) NOT NULL,
   unit_price_ars INTEGER NOT NULL
