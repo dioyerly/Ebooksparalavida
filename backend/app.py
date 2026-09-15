@@ -612,7 +612,17 @@ def update_product_kit(product_id):
     if not product:
         return {"error": "No encontrado"}, 404
     product.is_kit = request.form.get("is_kit") == "True"
-    product.kit_bonus_ids = request.form.get("kit_bonus_ids", "")
+    if product.is_kit:
+        html_file = request.files.get("html_kit_file")
+        if html_file and html_file.filename:
+            interactive_dir = (Path(__file__).parent.parent / "storage" /
+                              "interactive_ebooks")
+            interactive_dir.mkdir(parents=True, exist_ok=True)
+            file_name = secure_filename(f"{product.slug}_kit.html")
+            html_file.save(str(interactive_dir / file_name))
+            product.source_html_path = str(Path("interactive_ebooks") / file_name)
+            product.ebook_file = html_file.read()
+        product.kit_bonus_ids = request.form.get("kit_bonus_ids", "")
     db.session.commit()
     return {"message": "Configuración KIT guardada"}
 
