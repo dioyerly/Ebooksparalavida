@@ -549,66 +549,66 @@ function manageKIT(id, name) {
       </form>
     </div>
   `;
-  document.body.appendChild(modal);
+      document.body.appendChild(modal);
 
-  window.kitProductId = id;
-  window.bonusFiles = [];
+      window.kitProductId = id;
+      window.bonusFiles = [];
 
-  const hasKitRadios = document.querySelectorAll('input[name="has_kit"]');
-  const kitSection = document.getElementById('kitSection');
-  const bonusFilesUL = document.getElementById('bonusFilesUL');
+      const hasKitRadios = document.querySelectorAll('input[name="has_kit"]');
+      const kitSection = document.getElementById('kitSection');
+      const bonusFilesUL = document.getElementById('bonusFilesUL');
 
-  // Load existing bonus files
-  if (product.kit_bonus_ids) {
-    const existingFiles = product.kit_bonus_ids.split(',').map(f => f.trim()).filter(f => f);
-    if (existingFiles.length > 0) {
-      bonusFilesUL.innerHTML = '';
-      existingFiles.forEach(file => {
-        const li = document.createElement('li');
-        li.style.cssText = 'padding:8px;margin:5px 0;background:#e8f5e9;border-radius:4px;display:flex;justify-content:space-between;align-items:center;';
-        li.innerHTML = `<span>📄 ${file}</span> <small style="color:#666;">(ya subido)</small>`;
-        bonusFilesUL.appendChild(li);
-      });
-    }
-  }
-
-  hasKitRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      kitSection.style.display = radio.value === 'yes' ? 'block' : 'none';
-    });
-  });
-
-  document.getElementById('kitForm').onsubmit = (e) => {
-    e.preventDefault();
-    const hasKit = document.querySelector('input[name="has_kit"]:checked').value === 'yes';
-    const formData = new FormData();
-    formData.append('is_kit', hasKit);
-
-    if (hasKit) {
-      if (window.bonusFiles.length === 0) {
-        alert('⚠️ Debes subir al menos 1 archivo bonus para el KIT');
-        return;
+      // Load existing bonus files
+      if (product.kit_bonus_ids) {
+        const existingFiles = product.kit_bonus_ids.split(',').map(f => f.trim()).filter(f => f);
+        if (existingFiles.length > 0) {
+          bonusFilesUL.innerHTML = '';
+          existingFiles.forEach(file => {
+            const li = document.createElement('li');
+            li.style.cssText = 'padding:8px;margin:5px 0;background:#e8f5e9;border-radius:4px;display:flex;justify-content:space-between;align-items:center;';
+            li.innerHTML = `<span>📄 ${file}</span> <small style="color:#666;">(ya subido)</small>`;
+            bonusFilesUL.appendChild(li);
+          });
+        }
       }
-      window.bonusFiles.forEach((file, idx) => {
-        formData.append(`bonus_file_${idx}`, file);
+
+      hasKitRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+          kitSection.style.display = radio.value === 'yes' ? 'block' : 'none';
+        });
       });
-      formData.append('kit_description', document.getElementById('kitDescription').value);
-    }
 
-    if (hasKit) {
-      const kitPrice = document.getElementById('kitPrice').value;
-      if (kitPrice) formData.append('kit_price_ars', kitPrice);
-    }
+      document.getElementById('kitForm').onsubmit = (e) => {
+        e.preventDefault();
+        const hasKit = document.querySelector('input[name="has_kit"]:checked').value === 'yes';
+        const formData = new FormData();
+        formData.append('is_kit', hasKit);
 
-    fetch(`/admin/products/${id}/kit`, { method: 'POST', body: formData })
-      .then(r => r.json())
-      .then(data => {
-        alert('✅ ' + (data.message || 'KIT guardado'));
-        modal.remove();
-        loadProductsTable();
-      })
-      .catch(e => alert('Error: ' + e));
-  };
+        if (hasKit) {
+          if (window.bonusFiles.length === 0) {
+            alert('⚠️ Debes subir al menos 1 archivo bonus para el KIT');
+            return;
+          }
+          window.bonusFiles.forEach((file, idx) => {
+            formData.append(`bonus_file_${idx}`, file);
+          });
+          formData.append('kit_description', document.getElementById('kitDescription').value);
+        }
+
+        if (hasKit) {
+          const kitPrice = document.getElementById('kitPrice').value;
+          if (kitPrice) formData.append('kit_price_ars', kitPrice);
+        }
+
+        fetch(`/admin/products/${id}/kit`, { method: 'POST', body: formData })
+          .then(r => r.json())
+          .then(data => {
+            alert('✅ ' + (data.message || 'KIT guardado'));
+            modal.remove();
+            loadProductsTable();
+          })
+          .catch(e => alert('Error: ' + e));
+      };
     });
 }
 
