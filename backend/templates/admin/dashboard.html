@@ -465,6 +465,12 @@ function manageKIT(id, name) {
           </div>
 
           <div style="margin-bottom:15px;">
+            <label style="font-weight:bold;">💰 Precio del KIT (ARS) - OPCIONAL</label>
+            <input type="number" id="kitPrice" placeholder="Ej: 15999" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
+            <small style="color:#666;">Si lo dejas vacío, usará el precio del producto individual</small>
+          </div>
+
+          <div style="margin-bottom:15px;">
             <label style="font-weight:bold;">📝 Descripción: ¿Qué lleva el KIT?</label>
             <textarea id="kitDescription" placeholder="Ej: Incluye 3 ebooks bonus + plantillas + acceso a comunidad" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;min-height:80px;margin-top:5px;"></textarea>
           </div>
@@ -506,6 +512,11 @@ function manageKIT(id, name) {
         formData.append(`bonus_file_${idx}`, file);
       });
       formData.append('kit_description', document.getElementById('kitDescription').value);
+    }
+
+    if (hasKit) {
+      const kitPrice = document.getElementById('kitPrice').value;
+      if (kitPrice) formData.append('kit_price_ars', kitPrice);
     }
 
     fetch(`/admin/products/${id}/kit`, { method: 'POST', body: formData })

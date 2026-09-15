@@ -24,6 +24,7 @@ class Product(db.Model):
     ebook_file = db.Column(db.LargeBinary)
     is_kit = db.Column(db.Boolean, default=False)
     kit_bonus_ids = db.Column(db.String(255))
+    kit_price_ars = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
