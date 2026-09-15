@@ -999,6 +999,45 @@ def get_products_list():
     }
 
 
+@app.post("/webhook/mercadopago")
+def webhook_mercadopago():
+    """Handle Mercado Pago payment notifications."""
+    try:
+        data = request.get_json() or {}
+        topic = data.get("type") or data.get("topic")
+        resource_id = data.get("data", {}).get("id") or data.get("id")
+
+        if not topic or not resource_id:
+            return {"status": "ok"}, 200
+
+        if topic in {"payment", "merchant_order"}:
+            mp_service = MercadoPagoService(app.config.get("MP_ACCESS_TOKEN"))
+            payment_info = mp_service.verify_payment(resource_id)
+
+            if payment_info.get("status") in {"approved", "paid", "paid_demo"}:
+                external_ref = data.get("data", {}).get("external_reference", "")
+                if external_ref and external_ref.startswith("order_"):
+                    order_id = int(external_ref.split("_")[1])
+                    order = Order.query.get(order_id)
+
+                    if order and order.status == "pending":
+                        order.status = "paid"
+                        db.session.commit()
+
+                        email_service = EmailService(app.config.get("SENDGRID_API_KEY"))
+                        product_names = [item.product_name for item in order.items]
+                        email_service.send_download_link(
+                            order.buyer_email,
+                            product_names,
+                            order.download_token
+                        )
+
+        return {"status": "ok"}, 200
+    except Exception as e:
+        print(f"Webhook error: {str(e)}")
+        return {"status": "error", "message": str(e)}, 500
+
+
 with app.app_context():
     db.create_all()
     migrate_product_columns()
