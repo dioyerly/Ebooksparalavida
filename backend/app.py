@@ -604,6 +604,19 @@ def edit_product_form(product_id):
     }
 
 
+@app.post("/admin/products/<int:product_id>/kit")
+@admin_required
+def update_product_kit(product_id):
+    """Update Product KIT configuration."""
+    product = Product.query.get(product_id)
+    if not product:
+        return {"error": "No encontrado"}, 404
+    product.is_kit = request.form.get("is_kit") == "True"
+    product.kit_bonus_ids = request.form.get("kit_bonus_ids", "")
+    db.session.commit()
+    return {"message": "Configuración KIT guardada"}
+
+
 @app.post("/admin/products/<int:product_id>/edit")
 @admin_required
 def update_product(product_id):

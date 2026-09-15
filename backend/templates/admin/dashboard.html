@@ -307,7 +307,8 @@ function loadProductsTable() {
           <td style="padding: 12px;">$${p.price_ars.toLocaleString('es-AR')}</td>
           <td style="padding: 12px;"><small>pdf</small></td>
           <td style="padding: 12px;">
-            <a href="#" onclick="editProduct(${p.id}); return false;" style="color: #3A5F5F; text-decoration: none; margin-right: 10px;">✏️ Editar</a>
+            <a href="#" onclick="editProduct(${p.id}); return false;" style="color: #3A5F5F; text-decoration: none; margin-right: 8px;">✏️ Editar</a>
+            <a href="#" onclick="manageKIT(${p.id}, '${p.name}'); return false;" style="color: #ff9800; text-decoration: none; margin-right: 8px;font-weight:bold;">📦 KIT</a>
             <a href="#" onclick="deleteProduct(${p.id}); return false;" style="color: #c33; text-decoration: none;">🗑️ Eliminar</a>
           </td>
         </tr>
@@ -419,6 +420,97 @@ function showEditModal(product) {
       .then(data => {
         if (data.error) return alert('Error: ' + data.error);
         alert('✅ ' + (data.message || 'Guardado correctamente'));
+        modal.remove();
+        loadProductsTable();
+      })
+      .catch(e => alert('Error: ' + e));
+  };
+}
+
+function manageKIT(id, name) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+  modal.innerHTML = `
+    <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:550px;max-height:90vh;overflow-y:auto;">
+      <h2>📦 Configurar KIT: ${name}</h2>
+      <form id="kitForm">
+        <div style="margin-bottom:15px;">
+          <label style="font-weight:bold;color:#ff9800;">¿Este producto incluye BONUS/KIT?</label>
+          <div style="margin:10px 0;">
+            <label style="display:flex;align-items:center;gap:8px;">
+              <input type="radio" name="has_kit" value="no" checked> ❌ No, es un producto individual
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;">
+              <input type="radio" name="has_kit" value="yes"> ✅ Sí, este producto VIENE CON KIT
+            </label>
+          </div>
+        </div>
+
+        <div id="kitSection" style="display:none;margin-bottom:15px;padding:15px;background:#fff3cd;border:2px solid #ff9800;border-radius:4px;">
+          <label style="font-weight:bold;color:#ff9800;">📚 SELECCIONA LOS PRODUCTOS BONUS DEL KIT</label>
+          <select id="kitProductsSelect" multiple style="width:100%;padding:8px;border:2px solid #999;border-radius:4px;min-height:120px;margin:10px 0;">
+          </select>
+          <small style="color:#666;">✓ Ctrl/Cmd + Click para seleccionar múltiples.</small>
+
+          <div style="margin-top:15px;">
+            <label style="font-weight:bold;">Descripción: ¿Qué lleva el KIT?</label>
+            <textarea id="kitDescription" placeholder="Ej: Incluye 3 ebooks bonus + plantillas + acceso a comunidad" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;min-height:80px;margin-top:5px;"></textarea>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;">
+          <button type="submit" class="button button-primary" style="flex:1;padding:10px;">✅ Guardar Configuración KIT</button>
+          <button type="button" onclick="this.closest('div').parentElement.parentElement.remove();" class="button" style="flex:1;padding:10px;">❌ Cancelar</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const hasKitRadios = document.querySelectorAll('input[name="has_kit"]');
+  const kitSection = document.getElementById('kitSection');
+  const kitSelect = document.getElementById('kitProductsSelect');
+
+  // Cargar lista de productos
+  fetch('/api/admin/products-list')
+    .then(r => r.json())
+    .then(data => {
+      data.products.forEach(p => {
+        if (p.id !== id) {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = `${p.name} ($${p.price_ars})`;
+          kitSelect.appendChild(opt);
+        }
+      });
+    });
+
+  hasKitRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      kitSection.style.display = radio.value === 'yes' ? 'block' : 'none';
+    });
+  });
+
+  document.getElementById('kitForm').onsubmit = (e) => {
+    e.preventDefault();
+    const hasKit = document.querySelector('input[name="has_kit"]:checked').value === 'yes';
+    const bonusIds = hasKit ? Array.from(kitSelect.selectedOptions).map(o => o.value).join(',') : '';
+    const description = document.getElementById('kitDescription').value;
+
+    if (hasKit && bonusIds === '') {
+      alert('⚠️ Si marcas que tiene KIT, debes seleccionar al menos 1 bonus');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('is_kit', hasKit);
+    formData.append('kit_bonus_ids', bonusIds);
+    formData.append('kit_description', description);
+
+    fetch(`/admin/products/${id}/kit`, { method: 'POST', body: formData })
+      .then(r => r.json())
+      .then(data => {
+        alert('✅ ' + (data.message || 'KIT guardado'));
         modal.remove();
         loadProductsTable();
       })
