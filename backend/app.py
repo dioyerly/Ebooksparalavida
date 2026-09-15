@@ -528,70 +528,84 @@ def payment_simulator(order_id):
 @app.post("/process-payment/<int:order_id>")
 def process_payment(order_id):
     """Procesa el pago simulado de Mercado Pago."""
-    order = Order.query.get_or_404(order_id)
-    if order.status != "pending":
-        abort(403, description="Esta orden ya fue pagada.")
+    try:
+        order = Order.query.get_or_404(order_id)
+        if order.status != "pending":
+            abort(403, description="Esta orden ya fue pagada.")
 
-    card_number = request.form.get("card_number", "").replace(" ", "")
-    expiry = request.form.get("expiry", "")
-    cvv = request.form.get("cvv", "")
-    cardholder = request.form.get("cardholder", "").strip()
+        card_number = request.form.get("card_number", "").replace(" ", "")
+        expiry = request.form.get("expiry", "")
+        cvv = request.form.get("cvv", "")
+        cardholder = request.form.get("cardholder", "").strip()
 
-    if not all([card_number, expiry, cvv, cardholder]):
-        flash("Completá todos los datos de la tarjeta.", "error")
-        return redirect(url_for("payment_simulator", order_id=order_id))
+        if not all([card_number, expiry, cvv, cardholder]):
+            flash("Completá todos los datos de la tarjeta.", "error")
+            return redirect(url_for("payment_simulator", order_id=order_id))
 
-    valid_test_cards = [
-        "4111111111111111",  # Visa aprobada
-        "5425233430109903",  # MasterCard aprobada
-        "3782822463100005",  # Amex aprobada
-    ]
+        valid_test_cards = [
+            "4111111111111111",  # Visa aprobada
+            "5425233430109903",  # MasterCard aprobada
+            "3782822463100005",  # Amex aprobada
+        ]
 
-    if card_number not in valid_test_cards:
-        flash("Tarjeta rechazada. Usa tarjetas de prueba válidas.", "error")
-        return redirect(url_for("payment_simulator", order_id=order_id))
+        if card_number not in valid_test_cards:
+            flash("Tarjeta rechazada. Usa tarjetas de prueba válidas.", "error")
+            return redirect(url_for("payment_simulator", order_id=order_id))
 
-    order.status = "paid"
-    db.session.commit()
-
-    email_service = EmailService(app.config["SENDGRID_API_KEY"])
-    interactive_product = None
-    for item in order.items:
-        product = Product.query.get(item.product_id)
-        if product and product.product_type == "html_interactive":
-            interactive_product = product
-            break
-
-    if interactive_product:
-        access_code = generate_access_code()
-        while Order.query.filter_by(access_code=access_code).first():
-            access_code = generate_access_code()
-        source_path = Path(app.root_path).parent / "storage" / (
-            interactive_product.source_html_path or "interactive_ebooks/the-romance-reader-kit.html"
-        )
-        output_name = secure_filename(f"{order.id}_{order.buyer_email}.html")
-        output_path = Path(app.root_path).parent / "storage" / "personalized_ebooks" / output_name
-        generate_personalized_html(
-            order.buyer_email, source_path, access_code, output_path
-        )
-        order.access_code = access_code
-        order.personalized_file_path = str(
-            Path("personalized_ebooks") / output_name
-        )
+        order.status = "paid"
         db.session.commit()
-        email_service.send_interactive_ebook(
-            order.buyer_email, interactive_product.name, access_code, output_path
-        )
-    else:
-        product_names = [item.product_name for item in order.items]
-        email_service.send_download_link(
-            order.buyer_email,
-            product_names,
-            order.download_token
-        )
 
-    flash("Pago aprobado exitosamente.", "success")
-    return redirect(url_for("success", order_id=order_id))
+        email_service = EmailService(app.config.get("SENDGRID_API_KEY", ""))
+        interactive_product = None
+        for item in order.items:
+            product = Product.query.get(item.product_id)
+            if product and product.product_type == "html_interactive":
+                interactive_product = product
+                break
+
+        if interactive_product:
+            try:
+                access_code = generate_access_code()
+                while Order.query.filter_by(access_code=access_code).first():
+                    access_code = generate_access_code()
+                source_path = Path(app.root_path).parent / "storage" / (
+                    interactive_product.source_html_path or "interactive_ebooks/the-romance-reader-kit.html"
+                )
+                output_name = secure_filename(f"{order.id}_{order.buyer_email}.html")
+                output_path = Path(app.root_path).parent / "storage" / "personalized_ebooks" / output_name
+                generate_personalized_html(
+                    order.buyer_email, source_path, access_code, output_path
+                )
+                order.access_code = access_code
+                order.personalized_file_path = str(
+                    Path("personalized_ebooks") / output_name
+                )
+                db.session.commit()
+                email_service.send_interactive_ebook(
+                    order.buyer_email, interactive_product.name, access_code, output_path
+                )
+            except (FileNotFoundError, OSError) as e:
+                print(f"Error generando ebook: {str(e)}")
+                product_names = [item.product_name for item in order.items]
+                email_service.send_download_link(
+                    order.buyer_email,
+                    product_names,
+                    order.download_token
+                )
+        else:
+            product_names = [item.product_name for item in order.items]
+            email_service.send_download_link(
+                order.buyer_email,
+                product_names,
+                order.download_token
+            )
+
+        flash("Pago aprobado exitosamente.", "success")
+        return redirect(url_for("success", order_id=order_id))
+    except Exception as e:
+        print(f"Error en process_payment: {str(e)}")
+        flash(f"Error procesando pago: {str(e)}", "error")
+        return redirect(url_for("payment_simulator", order_id=order_id))
 
 
 @app.route("/admin/login", methods=["GET", "POST"])
