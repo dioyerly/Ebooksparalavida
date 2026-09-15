@@ -1044,18 +1044,22 @@ def get_products_analytics():
 @admin_required
 def get_products_list():
     """Return list of products for kit bonus selection."""
-    products = Product.query.all()
-    return {
-        "products": [
-            {
-                "id": p.id,
-                "name": p.name,
-                "price_ars": p.price_ars,
-                "category": p.category,
-            }
-            for p in products
-        ]
-    }
+    try:
+        products = Product.query.all()
+        return {
+            "products": [
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "price_ars": p.price_ars,
+                    "category": p.category,
+                }
+                for p in products
+            ]
+        }
+    except Exception as e:
+        print(f"Error en get_products_list: {str(e)}")
+        return {"error": str(e), "products": []}, 200
 
 
 @app.get("/image/<int:product_id>")
