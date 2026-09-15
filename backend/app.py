@@ -593,7 +593,8 @@ def read_interactive_ebook(access_code):
         if not html_content or not html_content.strip():
             print(f"ERROR: Order {order.id} has empty personalized_html_blob")
             abort(500, description="El contenido HTML está vacío")
-        return html_content, 200, {"Content-Type": "text/html; charset=utf-8"}
+        from flask import Response
+        return Response(html_content, mimetype='text/html; charset=utf-8')
     except UnicodeDecodeError as e:
         print(f"ERROR: Failed to decode personalized_html_blob for order {order.id}: {str(e)}")
         abort(500, description="Error al leer el archivo")
