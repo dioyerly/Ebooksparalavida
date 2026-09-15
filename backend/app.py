@@ -495,24 +495,28 @@ def success(order_id):
 @app.route("/download/<token>")
 def download(token):
     """Download."""
+    from flask import make_response
+    from io import BytesIO
+
     order = Order.query.filter_by(download_token=token).first_or_404()
     if order.status not in {"paid_demo", "paid"}:
         abort(403, description="Esta descarga no está disponible para esta orden.")
-    if order.ebook_type == "html_interactive" and order.personalized_file_path:
-        personalized_path = Path(app.root_path).parent / "storage" / order.personalized_file_path
-        if personalized_path.exists():
-            return send_from_directory(
-                personalized_path.parent, personalized_path.name, as_attachment=True
-            )
 
     if not order.items:
         abort(400, description="Esta orden no tiene items.")
 
     product = Product.query.filter_by(
         id=order.items[0].product_id).first_or_404()
-    downloads_dir = Path(app.root_path).parent / "storage" / "ebooks"
-    if product.file_name and (downloads_dir / product.file_name).exists():
-        return send_from_directory(downloads_dir, product.file_name, as_attachment=True)
+
+    if product.ebook_file:
+        extension = Path(product.file_name).suffix.lower() if product.file_name else ".pdf"
+        mime_type = "application/pdf" if extension == ".pdf" else "application/epub+zip"
+
+        response = make_response(product.ebook_file)
+        response.headers['Content-Type'] = mime_type
+        response.headers['Content-Disposition'] = f'attachment; filename="{product.file_name or product.slug + extension}"'
+        return response
+
     return render_template("download_placeholder.html", product=product, order=order)
 
 
