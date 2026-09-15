@@ -713,12 +713,6 @@ def update_product_kit(product_id):
                 break
             for bonus_file in request.files.getlist(key):
                 if bonus_file and bonus_file.filename:
-                    ext = Path(bonus_file.filename).suffix.lower()
-                    ebooks_dir = (Path(__file__).parent.parent / "storage" /
-                                 "ebooks")
-                    ebooks_dir.mkdir(parents=True, exist_ok=True)
-                    file_name = secure_filename(f"{product.slug}_bonus_{idx}{ext}")
-                    bonus_file.save(str(ebooks_dir / file_name))
                     bonus_ids.append(f"{product.slug}_bonus_{idx}")
             idx += 1
         product.kit_bonus_ids = ",".join(bonus_ids) if bonus_ids else ""

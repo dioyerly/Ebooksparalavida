@@ -133,12 +133,13 @@ def generate_personalized_html(
         """
         html = html.replace("</body>", login_markup + "</body>", 1)
 
-    destination = Path(output_path or original_path.with_name(
-        f"{original_path.stem}-{customer_email}.html"
-    ))
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(html, encoding="utf-8")
-    return str(destination)
+    if output_path:
+        destination = Path(output_path)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(html, encoding="utf-8")
+        return str(destination)
+    else:
+        return html
 
 
 class MercadoPagoService:
