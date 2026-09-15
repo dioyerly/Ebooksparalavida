@@ -349,7 +349,11 @@ function showEditModal(product) {
           <input type="text" name="category" value="${product.category}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
         </div>
         <div style="margin-bottom:15px;">
-          <label><input type="checkbox" name="is_kit" ${product.is_kit ? 'checked' : ''}> ¿Es un KIT?</label>
+          <label><input type="checkbox" name="is_kit" id="modalIsKit" ${product.is_kit ? 'checked' : ''}> ¿Es un KIT?</label>
+        </div>
+        <div id="modalBonusSection" style="margin-bottom:15px;display:${product.is_kit ? 'block' : 'none'};">
+          <label>Ebooks bonus del KIT</label>
+          <select name="kit_bonus_ids" id="modalBonusSelect" multiple style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;min-height:100px;"></select>
         </div>
         <div style="margin-bottom:15px;">
           <label>Subir nuevo archivo (opcional)</label>
@@ -363,9 +367,37 @@ function showEditModal(product) {
     </div>
   `;
   document.body.appendChild(modal);
+
+  const isKitCheckbox = document.getElementById('modalIsKit');
+  const bonusSection = document.getElementById('modalBonusSection');
+  const bonusSelect = document.getElementById('modalBonusSelect');
+
+  // Cargar lista de productos
+  fetch('/api/admin/products-list')
+    .then(r => r.json())
+    .then(data => {
+      data.products.forEach(p => {
+        if (p.id !== product.id) {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = `${p.name} (${p.price_ars} ARS)`;
+          bonusSelect.appendChild(opt);
+        }
+      });
+      if (product.kit_bonus_ids) {
+        bonusSelect.value = product.kit_bonus_ids.split(',').map(x => x.trim());
+      }
+    });
+
+  isKitCheckbox.addEventListener('change', () => {
+    bonusSection.style.display = isKitCheckbox.checked ? 'block' : 'none';
+  });
+
   document.getElementById('editForm').onsubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(document.getElementById('editForm'));
+    const bonusIds = Array.from(bonusSelect.selectedOptions).map(o => o.value).join(',');
+    formData.set('kit_bonus_ids', bonusIds);
     fetch(`/admin/products/${product.id}/edit`, { method: 'POST', body: formData })
       .then(r => r.json())
       .then(data => {
