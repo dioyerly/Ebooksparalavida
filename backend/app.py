@@ -999,6 +999,43 @@ def get_products_list():
     }
 
 
+@app.get("/image/<int:product_id>")
+def serve_cover_image(product_id):
+    """Serve cover image from database (BLOB)."""
+    product = Product.query.get_or_404(product_id)
+    if not product.cover_image_blob:
+        abort(404, description="Imagen no disponible")
+
+    from flask import send_file
+    from io import BytesIO
+    return send_file(
+        BytesIO(product.cover_image_blob),
+        mimetype="image/jpeg",
+        as_attachment=False
+    )
+
+
+@app.get("/ebook-file/<int:product_id>")
+def serve_ebook_file(product_id):
+    """Serve ebook file from database (BLOB)."""
+    product = Product.query.get_or_404(product_id)
+    if not product.ebook_file:
+        abort(404, description="Archivo no disponible")
+
+    from flask import send_file
+    from io import BytesIO
+
+    mime_type = "application/pdf" if product.product_type == "pdf" else "text/html"
+    filename = product.file_name or f"{product.slug}.{product.product_type}"
+
+    return send_file(
+        BytesIO(product.ebook_file),
+        mimetype=mime_type,
+        as_attachment=True,
+        download_name=filename
+    )
+
+
 @app.post("/webhook/mercadopago")
 def webhook_mercadopago():
     """Handle Mercado Pago payment notifications."""
