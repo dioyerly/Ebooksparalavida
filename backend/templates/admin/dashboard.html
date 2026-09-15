@@ -493,6 +493,21 @@ function manageKIT(id, name) {
 
   const hasKitRadios = document.querySelectorAll('input[name="has_kit"]');
   const kitSection = document.getElementById('kitSection');
+  const bonusFilesUL = document.getElementById('bonusFilesUL');
+
+  // Load existing bonus files
+  if (product.kit_bonus_ids) {
+    const existingFiles = product.kit_bonus_ids.split(',').map(f => f.trim()).filter(f => f);
+    if (existingFiles.length > 0) {
+      bonusFilesUL.innerHTML = '';
+      existingFiles.forEach(file => {
+        const li = document.createElement('li');
+        li.style.cssText = 'padding:8px;margin:5px 0;background:#e8f5e9;border-radius:4px;display:flex;justify-content:space-between;align-items:center;';
+        li.innerHTML = `<span>📄 ${file}</span> <small style="color:#666;">(ya subido)</small>`;
+        bonusFilesUL.appendChild(li);
+      });
+    }
+  }
 
   hasKitRadios.forEach(radio => {
     radio.addEventListener('change', () => {
