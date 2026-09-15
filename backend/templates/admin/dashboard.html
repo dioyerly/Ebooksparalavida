@@ -438,17 +438,18 @@ function createKitAuto(productId, productName) {
     .then(r => r.json())
     .then(data => {
       if (data.error) {
-        alert('❌ ' + data.error);
+        alert('Error: ' + data.error);
       } else {
-        alert('✅ KIT creado exitosamente:\n' + data.message);
-        document.querySelector('[onclick*="manageKIT"]')?.closest('tr')?.parentElement?.parentElement?.remove?.();
+        alert('KIT creado!');
         loadProductsTable();
       }
-      document.querySelector('div[style*="position:fixed"]')?.remove?.();
+      var modal = document.querySelector('div[style*="position:fixed"]');
+      if (modal) modal.remove();
     })
-    .catch(e => {
+    .catch(function(e) {
       alert('Error: ' + e);
-      document.querySelector('div[style*="position:fixed"]')?.remove?.();
+      var modal = document.querySelector('div[style*="position:fixed"]');
+      if (modal) modal.remove();
     });
 }
 
