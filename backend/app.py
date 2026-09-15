@@ -214,8 +214,11 @@ def seed_products():
 
 def migrate_product_columns():
     """Migrate Product Columns."""
-    columns = {row[1] for row in db.session.execute(
-        db.text("PRAGMA table_info(product)"))}
+    query = db.text("""
+        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = 'product' AND TABLE_SCHEMA = DATABASE()
+    """)
+    columns = {row[0] for row in db.session.execute(query)}
     if "short_description" not in columns:
         db.session.execute(
             db.text("ALTER TABLE product ADD COLUMN short_description VARCHAR(280)"))
