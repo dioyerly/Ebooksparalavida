@@ -49,7 +49,7 @@
     </div>
   </div>
 
-  {% if order.ebook_type == 'html_interactive' and order.access_code %}
+  {% if order.ebook_type and 'html' in order.ebook_type and order.access_code %}
   <div class="interactive-code-box">
     <p>Tu código de acceso es:</p>
     <strong>{{ order.access_code }}</strong>
