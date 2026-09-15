@@ -258,6 +258,20 @@ def migrate_product_columns():
             ))
             db.session.commit()
 
+    # Fix BLOB size limit - convert to LONGBLOB for large HTML files
+    column_type_query = db.text(f"""
+        SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = '{order_table}' AND COLUMN_NAME = 'personalized_html_blob' AND TABLE_SCHEMA = DATABASE()
+    """)
+    result = db.session.execute(column_type_query).fetchone()
+    if result and result[0] == 'blob':
+        print("Converting personalized_html_blob from BLOB to LONGBLOB...")
+        db.session.execute(db.text(
+            f"ALTER TABLE {order_table} MODIFY COLUMN personalized_html_blob LONGBLOB"
+        ))
+        db.session.commit()
+        print("Conversion complete!")
+
 
 def is_valid_email(email):
     """Validate email format."""
