@@ -233,6 +233,7 @@ def migrate_product_columns():
         "is_kit": "BOOLEAN DEFAULT FALSE",
         "kit_bonus_ids": "VARCHAR(255)",
         "kit_price_ars": "INT",
+        "kit_description": "TEXT",
     }.items():
         if column not in columns:
             db.session.execute(db.text(
@@ -652,8 +653,12 @@ def update_product_kit(product_id):
         kit_price = request.form.get("kit_price_ars")
         if kit_price:
             product.kit_price_ars = int(kit_price)
+        kit_desc = request.form.get("kit_description", "").strip()
+        if kit_desc:
+            product.kit_description = kit_desc
     else:
         product.kit_price_ars = None
+        product.kit_description = None
     db.session.commit()
     return {"message": "Configuración KIT guardada"}
 

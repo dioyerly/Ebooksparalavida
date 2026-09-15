@@ -428,25 +428,28 @@ function showEditModal(product) {
 }
 
 function manageKIT(id, name) {
-  const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
-  modal.innerHTML = `
-    <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:600px;max-height:90vh;overflow-y:auto;">
-      <h2>📦 Configurar KIT: ${name}</h2>
-      <form id="kitForm">
-        <div style="margin-bottom:20px;padding:15px;background:#fff3cd;border:2px solid #ff9800;border-radius:4px;">
-          <label style="font-weight:bold;color:#ff9800;font-size:16px;">¿Tiene BONUS/KIT?</label>
-          <div style="margin:15px 0;">
-            <label style="display:flex;align-items:center;gap:10px;margin:10px 0;">
-              <input type="radio" name="has_kit" value="no" checked> ❌ No, es un producto individual
-            </label>
-            <label style="display:flex;align-items:center;gap:10px;margin:10px 0;">
-              <input type="radio" name="has_kit" value="yes"> ✅ Sí, este producto VIENE CON KIT
-            </label>
-          </div>
-        </div>
+  fetch(`/admin/products/${id}/edit`)
+    .then(r => r.json())
+    .then(product => {
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+      modal.innerHTML = `
+        <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:600px;max-height:90vh;overflow-y:auto;">
+          <h2>📦 Configurar KIT: ${name}</h2>
+          <form id="kitForm">
+            <div style="margin-bottom:20px;padding:15px;background:#fff3cd;border:2px solid #ff9800;border-radius:4px;">
+              <label style="font-weight:bold;color:#ff9800;font-size:16px;">¿Tiene BONUS/KIT?</label>
+              <div style="margin:15px 0;">
+                <label style="display:flex;align-items:center;gap:10px;margin:10px 0;">
+                  <input type="radio" name="has_kit" value="no" ${!product.is_kit ? 'checked' : ''}> ❌ No
+                </label>
+                <label style="display:flex;align-items:center;gap:10px;margin:10px 0;">
+                  <input type="radio" name="has_kit" value="yes" ${product.is_kit ? 'checked' : ''}> ✅ Sí
+                </label>
+              </div>
+            </div>
 
-        <div id="kitSection" style="display:none;margin-bottom:20px;">
+            <div id="kitSection" style="display:${product.is_kit ? 'block' : 'none'};margin-bottom:20px;">
           <div style="margin-bottom:20px;padding:15px;background:#e8f5e9;border:2px solid #4caf50;border-radius:4px;">
             <label style="font-weight:bold;color:#2e7d32;font-size:14px;">📁 SUBE AQUÍ LOS ARCHIVOS BONUS DEL KIT</label>
             <p style="color:#666;margin:10px 0;font-size:13px;">Sube cada archivo como si fuera un libro (HTML, PDF, EPUB)</p>
@@ -466,13 +469,13 @@ function manageKIT(id, name) {
 
           <div style="margin-bottom:15px;">
             <label style="font-weight:bold;">💰 Precio del KIT (ARS) - OPCIONAL</label>
-            <input type="number" id="kitPrice" placeholder="Ej: 15999" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
+            <input type="number" id="kitPrice" placeholder="Ej: 15999" value="${product.kit_price_ars || ''}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
             <small style="color:#666;">Si lo dejas vacío, usará el precio del producto individual</small>
           </div>
 
           <div style="margin-bottom:15px;">
             <label style="font-weight:bold;">📝 Descripción: ¿Qué lleva el KIT?</label>
-            <textarea id="kitDescription" placeholder="Ej: Incluye 3 ebooks bonus + plantillas + acceso a comunidad" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;min-height:80px;margin-top:5px;"></textarea>
+            <textarea id="kitDescription" placeholder="Ej: Incluye 3 ebooks bonus + plantillas + acceso a comunidad" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;min-height:80px;margin-top:5px;">${product.kit_description || ''}</textarea>
           </div>
         </div>
 
@@ -528,6 +531,7 @@ function manageKIT(id, name) {
       })
       .catch(e => alert('Error: ' + e));
   };
+    });
 }
 
 function addBonusFile() {

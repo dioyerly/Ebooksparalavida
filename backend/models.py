@@ -25,6 +25,7 @@ class Product(db.Model):
     is_kit = db.Column(db.Boolean, default=False)
     kit_bonus_ids = db.Column(db.String(255))
     kit_price_ars = db.Column(db.Integer)
+    kit_description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
