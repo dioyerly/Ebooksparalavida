@@ -328,20 +328,15 @@ def product_detail(slug):
     product = Product.query.filter_by(slug=slug).first_or_404()
     kit = None
 
-    if product.is_kit and product.kit_price_ars:
-        kit = {
-            "name": f"{product.name} + KIT Completo",
-            "price_ars": product.kit_price_ars,
-            "id": product.id,
-        }
-    else:
-        kit_slug = f"kit-{slug}" if not slug.startswith("kit-") else None
-        kit_product = Product.query.filter_by(slug=kit_slug).first() if kit_slug else None
+    if not slug.startswith("kit-"):
+        kit_slug = f"kit-{slug}"
+        kit_product = Product.query.filter_by(slug=kit_slug).first()
         if kit_product:
             kit = {
+                "id": kit_product.id,
                 "name": kit_product.name,
                 "price_ars": kit_product.price_ars,
-                "id": kit_product.id,
+                "description": kit_product.short_description or kit_product.description[:100],
             }
 
     return render_template("product.html", product=product, kit=kit)
