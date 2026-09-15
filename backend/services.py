@@ -131,7 +131,13 @@ def generate_personalized_html(
 }})();
 </script>
         """
-        html = html.replace("</body>", login_markup + "</body>", 1)
+        # Intentar inyectar antes de </body> (case-insensitive)
+        if "</body>" in html.lower():
+            body_close_idx = html.lower().rfind("</body>")
+            html = html[:body_close_idx] + login_markup + html[body_close_idx:]
+        else:
+            # Si no tiene </body>, inyectar al final
+            html = html + login_markup
 
     if output_path:
         destination = Path(output_path)
