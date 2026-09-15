@@ -3,7 +3,9 @@
 {% block content %}
 <section class="product-detail wrap" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}">
   <div class="detail-cover">
-    {% if product.cover_image %}
+    {% if product.cover_image_blob %}
+      <img class="real-cover" src="{{ url_for('serve_cover_image', product_id=product.id) }}" alt="Portada de {{ product.name }}">
+    {% elif product.cover_image %}
       <img class="real-cover" src="{{ url_for('static', filename='images/' + product.cover_image) }}" alt="Portada de {{ product.name }}">
     {% else %}
       <div class="book-cover book-{{ product.cover_class }}">

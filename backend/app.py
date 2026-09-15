@@ -760,14 +760,10 @@ def admin_create_product():
 
     cover_file = request.files.get("cover_image")
     cover_image = None
+    cover_image_blob = None
     if cover_file and cover_file.filename:
-        images_dir = (Path(__file__).parent.parent / "frontend" /
-                      "assets" / "images")
-        images_dir.mkdir(parents=True, exist_ok=True)
-        ext = Path(cover_file.filename).suffix
-        filename = secure_filename(f"{slug}{ext}")
-        cover_file.save(str(images_dir / filename))
-        cover_image = filename
+        cover_image_blob = cover_file.read()
+        cover_image = secure_filename(f"{slug}{Path(cover_file.filename).suffix}")
 
     try:
         price_ars = int(request.form["price_ars"])
@@ -800,6 +796,7 @@ def admin_create_product():
         featured=request.form.get("featured") == "on",
         file_name=file_name,
         cover_image=cover_image,
+        cover_image_blob=cover_image_blob,
         product_type=product_type,
         source_html_path=source_html_path,
         ebook_file=ebook_binary,
