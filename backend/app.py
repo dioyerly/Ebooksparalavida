@@ -230,6 +230,9 @@ def migrate_product_columns():
     for column, definition in {
         "product_type": "VARCHAR(30) NOT NULL DEFAULT 'pdf'",
         "source_html_path": "VARCHAR(255)",
+        "is_kit": "BOOLEAN DEFAULT FALSE",
+        "kit_bonus_ids": "VARCHAR(255)",
+        "kit_price_ars": "INT",
     }.items():
         if column not in columns:
             db.session.execute(db.text(
