@@ -4,6 +4,7 @@ Handles product catalog, shopping cart, checkout, and payments.
 """
 import secrets
 import datetime
+import re
 from functools import wraps
 from pathlib import Path
 
@@ -248,6 +249,12 @@ def migrate_product_columns():
             db.session.commit()
 
 
+def is_valid_email(email):
+    """Validate email format."""
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+
 def cart_products():
     """Cart Products."""
     ids = session.get("cart", [])
@@ -356,8 +363,12 @@ def checkout():
         buyer_email = request.form.get("buyer_email", "").strip().lower()
         payment_method = request.form.get("payment_method", "mercadopago")
 
-        if not buyer_name or "@" not in buyer_email:
-            flash("Completá tu nombre y un email válido.", "error")
+        if not buyer_name:
+            flash("El nombre es requerido.", "error")
+            return render_template("checkout.html", products=products, total=total)
+
+        if not is_valid_email(buyer_email):
+            flash("Ingresá un email válido.", "error")
             return render_template("checkout.html", products=products, total=total)
 
         # Crear orden
@@ -465,6 +476,9 @@ def download(token):
                 personalized_path.parent, personalized_path.name, as_attachment=True
             )
 
+    if not order.items:
+        abort(400, description="Esta orden no tiene items.")
+
     product = Product.query.filter_by(
         id=order.items[0].product_id).first_or_404()
     downloads_dir = Path(app.root_path).parent / "storage" / "ebooks"
@@ -555,7 +569,17 @@ def process_payment(order_id):
 def admin_login():
     """Admin Login."""
     if request.method == "POST":
-        if request.form.get("email") == app.config["ADMIN_EMAIL"] and request.form.get("password") == app.config["ADMIN_PASSWORD"]:
+        email = request.form.get("email", "")
+        password = request.form.get("password", "")
+
+        email_matches = secrets.compare_digest(
+            email, app.config.get("ADMIN_EMAIL", "")
+        )
+        password_matches = secrets.compare_digest(
+            password, app.config.get("ADMIN_PASSWORD", "")
+        )
+
+        if email_matches and password_matches:
             session["is_admin"] = True
             return redirect(request.args.get("next") or url_for("admin_dashboard"))
         flash("Credenciales incorrectas.", "error")
@@ -618,12 +642,32 @@ def admin_create_product():
         cover_file.save(str(images_dir / filename))
         cover_image = filename
 
+    try:
+        price_ars = int(request.form["price_ars"])
+    except (ValueError, KeyError):
+        flash("El precio debe ser un número válido.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    if price_ars <= 0:
+        flash("El precio debe ser mayor a 0.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    description = request.form.get("description", "").strip()
+    if not description:
+        flash("La descripción es requerida.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    category = request.form.get("category", "").strip()
+    if not category:
+        flash("La categoría es requerida.", "error")
+        return redirect(url_for("admin_dashboard"))
+
     product = Product(
         slug=slug,
         name=name,
-        description=request.form["description"].strip(),
-        category=request.form["category"].strip(),
-        price_ars=int(request.form["price_ars"]),
+        description=description,
+        category=category,
+        price_ars=price_ars,
         cover_class=request.form.get("cover_class", "coral"),
         accent=request.form.get("accent", "#C9756B"),
         featured=request.form.get("featured") == "on",

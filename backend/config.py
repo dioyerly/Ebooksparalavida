@@ -9,13 +9,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-me")
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    if not SECRET_KEY:
+        raise ValueError("SECRET_KEY environment variable is required")
+
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "DATABASE_URL", f"sqlite:///{BASE_DIR / 'ebooks_store.db'}"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@ebooksparalavida.com")
-    ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
+    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
+    ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+    if not ADMIN_EMAIL or not ADMIN_PASSWORD:
+        raise ValueError("ADMIN_EMAIL and ADMIN_PASSWORD are required")
     PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:5000")
     MP_ACCESS_TOKEN = os.getenv("MP_ACCESS_TOKEN", "")
     PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")

@@ -20,38 +20,48 @@ def generate_personalized_html(
     customer_email, html_original_path, access_code=None, output_path=None
 ):
     """Create an offline HTML copy with the buyer credentials embedded."""
-    original_path = Path(html_original_path)
-    html = original_path.read_text(encoding="utf-8")
-    escaped_email = customer_email.replace("\\", "\\\\").replace('"', '\\"')
-    access_code = access_code or generate_access_code()
-    escaped_code = access_code.replace("\\", "\\\\").replace('"', '\\"')
+    try:
+        original_path = Path(html_original_path)
+        if not original_path.exists():
+            raise FileNotFoundError(f"HTML file not found: {html_original_path}")
 
-    # The supplied file already has the offline login; replace only its credentials.
-    html = re.sub(
-        r'(const emailCorrecto\s*=\s*)"[^"]*"',
-        rf'\1"{escaped_email}"',
-        html,
-        count=1,
-    )
-    html = re.sub(
-        r'(const codigoCorrecto\s*=\s*)"[^"]*"',
-        rf'\1"{escaped_code}"',
-        html,
-        count=1,
-    )
-    html = re.sub(
-        r'(data\.email\s*===\s*)"[^"]*"',
-        rf'\1"{escaped_email}"',
-        html,
-        count=1,
-    )
-    html = re.sub(
-        r'(<input[^>]+id=["\']login-email["\'][^>]+value=["\'])[^"\']*(["\'])',
-        rf'\1{escaped_email}\2',
-        html,
-        count=1,
-        flags=re.IGNORECASE,
-    )
+        html = original_path.read_text(encoding="utf-8")
+        escaped_email = customer_email.replace("\\", "\\\\").replace('"', '\\"')
+        access_code = access_code or generate_access_code()
+        escaped_code = access_code.replace("\\", "\\\\").replace('"', '\\"')
+
+        # The supplied file already has the offline login; replace only its credentials.
+        html = re.sub(
+            r'(const emailCorrecto\s*=\s*)"[^"]*"',
+            rf'\1"{escaped_email}"',
+            html,
+            count=1,
+        )
+        html = re.sub(
+            r'(const codigoCorrecto\s*=\s*)"[^"]*"',
+            rf'\1"{escaped_code}"',
+            html,
+            count=1,
+        )
+        html = re.sub(
+            r'(data\.email\s*===\s*)"[^"]*"',
+            rf'\1"{escaped_email}"',
+            html,
+            count=1,
+        )
+        html = re.sub(
+            r'(<input[^>]+id=["\']login-email["\'][^>]+value=["\'])[^"\']*(["\'])',
+            rf'\1{escaped_email}\2',
+            html,
+            count=1,
+            flags=re.IGNORECASE,
+        )
+    except (OSError, IOError) as e:
+        print(f"Error reading HTML file {html_original_path}: {str(e)}")
+        raise
+    except Exception as e:
+        print(f"Unexpected error processing HTML: {str(e)}")
+        raise
 
     if "id=\"personalized-login-screen\"" not in html:
         email_json = json.dumps(customer_email)
@@ -357,16 +367,23 @@ class EmailService:
             print(f"DEMO EMAIL TO: {buyer_email}\nSubject: {subject}\n\n{body}")
             return {"success": True, "is_demo": True, "message": "Interactive email logged"}
 
-        message = EmailMessage()
-        message["Subject"] = subject
-        message["From"] = sender
-        message["To"] = buyer_email
-        message.set_content(body)
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as smtp:
-            smtp.starttls()
-            smtp.login(smtp_user, smtp_password)
-            smtp.send_message(message)
-        return {"success": True, "is_demo": False, "message": "Interactive email sent"}
+        try:
+            message = EmailMessage()
+            message["Subject"] = subject
+            message["From"] = sender
+            message["To"] = buyer_email
+            message.set_content(body)
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as smtp:
+                smtp.starttls()
+                smtp.login(smtp_user, smtp_password)
+                smtp.send_message(message)
+            return {"success": True, "is_demo": False, "message": "Interactive email sent"}
+        except smtplib.SMTPException as e:
+            print(f"SMTP Error sending to {buyer_email}: {str(e)}")
+            return {"success": False, "error": "Email delivery failed", "message": str(e)}
+        except Exception as e:
+            print(f"Unexpected error sending email to {buyer_email}: {str(e)}")
+            return {"success": False, "error": "Email error", "message": str(e)}
 
     def _log_demo_email(self, buyer_email, product_names, download_token):
         """En modo demo, solo registra que se enviaría el email"""
