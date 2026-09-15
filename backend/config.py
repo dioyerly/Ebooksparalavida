@@ -14,6 +14,12 @@ class Config:
         "DATABASE_URL", f"sqlite:///{BASE_DIR / 'ebooks_store.db'}"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 3600,
+        "pool_size": 10,
+        "max_overflow": 20,
+    }
     ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@ebooksparalavida.com")
     ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
     PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:5000")
