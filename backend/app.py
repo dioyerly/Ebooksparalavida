@@ -722,6 +722,46 @@ def delete_product(product_id):
     return {"message": "Producto eliminado"}
 
 
+@app.post("/admin/products/<int:product_id>/create-kit")
+@admin_required
+def create_kit_from_product(product_id):
+    """Create KIT version from existing product."""
+    product = Product.query.get_or_404(product_id)
+
+    kit_slug = f"kit-{product.slug}"
+    if Product.query.filter_by(slug=kit_slug).first():
+        return {"error": f"KIT ya existe: {kit_slug}"}, 400
+
+    kit_price = int(request.form.get("kit_price_ars", int(product.price_ars * 1.15)))
+    kit_description = request.form.get("kit_description",
+        f"{product.description}\n\nIncluye el ebook principal y 3 bonus exclusivos: Modo Supervivencia, Mi Casa Funciona Así, Tarjetas Antibloqueo.")
+
+    kit = Product(
+        slug=kit_slug,
+        name=f"KIT: {product.name}",
+        description=kit_description,
+        short_description=f"KIT completo con 3 bonus",
+        category=product.category,
+        price_ars=kit_price,
+        cover_class=product.cover_class,
+        accent=product.accent,
+        featured=product.featured,
+        file_name=product.file_name,
+        cover_image=product.cover_image,
+        cover_image_blob=product.cover_image_blob,
+        product_type=product.product_type,
+        source_html_path=product.source_html_path,
+        ebook_file=product.ebook_file,
+        is_kit=True,
+        kit_price_ars=kit_price,
+        kit_description=kit_description,
+    )
+    db.session.add(kit)
+    db.session.commit()
+
+    return {"message": f"KIT '{kit_slug}' creado exitosamente", "kit_id": kit.id}
+
+
 @app.post("/admin/products")
 @admin_required
 def admin_create_product():
