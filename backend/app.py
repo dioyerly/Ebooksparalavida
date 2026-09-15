@@ -1141,12 +1141,42 @@ def webhook_mercadopago():
                         db.session.commit()
 
                         email_service = EmailService(app.config.get("SENDGRID_API_KEY"))
-                        product_names = [item.product_name for item in order.items]
-                        email_service.send_download_link(
-                            order.buyer_email,
-                            product_names,
-                            order.download_token
-                        )
+
+                        # Check if order contains interactive products
+                        interactive_product = None
+                        for item in order.items:
+                            product = Product.query.get(item.product_id)
+                            if product and product.product_type == "html_interactive":
+                                interactive_product = product
+                                break
+
+                        if interactive_product:
+                            access_code = generate_access_code()
+                            while Order.query.filter_by(access_code=access_code).first():
+                                access_code = generate_access_code()
+
+                            if interactive_product.ebook_file:
+                                html_content = interactive_product.ebook_file.decode('utf-8')
+                                try:
+                                    personalized_html = generate_personalized_html(
+                                        order.buyer_email, None, access_code, None, html_content=html_content
+                                    )
+                                    order.access_code = access_code
+                                    order.personalized_html_blob = personalized_html.encode('utf-8')
+                                    db.session.commit()
+                                    email_service.send_interactive_ebook(
+                                        order.buyer_email, interactive_product.name, access_code, None
+                                    )
+                                except Exception as e:
+                                    print(f"Error processing interactive product in webhook: {str(e)}")
+                        else:
+                            # Regular PDF download
+                            product_names = [item.product_name for item in order.items]
+                            email_service.send_download_link(
+                                order.buyer_email,
+                                product_names,
+                                order.download_token
+                            )
 
         return {"status": "ok"}, 200
     except Exception as e:
