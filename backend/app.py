@@ -448,24 +448,20 @@ def checkout():
             access_code = generate_access_code()
             while Order.query.filter_by(access_code=access_code).first():
                 access_code = generate_access_code()
-            source_path = Path(app.root_path).parent / "storage" / (
-                interactive_product.source_html_path or "interactive_ebooks/the-romance-reader-kit.html"
-            )
-            output_name = secure_filename(
-                f"{order.id}_{buyer_email}.html"
-            )
-            output_path = Path(app.root_path).parent / "storage" / "personalized_ebooks" / output_name
+
+            if not interactive_product.ebook_file:
+                raise FileNotFoundError("No HTML content found for this product")
+
+            html_content = interactive_product.ebook_file.decode('utf-8')
             try:
-                generate_personalized_html(
-                    buyer_email, source_path, access_code, output_path
+                personalized_html = generate_personalized_html(
+                    buyer_email, None, access_code, None, html_content=html_content
                 )
                 order.access_code = access_code
-                order.personalized_file_path = str(
-                    Path("personalized_ebooks") / output_name
-                )
+                order.personalized_html_blob = personalized_html.encode('utf-8')
                 db.session.commit()
                 email_service.send_interactive_ebook(
-                    buyer_email, interactive_product.name, access_code, output_path
+                    buyer_email, interactive_product.name, access_code, None
                 )
             except (FileNotFoundError, OSError) as e:
                 order.status = "paid_demo_no_file"
@@ -526,7 +522,7 @@ def read_interactive_ebook(access_code):
     order = Order.query.filter_by(access_code=access_code).first_or_404()
     if order.status not in {"paid_demo", "paid"}:
         abort(403, description="Esta orden no está pagada.")
-    if not order.personalized_file_path:
+    if not order.personalized_html_blob:
         abort(404, description="El archivo personalizado no está disponible.")
 
     from backend.models import DeviceSession
@@ -550,13 +546,7 @@ def read_interactive_ebook(access_code):
         db.session.add(new_session)
         db.session.commit()
 
-    personalized_path = Path(app.root_path).parent / "storage" / order.personalized_file_path
-    if not personalized_path.exists():
-        abort(404, description="El archivo no está disponible.")
-
-    with open(personalized_path, 'r', encoding='utf-8') as f:
-        html_content = f.read()
-
+    html_content = order.personalized_html_blob.decode('utf-8')
     return html_content, 200, {"Content-Type": "text/html; charset=utf-8"}
 
 
@@ -612,21 +602,18 @@ def process_payment(order_id):
                 access_code = generate_access_code()
                 while Order.query.filter_by(access_code=access_code).first():
                     access_code = generate_access_code()
-                source_path = Path(app.root_path).parent / "storage" / (
-                    interactive_product.source_html_path or "interactive_ebooks/the-romance-reader-kit.html"
-                )
-                output_name = secure_filename(f"{order.id}_{order.buyer_email}.html")
-                output_path = Path(app.root_path).parent / "storage" / "personalized_ebooks" / output_name
-                generate_personalized_html(
-                    order.buyer_email, source_path, access_code, output_path
+                if not interactive_product.ebook_file:
+                    raise FileNotFoundError("No HTML content found for this product")
+
+                html_content = interactive_product.ebook_file.decode('utf-8')
+                personalized_html = generate_personalized_html(
+                    order.buyer_email, None, access_code, None, html_content=html_content
                 )
                 order.access_code = access_code
-                order.personalized_file_path = str(
-                    Path("personalized_ebooks") / output_name
-                )
+                order.personalized_html_blob = personalized_html.encode('utf-8')
                 db.session.commit()
                 email_service.send_interactive_ebook(
-                    order.buyer_email, interactive_product.name, access_code, output_path
+                    order.buyer_email, interactive_product.name, access_code, None
                 )
             except (FileNotFoundError, OSError) as e:
                 print(f"Error generando ebook: {str(e)}")
@@ -842,23 +829,13 @@ def admin_create_product():
         return redirect(url_for("admin_dashboard"))
 
     if product_type == "html_interactive" and extension == ".html":
-        interactive_dir = (Path(__file__).parent.parent / "storage" /
-                          "interactive_ebooks")
-        interactive_dir.mkdir(parents=True, exist_ok=True)
         file_name = secure_filename(f"{slug}.html")
         ebook_binary = ebook_file.read()
-        ebook_file.seek(0)
-        ebook_file.save(str(interactive_dir / file_name))
-        source_html_path = str(Path("interactive_ebooks") / file_name)
+        source_html_path = None
     elif product_type in {"pdf", "epub"} and extension in {".pdf",
                                                              ".epub"}:
-        ebooks_dir = (Path(__file__).parent.parent / "storage" /
-                      "ebooks")
-        ebooks_dir.mkdir(parents=True, exist_ok=True)
         file_name = secure_filename(f"{slug}{extension}")
         ebook_binary = ebook_file.read()
-        ebook_file.seek(0)
-        ebook_file.save(str(ebooks_dir / file_name))
     else:
         flash(("El archivo no coincide con el tipo de producto "
                "elegido."), "error")

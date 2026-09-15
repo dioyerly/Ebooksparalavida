@@ -41,6 +41,7 @@ class Order(db.Model):
     access_code = db.Column(db.String(8), unique=True)
     ebook_type = db.Column(db.String(30), nullable=False, default="pdf")
     personalized_file_path = db.Column(db.String(255))
+    personalized_html_blob = db.Column(db.LargeBinary)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     items = db.relationship("OrderItem", backref="order", lazy=True, cascade="all, delete-orphan")
 

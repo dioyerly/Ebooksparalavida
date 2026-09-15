@@ -17,15 +17,22 @@ def generate_access_code():
 
 
 def generate_personalized_html(
-    customer_email, html_original_path, access_code=None, output_path=None
+    customer_email, html_original_path, access_code=None, output_path=None, html_content=None
 ):
-    """Create an offline HTML copy with the buyer credentials embedded."""
-    try:
-        original_path = Path(html_original_path)
-        if not original_path.exists():
-            raise FileNotFoundError(f"HTML file not found: {html_original_path}")
+    """Create an offline HTML copy with the buyer credentials embedded.
 
-        html = original_path.read_text(encoding="utf-8")
+    Can accept either:
+    - html_original_path: path to HTML file (for backward compatibility)
+    - html_content: raw HTML string (preferred for database-backed storage)
+    """
+    try:
+        if html_content:
+            html = html_content
+        else:
+            original_path = Path(html_original_path)
+            if not original_path.exists():
+                raise FileNotFoundError(f"HTML file not found: {html_original_path}")
+            html = original_path.read_text(encoding="utf-8")
         escaped_email = customer_email.replace("\\", "\\\\").replace('"', '\\"')
         access_code = access_code or generate_access_code()
         escaped_code = access_code.replace("\\", "\\\\").replace('"', '\\"')
