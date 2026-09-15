@@ -69,3 +69,11 @@ class PageVisit(db.Model):
     user_session_id = db.Column(db.String(120))
     user_agent = db.Column(db.String(500))
     referrer = db.Column(db.String(255))
+
+
+class DeviceSession(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey("order.id"), nullable=False)
+    fingerprint = db.Column(db.String(255), nullable=False)
+    user_agent = db.Column(db.String(500))
+    accessed_at = db.Column(db.DateTime, default=datetime.utcnow)

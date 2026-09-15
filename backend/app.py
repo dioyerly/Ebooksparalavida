@@ -516,6 +516,46 @@ def download(token):
     return render_template("download_placeholder.html", product=product, order=order)
 
 
+@app.get("/leer/<access_code>")
+def read_interactive_ebook(access_code):
+    """Read interactive ebook with device protection (max 2 devices)."""
+    order = Order.query.filter_by(access_code=access_code).first_or_404()
+    if order.status not in {"paid_demo", "paid"}:
+        abort(403, description="Esta orden no está pagada.")
+    if not order.personalized_file_path:
+        abort(404, description="El archivo personalizado no está disponible.")
+
+    from backend.models import DeviceSession
+    user_agent = request.headers.get("User-Agent", "unknown")
+    fingerprint = f"{user_agent}:{request.remote_addr}"
+
+    existing_session = DeviceSession.query.filter_by(
+        order_id=order.id, fingerprint=fingerprint
+    ).first()
+
+    if not existing_session:
+        device_count = DeviceSession.query.filter_by(order_id=order.id).count()
+        if device_count >= 2:
+            abort(403, description="Has alcanzado el límite máximo de 2 dispositivos autorizados para este Ebook Interactivo.")
+
+        new_session = DeviceSession(
+            order_id=order.id,
+            fingerprint=fingerprint,
+            user_agent=user_agent
+        )
+        db.session.add(new_session)
+        db.session.commit()
+
+    personalized_path = Path(app.root_path).parent / "storage" / order.personalized_file_path
+    if not personalized_path.exists():
+        abort(404, description="El archivo no está disponible.")
+
+    with open(personalized_path, 'r', encoding='utf-8') as f:
+        html_content = f.read()
+
+    return html_content, 200, {"Content-Type": "text/html; charset=utf-8"}
+
+
 @app.get("/pay/mercadopago/<int:order_id>")
 def payment_simulator(order_id):
     """Simulador de pago de Mercado Pago para localhost."""
