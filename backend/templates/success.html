@@ -49,15 +49,6 @@
     </div>
   </div>
 
-  <div class="download-section">
-    <a class="button button-primary full" href="{{ url_for('download', token=order.download_token) }}">
-      ↓ Descargar mis ebooks
-    </a>
-    <small class="download-note">
-      Tu enlace de descarga es personal y no caduca. Podés usarlo cuando quieras.
-    </small>
-  </div>
-
   {% if order.ebook_type == 'html_interactive' and order.access_code %}
   <div class="interactive-code-box">
     <p>Tu código de acceso es:</p>
@@ -69,10 +60,39 @@
       </a>
     </div>
   </div>
+  {% else %}
+  <div class="download-section">
+    <a class="button button-primary full" href="{{ url_for('download', token=order.download_token) }}">
+      ↓ Descargar mis ebooks
+    </a>
+    <small class="download-note">
+      Tu enlace de descarga es personal y no caduca. Podés usarlo cuando quieras.
+    </small>
+  </div>
   {% endif %}
 
   <div class="next-steps">
     <h3>¿Qué sigue?</h3>
+    {% if order.ebook_type == 'html_interactive' %}
+    <ul class="steps-list">
+      <li>
+        <span class="step-num">1</span>
+        <span>Abrí el botón "Leer mi ebook ahora" arriba</span>
+      </li>
+      <li>
+        <span class="step-num">2</span>
+        <span>Ingresá tu código de acceso para comenzar</span>
+      </li>
+      <li>
+        <span class="step-num">3</span>
+        <span>Agrégalo a tu pantalla de inicio para leerlo como app (sin internet)</span>
+      </li>
+      <li>
+        <span class="step-num">4</span>
+        <span>Tus ejercicios y respuestas se guardan automáticamente</span>
+      </li>
+    </ul>
+    {% else %}
     <ul class="steps-list">
       <li>
         <span class="step-num">1</span>
@@ -87,6 +107,7 @@
         <span>¡Disfrutá tu lectura!</span>
       </li>
     </ul>
+    {% endif %}
   </div>
 
   <div class="email-notification">
