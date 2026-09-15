@@ -627,7 +627,17 @@ function addBonusFile() {
   }
   const li = document.createElement('li');
   li.style.cssText = 'padding:8px;margin:5px 0;background:#e8f5e9;border-radius:4px;display:flex;justify-content:space-between;align-items:center;';
-  li.innerHTML = `<span>📄 ${file.name}</span> <button type="button" onclick="this.parentElement.remove(); window.bonusFiles.splice(window.bonusFiles.indexOf(arguments[0]), 1);" style="background:#c33;color:white;border:none;padding:4px 8px;border-radius:3px;cursor:pointer;">✕</button>`;
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
+  removeBtn.textContent = '✕';
+  removeBtn.style.cssText = 'background:#c33;color:white;border:none;padding:4px 8px;border-radius:3px;cursor:pointer;';
+  removeBtn.onclick = function() {
+    const idx = window.bonusFiles.indexOf(file);
+    if (idx > -1) window.bonusFiles.splice(idx, 1);
+    li.remove();
+  };
+  li.innerHTML = `<span>📄 ${file.name}</span>`;
+  li.appendChild(removeBtn);
   ul.appendChild(li);
   fileInput.value = '';
 }
