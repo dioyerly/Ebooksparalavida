@@ -547,6 +547,72 @@ def read_interactive_ebook(access_code):
         db.session.commit()
 
     html_content = order.personalized_html_blob.decode('utf-8')
+
+    # Inyectar login screen en el HTML
+    if "id=\"personalized-login-screen\"" not in html_content:
+        import json
+        email_json = json.dumps(order.buyer_email)
+        access_code_json = json.dumps(access_code)
+        login_html = f"""
+<style id="ebook-login-style">
+  #ebook-login-screen {{
+    position: fixed; inset: 0; z-index: 999999; display: flex;
+    align-items: center; justify-content: center; padding: 24px;
+    background: linear-gradient(135deg, #D8A5A5 0%, #C8B8D8 100%);
+    font-family: Arial, sans-serif;
+  }}
+  #ebook-login-screen .login-card {{
+    width: min(100%, 420px); background: #fff; padding: 32px;
+    border-radius: 12px; box-shadow: 0 16px 50px rgba(0,0,0,.18);
+  }}
+  #ebook-login-screen h2 {{ margin: 0 0 8px; color: #4A4A4A; }}
+  #ebook-login-screen p {{ color: #666; }}
+  #ebook-login-screen label {{ display:block; margin:14px 0 6px; color:#4A4A4A; font-weight:bold; }}
+  #ebook-login-screen input {{ width:100%; padding:12px; border:2px solid #A8D5D5; border-radius:6px; box-sizing:border-box; }}
+  #ebook-login-screen button {{ width:100%; margin-top:18px; padding:12px; border:0; border-radius:6px; background:#D8A5A5; color:#fff; font-weight:bold; cursor:pointer; }}
+  #ebook-login-error {{ min-height:20px; color:#B44E4E!important; font-size:13px; }}
+</style>
+<div id="ebook-login-screen">
+  <div class="login-card">
+    <h2>Acceso a tu Ebook</h2>
+    <p>Ingresá tu email y código de acceso.</p>
+    <label for="ebook-login-email">Email</label>
+    <input id="ebook-login-email" type="email" autocomplete="email" value="{order.buyer_email}">
+    <label for="ebook-login-code">Código</label>
+    <input id="ebook-login-code" type="text" maxlength="8" autocomplete="off">
+    <button type="button" onclick="validateEbookLogin()">Ingresar</button>
+    <p id="ebook-login-error"></p>
+  </div>
+</div>
+<script>
+(function() {{
+  const emailExpected = {email_json};
+  const codeExpected = {access_code_json};
+  const storageKey = 'ebook-auth-' + codeExpected;
+  window.validateEbookLogin = function() {{
+    const email = document.getElementById('ebook-login-email').value.trim();
+    const code = document.getElementById('ebook-login-code').value.trim().toUpperCase();
+    const error = document.getElementById('ebook-login-error');
+    if (email === emailExpected && code === codeExpected) {{
+      localStorage.setItem(storageKey, JSON.stringify({{ email: email, code: code, validado: true }}));
+      document.getElementById('ebook-login-screen').remove();
+    }} else {{
+      error.textContent = 'Email o código incorrecto.';
+    }}
+  }};
+  try {{
+    const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+    if (saved && saved.validado && saved.email === emailExpected && saved.code === codeExpected) {{
+      document.getElementById('ebook-login-screen').remove();
+    }}
+  }} catch (error) {{
+    localStorage.removeItem(storageKey);
+  }}
+}})();
+</script>
+"""
+        html_content = html_content.replace("</body>", login_html + "</body>", 1)
+
     return html_content, 200, {"Content-Type": "text/html; charset=utf-8"}
 
 
