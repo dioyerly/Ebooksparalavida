@@ -585,6 +585,45 @@ def admin_dashboard():
     return render_template("admin/dashboard.html", orders=orders, revenue=revenue, products=Product.query.all(), categories=CATEGORIES)
 
 
+@app.get("/admin/products/<int:product_id>/edit")
+@admin_required
+def edit_product_form(product_id):
+    """Get product for editing."""
+    product = Product.query.get(product_id)
+    if not product:
+        return {"error": "No encontrado"}, 404
+    return {
+        "id": product.id,
+        "name": product.name,
+        "slug": product.slug,
+        "description": product.description,
+        "price_ars": product.price_ars,
+        "category": product.category,
+        "is_kit": product.is_kit,
+        "kit_bonus_ids": product.kit_bonus_ids,
+    }
+
+
+@app.post("/admin/products/<int:product_id>/edit")
+@admin_required
+def update_product(product_id):
+    """Update Product."""
+    product = Product.query.get(product_id)
+    if not product:
+        return {"error": "No encontrado"}, 404
+    product.name = request.form.get("name", product.name).strip()
+    product.description = request.form.get("description", product.description).strip()
+    product.price_ars = int(request.form.get("price_ars", product.price_ars))
+    product.category = request.form.get("category", product.category).strip()
+    product.is_kit = request.form.get("is_kit") == "on"
+    product.kit_bonus_ids = request.form.get("kit_bonus_ids", "") if product.is_kit else None
+    ebook_file = request.files.get("ebook_file")
+    if ebook_file and ebook_file.filename:
+        product.ebook_file = ebook_file.read()
+    db.session.commit()
+    return {"message": "Producto actualizado"}
+
+
 @app.delete("/admin/products/<int:product_id>")
 @admin_required
 def delete_product(product_id):

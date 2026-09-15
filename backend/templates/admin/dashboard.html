@@ -317,7 +317,63 @@ function loadProductsTable() {
 }
 
 function editProduct(id) {
-  alert('Editar producto #' + id + ' - Próximamente');
+  fetch(`/admin/products/${id}/edit`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) return alert('Error: ' + data.error);
+      showEditModal(data);
+    });
+}
+
+function showEditModal(product) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+  modal.innerHTML = `
+    <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;">
+      <h2>Editar: ${product.name}</h2>
+      <form id="editForm">
+        <div style="margin-bottom:15px;">
+          <label>Nombre</label>
+          <input type="text" name="name" value="${product.name}" required style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
+        </div>
+        <div style="margin-bottom:15px;">
+          <label>Descripción</label>
+          <textarea name="description" required style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;min-height:80px;">${product.description}</textarea>
+        </div>
+        <div style="margin-bottom:15px;">
+          <label>Precio (ARS)</label>
+          <input type="number" name="price_ars" value="${product.price_ars}" required style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
+        </div>
+        <div style="margin-bottom:15px;">
+          <label>Categoría</label>
+          <input type="text" name="category" value="${product.category}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
+        </div>
+        <div style="margin-bottom:15px;">
+          <label><input type="checkbox" name="is_kit" ${product.is_kit ? 'checked' : ''}> ¿Es un KIT?</label>
+        </div>
+        <div style="margin-bottom:15px;">
+          <label>Subir nuevo archivo (opcional)</label>
+          <input type="file" name="ebook_file" accept=".pdf,.epub,.html" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button type="submit" class="button button-primary" style="flex:1;">Guardar</button>
+          <button type="button" onclick="this.closest('div').parentElement.parentElement.remove();" class="button" style="flex:1;">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  document.getElementById('editForm').onsubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(document.getElementById('editForm'));
+    fetch(`/admin/products/${product.id}/edit`, { method: 'POST', body: formData })
+      .then(r => r.json())
+      .then(data => {
+        alert(data.message || 'Guardado');
+        modal.remove();
+        loadProductsTable();
+      });
+  };
 }
 
 function deleteProduct(id) {
