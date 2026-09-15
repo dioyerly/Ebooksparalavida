@@ -215,8 +215,11 @@ def seed_products():
 
 def migrate_product_columns():
     """Migrate Product Columns."""
-    columns = {row[1] for row in db.session.execute(
-        db.text("PRAGMA table_info(product)"))}
+    query = db.text("""
+        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = 'product' AND TABLE_SCHEMA = DATABASE()
+    """)
+    columns = {row[0] for row in db.session.execute(query)}
     if "short_description" not in columns:
         db.session.execute(
             db.text("ALTER TABLE product ADD COLUMN short_description VARCHAR(280)"))
@@ -228,6 +231,10 @@ def migrate_product_columns():
     for column, definition in {
         "product_type": "VARCHAR(30) NOT NULL DEFAULT 'pdf'",
         "source_html_path": "VARCHAR(255)",
+        "is_kit": "BOOLEAN DEFAULT FALSE",
+        "kit_bonus_ids": "VARCHAR(255)",
+        "kit_price_ars": "INT",
+        "kit_description": "TEXT",
     }.items():
         if column not in columns:
             db.session.execute(db.text(
@@ -235,8 +242,11 @@ def migrate_product_columns():
             ))
             db.session.commit()
     order_table = Order.__tablename__
-    order_columns = {row[1] for row in db.session.execute(
-        db.text(f"PRAGMA table_info(\"{order_table}\")"))}
+    query = db.text(f"""
+        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = '{order_table}' AND TABLE_SCHEMA = DATABASE()
+    """)
+    order_columns = {row[0] for row in db.session.execute(query)}
     for column, definition in {
         "access_code": "VARCHAR(8)",
         "ebook_type": "VARCHAR(30) NOT NULL DEFAULT 'pdf'",
@@ -244,7 +254,7 @@ def migrate_product_columns():
     }.items():
         if column not in order_columns:
             db.session.execute(db.text(
-                f"ALTER TABLE \"{order_table}\" ADD COLUMN {column} {definition}"
+                f"ALTER TABLE {order_table} ADD COLUMN {column} {definition}"
             ))
             db.session.commit()
 
@@ -316,8 +326,24 @@ def shop():
 def product_detail(slug):
     """Product Detail."""
     product = Product.query.filter_by(slug=slug).first_or_404()
-    kit_slug = f"kit-{slug}" if not slug.startswith("kit-") else None
-    kit = Product.query.filter_by(slug=kit_slug).first() if kit_slug else None
+    kit = None
+
+    if product.is_kit and product.kit_price_ars:
+        kit = {
+            "name": f"{product.name} + KIT Completo",
+            "price_ars": product.kit_price_ars,
+            "id": product.id,
+        }
+    else:
+        kit_slug = f"kit-{slug}" if not slug.startswith("kit-") else None
+        kit_product = Product.query.filter_by(slug=kit_slug).first() if kit_slug else None
+        if kit_product:
+            kit = {
+                "name": kit_product.name,
+                "price_ars": kit_product.price_ars,
+                "id": kit_product.id,
+            }
+
     return render_template("product.html", product=product, kit=kit)
 
 
@@ -603,6 +629,96 @@ def admin_dashboard():
     return render_template("admin/dashboard.html", orders=orders, revenue=revenue, products=Product.query.all(), categories=CATEGORIES)
 
 
+@app.get("/admin/products/<int:product_id>/edit")
+@admin_required
+def edit_product_form(product_id):
+    """Get product for editing."""
+    product = Product.query.get(product_id)
+    if not product:
+        return {"error": "No encontrado"}, 404
+    return {
+        "id": product.id,
+        "name": product.name,
+        "slug": product.slug,
+        "description": product.description,
+        "price_ars": product.price_ars,
+        "category": product.category,
+        "is_kit": product.is_kit,
+        "kit_bonus_ids": product.kit_bonus_ids,
+    }
+
+
+@app.post("/admin/products/<int:product_id>/kit")
+@admin_required
+def update_product_kit(product_id):
+    """Update Product KIT configuration."""
+    product = Product.query.get(product_id)
+    if not product:
+        return {"error": "No encontrado"}, 404
+    product.is_kit = request.form.get("is_kit") == "True"
+    if product.is_kit:
+        bonus_ids = []
+        idx = 0
+        while True:
+            key = f'bonus_file_{idx}'
+            if key not in request.files:
+                break
+            for bonus_file in request.files.getlist(key):
+                if bonus_file and bonus_file.filename:
+                    ext = Path(bonus_file.filename).suffix.lower()
+                    ebooks_dir = (Path(__file__).parent.parent / "storage" /
+                                 "ebooks")
+                    ebooks_dir.mkdir(parents=True, exist_ok=True)
+                    file_name = secure_filename(f"{product.slug}_bonus_{idx}{ext}")
+                    bonus_file.save(str(ebooks_dir / file_name))
+                    bonus_ids.append(f"{product.slug}_bonus_{idx}")
+            idx += 1
+        product.kit_bonus_ids = ",".join(bonus_ids) if bonus_ids else ""
+        kit_price = request.form.get("kit_price_ars")
+        if kit_price:
+            product.kit_price_ars = int(kit_price)
+        kit_desc = request.form.get("kit_description", "").strip()
+        if kit_desc:
+            product.kit_description = kit_desc
+    else:
+        product.kit_price_ars = None
+        product.kit_description = None
+    db.session.commit()
+    return {"message": "Configuración KIT guardada"}
+
+
+@app.post("/admin/products/<int:product_id>/edit")
+@admin_required
+def update_product(product_id):
+    """Update Product."""
+    product = Product.query.get(product_id)
+    if not product:
+        return {"error": "No encontrado"}, 404
+    product.name = request.form.get("name", product.name).strip()
+    product.description = request.form.get("description", product.description).strip()
+    product.price_ars = int(request.form.get("price_ars", product.price_ars))
+    product.category = request.form.get("category", product.category).strip()
+    product.is_kit = request.form.get("is_kit") == "on"
+    product.kit_bonus_ids = request.form.get("kit_bonus_ids", "") if product.is_kit else None
+    ebook_file = request.files.get("ebook_file")
+    if ebook_file and ebook_file.filename:
+        product.ebook_file = ebook_file.read()
+    db.session.commit()
+    return {"message": "Producto actualizado"}
+
+
+@app.delete("/admin/products/<int:product_id>")
+@admin_required
+def delete_product(product_id):
+    """Delete Product."""
+    product = Product.query.get(product_id)
+    if not product:
+        return {"error": "Producto no encontrado"}, 404
+    db.session.delete(product)
+    db.session.commit()
+    return {"message": "Producto eliminado"}
+
+
 @app.post("/admin/products")
 @admin_required
 def admin_create_product():
@@ -610,32 +726,48 @@ def admin_create_product():
     slug = request.form["slug"].strip()
     name = request.form["name"].strip()
     product_type = request.form.get("product_type", "pdf")
+    is_kit = request.form.get("is_kit") == "on"
+    kit_bonus_ids = request.form.get("kit_bonus_ids", "")
 
     ebook_file = request.files.get("ebook_file")
     file_name = None
     source_html_path = None
-    extension = Path(ebook_file.filename).suffix.lower() if ebook_file and ebook_file.filename else ""
-    if product_type == "html_interactive" and extension == ".html":
-        interactive_dir = Path(__file__).parent.parent / "storage" / "interactive_ebooks"
-        interactive_dir.mkdir(parents=True, exist_ok=True)
-        file_name = secure_filename(f"{slug}.html")
-        ebook_file.save(str(interactive_dir / file_name))
-        source_html_path = str(Path("interactive_ebooks") / file_name)
-    elif product_type in {"pdf", "epub"} and extension in {".pdf", ".epub"}:
-        ebooks_dir = Path(__file__).parent.parent / "storage" / "ebooks"
-        ebooks_dir.mkdir(parents=True, exist_ok=True)
-        file_name = secure_filename(f"{slug}{extension}")
-        ebook_file.save(str(ebooks_dir / file_name))
-    else:
-        flash("El archivo no coincide con el tipo de producto elegido.", "error")
+    ebook_binary = None
+    extension = (Path(ebook_file.filename).suffix.lower()
+                 if ebook_file and ebook_file.filename else "")
+
+    if not ebook_file:
+        flash("Debes subir un archivo ebook.", "error")
         return redirect(url_for("admin_dashboard"))
 
-    # Guardar imagen de portada
+    if product_type == "html_interactive" and extension == ".html":
+        interactive_dir = (Path(__file__).parent.parent / "storage" /
+                          "interactive_ebooks")
+        interactive_dir.mkdir(parents=True, exist_ok=True)
+        file_name = secure_filename(f"{slug}.html")
+        ebook_binary = ebook_file.read()
+        ebook_file.seek(0)
+        ebook_file.save(str(interactive_dir / file_name))
+        source_html_path = str(Path("interactive_ebooks") / file_name)
+    elif product_type in {"pdf", "epub"} and extension in {".pdf",
+                                                             ".epub"}:
+        ebooks_dir = (Path(__file__).parent.parent / "storage" /
+                      "ebooks")
+        ebooks_dir.mkdir(parents=True, exist_ok=True)
+        file_name = secure_filename(f"{slug}{extension}")
+        ebook_binary = ebook_file.read()
+        ebook_file.seek(0)
+        ebook_file.save(str(ebooks_dir / file_name))
+    else:
+        flash(("El archivo no coincide con el tipo de producto "
+               "elegido."), "error")
+        return redirect(url_for("admin_dashboard"))
+
     cover_file = request.files.get("cover_image")
     cover_image = None
     if cover_file and cover_file.filename:
-        images_dir = Path(__file__).parent.parent / \
-            "frontend" / "assets" / "images"
+        images_dir = (Path(__file__).parent.parent / "frontend" /
+                      "assets" / "images")
         images_dir.mkdir(parents=True, exist_ok=True)
         ext = Path(cover_file.filename).suffix
         filename = secure_filename(f"{slug}{ext}")
@@ -675,10 +807,13 @@ def admin_create_product():
         cover_image=cover_image,
         product_type=product_type,
         source_html_path=source_html_path,
+        ebook_file=ebook_binary,
+        is_kit=is_kit,
+        kit_bonus_ids=kit_bonus_ids if is_kit else None,
     )
     db.session.add(product)
     db.session.commit()
-    flash(f"Producto '{name}' creado exitosamente.", "success")
+    flash(f"✅ Producto '{name}' creado exitosamente.", "success")
     return redirect(url_for("admin_dashboard"))
 
 
@@ -846,13 +981,32 @@ def get_products_analytics():
         if item.product_id in product_data:
             product_data[item.product_id]["sales"] += 1
 
-    return {"products": sorted(product_data.values(), key=lambda x: x["clicks"], reverse=True)}
+    return {"products": sorted(product_data.values(),
+                               key=lambda x: x["clicks"],
+                               reverse=True)}
+
+
+@app.get("/api/admin/products-list")
+@admin_required
+def get_products_list():
+    """Return list of products for kit bonus selection."""
+    products = Product.query.all()
+    return {
+        "products": [
+            {
+                "id": p.id,
+                "name": p.name,
+                "price_ars": p.price_ars,
+                "category": p.category,
+            }
+            for p in products
+        ]
+    }
 
 
 with app.app_context():
     db.create_all()
     migrate_product_columns()
-    seed_products()
 
 
 if __name__ == "__main__":
