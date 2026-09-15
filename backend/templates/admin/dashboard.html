@@ -370,7 +370,7 @@ function showEditModal(product) {
         </div>
         <div style="display:flex;gap:10px;">
           <button type="submit" class="button button-primary" style="flex:1;padding:10px;">✅ Guardar Cambios</button>
-          <button type="button" onclick="this.closest('div').parentElement.parentElement.remove();" class="button" style="flex:1;padding:10px;">❌ Cancelar</button>
+          <button type="button" onclick="closeModal(event); return false;" class="button" style="flex:1;padding:10px;">❌ Cancelar</button>
         </div>
       </form>
     </div>
@@ -427,6 +427,16 @@ function showEditModal(product) {
   };
 }
 
+function closeModal(event) {
+  event.preventDefault();
+  var modals = document.querySelectorAll('div[style*="position:fixed"]');
+  modals.forEach(function(modal) {
+    if (modal.style.zIndex === '9999' || modal.style.zIndex > 1000) {
+      modal.remove();
+    }
+  });
+}
+
 function createKitAuto(productId, productName) {
   const formData = new FormData();
   formData.append('kit_price_ars', Math.round(document.querySelector(`[data-product-id="${productId}"]`)?.dataset.price * 1.15 || 0));
@@ -479,8 +489,8 @@ function manageKIT(id, name) {
               </ul>
             </div>
             <div style="display:flex;gap:10px;">
-              <button class="button button-primary" style="flex:1;padding:12px;cursor:pointer;" onclick="createKitAuto(${id}, '${name}')">✅ Crear KIT Ahora</button>
-              <button class="button" style="flex:1;padding:12px;cursor:pointer;" onclick="this.closest('div').parentElement.remove();">❌ Cancelar</button>
+              <button class="button button-primary" style="flex:1;padding:12px;cursor:pointer;" onclick="createKitAuto(${id}, '${name}'); return false;">✅ Crear KIT Ahora</button>
+              <button class="button" style="flex:1;padding:12px;cursor:pointer;" onclick="closeModal(event); return false;">❌ Cancelar</button>
             </div>
           </div>
         `;
@@ -534,7 +544,7 @@ function manageKIT(id, name) {
 
         <div style="display:flex;gap:10px;">
           <button type="submit" class="button button-primary" style="flex:1;padding:12px;font-size:14px;">✅ Guardar KIT</button>
-          <button type="button" onclick="this.closest('div').parentElement.parentElement.remove();" class="button" style="flex:1;padding:12px;font-size:14px;">❌ Cancelar</button>
+          <button type="button" onclick="closeModal(event); return false;" class="button" style="flex:1;padding:12px;font-size:14px;">❌ Cancelar</button>
         </div>
       </form>
     </div>
