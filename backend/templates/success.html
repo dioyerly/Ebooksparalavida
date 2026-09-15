@@ -58,11 +58,16 @@
     </small>
   </div>
 
-  {% if order.ebook_type == 'html_interactive' %}
+  {% if order.ebook_type == 'html_interactive' and order.access_code %}
   <div class="interactive-code-box">
     <p>Tu código de acceso es:</p>
     <strong>{{ order.access_code }}</strong>
     <small>También lo enviamos junto con tu archivo HTML personalizado.</small>
+    <div style="margin-top: 20px;">
+      <a class="button button-primary" href="{{ url_for('read_interactive_ebook', access_code=order.access_code) }}" style="display: inline-block;">
+        📖 Leer mi ebook ahora
+      </a>
+    </div>
   </div>
   {% endif %}
 
