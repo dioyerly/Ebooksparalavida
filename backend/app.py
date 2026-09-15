@@ -266,6 +266,20 @@ def migrate_product_columns():
     result = db.session.execute(column_type_query).fetchone()
     if result and result[0] == 'blob':
         print("Converting personalized_html_blob from BLOB to LONGBLOB...")
+        # Delete truncated orders (64KB exactly = corrupted)
+        truncated_orders = db.session.execute(db.text(f"""
+            SELECT id FROM {order_table}
+            WHERE personalized_html_blob IS NOT NULL
+            AND LENGTH(personalized_html_blob) = 65535
+        """)).fetchall()
+        if truncated_orders:
+            truncated_ids = [order[0] for order in truncated_orders]
+            print(f"Deleting {len(truncated_ids)} truncated orders: {truncated_ids}")
+            db.session.execute(db.text(
+                f"DELETE FROM {order_table} WHERE id IN ({','.join(map(str, truncated_ids))})"
+            ))
+            db.session.commit()
+        # Convert column type
         db.session.execute(db.text(
             f"ALTER TABLE {order_table} MODIFY COLUMN personalized_html_blob LONGBLOB"
         ))
