@@ -318,8 +318,13 @@ def shop():
 def product_detail(slug):
     """Product Detail."""
     product = Product.query.filter_by(slug=slug).first_or_404()
-    kit_slug = f"kit-{slug}" if not slug.startswith("kit-") else None
-    kit = Product.query.filter_by(slug=kit_slug).first() if kit_slug else None
+    kit = None
+    if product.is_kit and product.kit_price_ars:
+        kit = {
+            "name": f"{product.name} + KIT Completo",
+            "price_ars": product.kit_price_ars,
+            "id": product.id,
+        }
     return render_template("product.html", product=product, kit=kit)
 
 
