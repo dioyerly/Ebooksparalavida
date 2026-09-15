@@ -925,6 +925,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById(tab).classList.add('active');
 
     // Cargar datos específicos del tab
+    if (tab === 'myproducts') loadProductsTable();
     if (tab === 'orders') loadOrders();
     if (tab === 'products') loadProductsAnalytics();
     if (tab === 'customers') loadCustomers();
