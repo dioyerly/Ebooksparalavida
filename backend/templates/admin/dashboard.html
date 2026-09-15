@@ -439,7 +439,7 @@ function closeModal(event) {
 
 function createKitAuto(productId, productName) {
   const formData = new FormData();
-  formData.append('kit_price_ars', Math.round(document.querySelector(`[data-product-id="${productId}"]`)?.dataset.price * 1.15 || 0));
+  formData.append('kit_price_ars', '12000');
 
   fetch(`/admin/products/${productId}/create-kit`, {
     method: 'POST',
