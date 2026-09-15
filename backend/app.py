@@ -237,8 +237,11 @@ def migrate_product_columns():
             ))
             db.session.commit()
     order_table = Order.__tablename__
-    order_columns = {row[1] for row in db.session.execute(
-        db.text(f"PRAGMA table_info(\"{order_table}\")"))}
+    query = db.text(f"""
+        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = '{order_table}' AND TABLE_SCHEMA = DATABASE()
+    """)
+    order_columns = {row[0] for row in db.session.execute(query)}
     for column, definition in {
         "access_code": "VARCHAR(8)",
         "ebook_type": "VARCHAR(30) NOT NULL DEFAULT 'pdf'",
@@ -246,7 +249,7 @@ def migrate_product_columns():
     }.items():
         if column not in order_columns:
             db.session.execute(db.text(
-                f"ALTER TABLE \"{order_table}\" ADD COLUMN {column} {definition}"
+                f"ALTER TABLE {order_table} ADD COLUMN {column} {definition}"
             ))
             db.session.commit()
 
