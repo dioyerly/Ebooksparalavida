@@ -452,23 +452,36 @@ def checkout():
             if not interactive_product.ebook_file:
                 raise FileNotFoundError("No HTML content found for this product")
 
-            html_content = interactive_product.ebook_file.decode('utf-8')
             try:
+                html_content = interactive_product.ebook_file.decode('utf-8')
+                if not html_content or not html_content.strip():
+                    raise ValueError("El archivo HTML está vacío")
+
                 personalized_html = generate_personalized_html(
                     buyer_email, None, access_code, None, html_content=html_content
                 )
+                if not personalized_html or not personalized_html.strip():
+                    raise ValueError("El HTML personalizado resultó vacío")
+
                 order.access_code = access_code
                 order.personalized_html_blob = personalized_html.encode('utf-8')
                 db.session.commit()
                 email_service.send_interactive_ebook(
                     buyer_email, interactive_product.name, access_code, None
                 )
-            except (FileNotFoundError, OSError) as e:
+            except (FileNotFoundError, OSError, ValueError, UnicodeDecodeError) as e:
                 order.status = "paid_demo_no_file"
                 db.session.commit()
+                print(f"Error processing interactive product: {str(e)}")
                 flash(f"Pago registrado pero no se pudo generar el archivo: {str(e)}", "warning")
                 email_service.send_download_link(
                     buyer_email, [interactive_product.name], order.download_token)
+                return redirect(url_for("success", order_id=order.id))
+            except Exception as e:
+                order.status = "paid_demo_no_file"
+                db.session.commit()
+                print(f"Unexpected error processing interactive product: {str(e)}")
+                flash(f"Error inesperado al procesar el archivo: {str(e)}", "error")
                 return redirect(url_for("success", order_id=order.id))
         else:
             email_service.send_download_link(
@@ -523,6 +536,7 @@ def read_interactive_ebook(access_code):
     if order.status not in {"paid_demo", "paid"}:
         abort(403, description="Esta orden no está pagada.")
     if not order.personalized_html_blob:
+        print(f"ERROR: Order {order.id} has no personalized_html_blob")
         abort(404, description="El archivo personalizado no está disponible.")
 
     from backend.models import DeviceSession
@@ -546,8 +560,15 @@ def read_interactive_ebook(access_code):
         db.session.add(new_session)
         db.session.commit()
 
-    html_content = order.personalized_html_blob.decode('utf-8')
-    return html_content, 200, {"Content-Type": "text/html; charset=utf-8"}
+    try:
+        html_content = order.personalized_html_blob.decode('utf-8')
+        if not html_content or not html_content.strip():
+            print(f"ERROR: Order {order.id} has empty personalized_html_blob")
+            abort(500, description="El contenido HTML está vacío")
+        return html_content, 200, {"Content-Type": "text/html; charset=utf-8"}
+    except UnicodeDecodeError as e:
+        print(f"ERROR: Failed to decode personalized_html_blob for order {order.id}: {str(e)}")
+        abort(500, description="Error al leer el archivo")
 
 
 @app.get("/pay/mercadopago/<int:order_id>")
@@ -1156,19 +1177,27 @@ def webhook_mercadopago():
                                 access_code = generate_access_code()
 
                             if interactive_product.ebook_file:
-                                html_content = interactive_product.ebook_file.decode('utf-8')
                                 try:
+                                    html_content = interactive_product.ebook_file.decode('utf-8')
+                                    if not html_content or not html_content.strip():
+                                        raise ValueError("El archivo HTML está vacío")
+
                                     personalized_html = generate_personalized_html(
                                         order.buyer_email, None, access_code, None, html_content=html_content
                                     )
+                                    if not personalized_html or not personalized_html.strip():
+                                        raise ValueError("El HTML personalizado resultó vacío")
+
                                     order.access_code = access_code
                                     order.personalized_html_blob = personalized_html.encode('utf-8')
                                     db.session.commit()
                                     email_service.send_interactive_ebook(
                                         order.buyer_email, interactive_product.name, access_code, None
                                     )
-                                except Exception as e:
+                                except (UnicodeDecodeError, ValueError) as e:
                                     print(f"Error processing interactive product in webhook: {str(e)}")
+                                except Exception as e:
+                                    print(f"Unexpected error in webhook: {str(e)}")
                         else:
                             # Regular PDF download
                             product_names = [item.product_name for item in order.items]
