@@ -215,9 +215,9 @@
         </div>
 
         <div class="form-row full">
-          <label id="ebookFileLabel">📥 Archivo PDF/EPUB del Ebook</label>
+          <label id="ebookFileLabel" style="font-weight:bold;color:#c33;">📥 Archivo del Ebook *OBLIGATORIO*</label>
           <input type="file" name="ebook_file" id="ebookFile" accept=".pdf,.epub" required>
-          <small id="ebookFileHelp" style="color: var(--muted);">Sube el archivo PDF o EPUB del ebook.</small>
+          <small id="ebookFileHelp" style="color: var(--muted);">Sube el archivo PDF o EPUB del ebook. Este es el ARCHIVO PRINCIPAL del producto.</small>
         </div>
 
         <div class="form-row full">
@@ -230,18 +230,18 @@
           <div>
             <label class="checkbox">
               <input type="checkbox" name="is_kit" id="isKitCheckbox">
-              📦 ¿Este ebook es un KIT con bonus?
+              📦 ¿Este ebook VIENE CON KIT de bonus?
             </label>
-            <small style="color: var(--muted);">Marca si incluye otros ebooks o material bonus.</small>
+            <small style="color: var(--muted);">✓ Marca si incluye otros ebooks bonus o material extra.</small>
           </div>
         </div>
 
-        <div class="form-row full" id="bonusSection" style="display: none;">
-          <label>📚 Ebooks/Bonus incluidos en el KIT</label>
-          <select name="kit_bonus_ids" id="kitBonusSelect" multiple style="min-height: 120px;">
+        <div class="form-row full" id="bonusSection" style="display: none;padding:15px;background:#fff3cd;border:2px solid #c33;border-radius:4px;">
+          <label style="font-weight:bold;color:#c33;">📚 SELECCIONA BONUS DEL KIT *OBLIGATORIO*</label>
+          <select name="kit_bonus_ids" id="kitBonusSelect" multiple style="min-height: 120px;border:2px solid #999;width:100%;padding:8px;margin:10px 0;">
             <option value="">-- Selecciona los bonus --</option>
           </select>
-          <small style="color: var(--muted);">Mantén Ctrl/Cmd presionado para seleccionar múltiples. Estos ebooks aparecerán en la página del producto.</small>
+          <small style="color: #c33;">⚠️ IMPORTANTE: Debes seleccionar MÍNIMO 1 producto como bonus. Usa Ctrl/Cmd + Click para múltiples.</small>
         </div>
 
         <button class="button button-primary">Crear Producto →</button>
@@ -354,15 +354,18 @@ function showEditModal(product) {
             <span style="font-weight:bold;">📦 ¿Es un KIT con bonus?</span>
           </label>
         </div>
-        <div id="modalBonusSection" style="margin-bottom:15px;padding:15px;background:#f9f9f9;border-radius:4px;display:${product.is_kit ? 'block' : 'none'};">
-          <label style="font-weight:bold;color:#c33;">📚 Ebooks/Bonus incluidos (REQUERIDO para KIT)</label>
-          <select name="kit_bonus_ids" id="modalBonusSelect" multiple style="width:100%;padding:8px;border:2px solid #999;border-radius:4px;min-height:120px;font-size:14px;">
+        <div id="modalBonusSection" style="margin-bottom:15px;padding:15px;background:#f9f9f9;border-radius:4px;border:2px solid #c33;display:${product.is_kit ? 'block' : 'none'};">
+          <label style="font-weight:bold;color:#c33;">📚 BONUS DEL KIT (OBLIGATORIO)</label>
+          <p style="color:#666;font-size:12px;margin:5px 0;">Selecciona productos ya existentes como bonus:</p>
+          <select name="kit_bonus_ids" id="modalBonusSelect" multiple style="width:100%;padding:8px;border:2px solid #999;border-radius:4px;min-height:100px;font-size:14px;margin-bottom:10px;">
           </select>
-          <small style="color:#666;">Mantén Ctrl/Cmd presionado para seleccionar múltiples</small>
+          <small style="color:#666;">✓ Ctrl/Cmd + Click para seleccionar múltiples</small>
+          <p style="color:#c33;font-weight:bold;margin:10px 0;">⚠️ Debes seleccionar al menos 1 bonus para guardar este KIT</p>
         </div>
         <div style="margin-bottom:15px;">
-          <label style="font-weight:bold;">Subir nuevo archivo (opcional)</label>
-          <input type="file" name="ebook_file" accept=".pdf,.epub,.html" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
+          <label style="font-weight:bold;">🔄 Reemplazar archivo del producto</label>
+          <small style="color:#666;">Déjalo vacío para mantener el archivo actual</small>
+          <input type="file" name="ebook_file" accept=".pdf,.epub,.html" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
         </div>
         <div style="display:flex;gap:10px;">
           <button type="submit" class="button button-primary" style="flex:1;padding:10px;">✅ Guardar Cambios</button>
