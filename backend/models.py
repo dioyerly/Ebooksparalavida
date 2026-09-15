@@ -19,6 +19,7 @@ class Product(db.Model):
     featured = db.Column(db.Boolean, default=False)
     file_name = db.Column(db.String(255))
     cover_image = db.Column(db.String(255))
+    cover_image_blob = db.Column(db.LargeBinary)
     product_type = db.Column(db.String(30), nullable=False, default="pdf")
     source_html_path = db.Column(db.String(255))
     ebook_file = db.Column(db.LargeBinary)

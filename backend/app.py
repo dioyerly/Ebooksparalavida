@@ -455,17 +455,25 @@ def checkout():
                 f"{order.id}_{buyer_email}.html"
             )
             output_path = Path(app.root_path).parent / "storage" / "personalized_ebooks" / output_name
-            generate_personalized_html(
-                buyer_email, source_path, access_code, output_path
-            )
-            order.access_code = access_code
-            order.personalized_file_path = str(
-                Path("personalized_ebooks") / output_name
-            )
-            db.session.commit()
-            email_service.send_interactive_ebook(
-                buyer_email, interactive_product.name, access_code, output_path
-            )
+            try:
+                generate_personalized_html(
+                    buyer_email, source_path, access_code, output_path
+                )
+                order.access_code = access_code
+                order.personalized_file_path = str(
+                    Path("personalized_ebooks") / output_name
+                )
+                db.session.commit()
+                email_service.send_interactive_ebook(
+                    buyer_email, interactive_product.name, access_code, output_path
+                )
+            except (FileNotFoundError, OSError) as e:
+                order.status = "paid_demo_no_file"
+                db.session.commit()
+                flash(f"Pago registrado pero no se pudo generar el archivo: {str(e)}", "warning")
+                email_service.send_download_link(
+                    buyer_email, [interactive_product.name], order.download_token)
+                return redirect(url_for("success", order_id=order.id))
         else:
             email_service.send_download_link(
                 buyer_email, [p.name for p in products], order.download_token)
@@ -1013,8 +1021,9 @@ def serve_cover_image(product_id):
 
 
 @app.get("/ebook-file/<int:product_id>")
+@admin_required
 def serve_ebook_file(product_id):
-    """Serve ebook file from database (BLOB)."""
+    """Serve ebook file from database (BLOB) - ADMIN ONLY."""
     product = Product.query.get_or_404(product_id)
     if not product.ebook_file:
         abort(404, description="Archivo no disponible")
