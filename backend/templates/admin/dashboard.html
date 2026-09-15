@@ -329,39 +329,44 @@ function showEditModal(product) {
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
   modal.innerHTML = `
-    <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;">
+    <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:550px;max-height:90vh;overflow-y:auto;">
       <h2>Editar: ${product.name}</h2>
       <form id="editForm">
         <div style="margin-bottom:15px;">
-          <label>Nombre</label>
+          <label style="font-weight:bold;">Nombre</label>
           <input type="text" name="name" value="${product.name}" required style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
         </div>
         <div style="margin-bottom:15px;">
-          <label>Descripción</label>
+          <label style="font-weight:bold;">Descripción</label>
           <textarea name="description" required style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;min-height:80px;">${product.description}</textarea>
         </div>
         <div style="margin-bottom:15px;">
-          <label>Precio (ARS)</label>
+          <label style="font-weight:bold;">Precio (ARS)</label>
           <input type="number" name="price_ars" value="${product.price_ars}" required style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
         </div>
         <div style="margin-bottom:15px;">
-          <label>Categoría</label>
+          <label style="font-weight:bold;">Categoría</label>
           <input type="text" name="category" value="${product.category}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
         </div>
         <div style="margin-bottom:15px;">
-          <label><input type="checkbox" name="is_kit" id="modalIsKit" ${product.is_kit ? 'checked' : ''}> ¿Es un KIT?</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" name="is_kit" id="modalIsKit" ${product.is_kit ? 'checked' : ''}>
+            <span style="font-weight:bold;">📦 ¿Es un KIT con bonus?</span>
+          </label>
         </div>
-        <div id="modalBonusSection" style="margin-bottom:15px;display:${product.is_kit ? 'block' : 'none'};">
-          <label>Ebooks bonus del KIT</label>
-          <select name="kit_bonus_ids" id="modalBonusSelect" multiple style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;min-height:100px;"></select>
+        <div id="modalBonusSection" style="margin-bottom:15px;padding:15px;background:#f9f9f9;border-radius:4px;display:${product.is_kit ? 'block' : 'none'};">
+          <label style="font-weight:bold;color:#c33;">📚 Ebooks/Bonus incluidos (REQUERIDO para KIT)</label>
+          <select name="kit_bonus_ids" id="modalBonusSelect" multiple style="width:100%;padding:8px;border:2px solid #999;border-radius:4px;min-height:120px;font-size:14px;">
+          </select>
+          <small style="color:#666;">Mantén Ctrl/Cmd presionado para seleccionar múltiples</small>
         </div>
         <div style="margin-bottom:15px;">
-          <label>Subir nuevo archivo (opcional)</label>
+          <label style="font-weight:bold;">Subir nuevo archivo (opcional)</label>
           <input type="file" name="ebook_file" accept=".pdf,.epub,.html" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
         </div>
         <div style="display:flex;gap:10px;">
-          <button type="submit" class="button button-primary" style="flex:1;">Guardar</button>
-          <button type="button" onclick="this.closest('div').parentElement.parentElement.remove();" class="button" style="flex:1;">Cancelar</button>
+          <button type="submit" class="button button-primary" style="flex:1;padding:10px;">✅ Guardar Cambios</button>
+          <button type="button" onclick="this.closest('div').parentElement.parentElement.remove();" class="button" style="flex:1;padding:10px;">❌ Cancelar</button>
         </div>
       </form>
     </div>
@@ -376,16 +381,20 @@ function showEditModal(product) {
   fetch('/api/admin/products-list')
     .then(r => r.json())
     .then(data => {
-      data.products.forEach(p => {
+      const allProducts = data.products || [];
+      allProducts.forEach(p => {
         if (p.id !== product.id) {
           const opt = document.createElement('option');
           opt.value = p.id;
-          opt.textContent = `${p.name} (${p.price_ars} ARS)`;
+          opt.textContent = `${p.name} ($${p.price_ars})`;
           bonusSelect.appendChild(opt);
         }
       });
       if (product.kit_bonus_ids) {
-        bonusSelect.value = product.kit_bonus_ids.split(',').map(x => x.trim());
+        const ids = product.kit_bonus_ids.split(',').map(x => x.trim());
+        Array.from(bonusSelect.options).forEach(opt => {
+          if (ids.includes(opt.value)) opt.selected = true;
+        });
       }
     });
 
@@ -395,16 +404,22 @@ function showEditModal(product) {
 
   document.getElementById('editForm').onsubmit = (e) => {
     e.preventDefault();
+    if (isKitCheckbox.checked && bonusSelect.selectedOptions.length === 0) {
+      alert('⚠️ Si marcas "KIT", DEBES seleccionar al menos 1 bonus');
+      return;
+    }
     const formData = new FormData(document.getElementById('editForm'));
     const bonusIds = Array.from(bonusSelect.selectedOptions).map(o => o.value).join(',');
     formData.set('kit_bonus_ids', bonusIds);
     fetch(`/admin/products/${product.id}/edit`, { method: 'POST', body: formData })
       .then(r => r.json())
       .then(data => {
-        alert(data.message || 'Guardado');
+        if (data.error) return alert('Error: ' + data.error);
+        alert('✅ ' + (data.message || 'Guardado correctamente'));
         modal.remove();
         loadProductsTable();
-      });
+      })
+      .catch(e => alert('Error: ' + e));
   };
 }
 
