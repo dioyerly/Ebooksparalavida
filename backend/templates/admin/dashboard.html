@@ -428,92 +428,62 @@ function showEditModal(product) {
 }
 
 function manageKIT(id, name) {
-  // Primero obtener tipo de producto
-  fetch(`/admin/products/${id}/edit`)
-    .then(r => r.json())
-    .then(product => {
-      const isHTML = product.product_type === 'html_interactive';
-      showKITModal(id, name, product, isHTML);
-    });
-}
-
-function showKITModal(id, name, product, isHTML) {
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
-
-  let kitContent = isHTML ? `
-    <div style="margin-bottom:15px;padding:15px;background:#fff3cd;border:2px solid #ff9800;border-radius:4px;">
-      <label style="font-weight:bold;color:#ff9800;">📄 Archivo HTML con KIT completo</label>
-      <p style="color:#666;font-size:13px;margin:5px 0;">Sube el archivo HTML que contiene el libro ORIGINAL + TODOS LOS BONUS</p>
-      <input type="file" name="html_kit_file" accept=".html" style="width:100%;padding:8px;border:1px solid #999;border-radius:4px;margin-top:5px;">
-      <small style="color:#c33;">⚠️ Este archivo reemplazará el anterior</small>
-    </div>
-  ` : `
-    <div style="margin-bottom:15px;padding:15px;background:#fff3cd;border:2px solid #ff9800;border-radius:4px;">
-      <label style="font-weight:bold;color:#ff9800;">📚 SELECCIONA LOS PRODUCTOS BONUS DEL KIT</label>
-      <select id="kitProductsSelect" multiple style="width:100%;padding:8px;border:2px solid #999;border-radius:4px;min-height:120px;margin:10px 0;">
-      </select>
-      <small style="color:#666;">✓ Ctrl/Cmd + Click para seleccionar múltiples.</small>
-    </div>
-  `;
-
   modal.innerHTML = `
-    <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:550px;max-height:90vh;overflow-y:auto;">
+    <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:600px;max-height:90vh;overflow-y:auto;">
       <h2>📦 Configurar KIT: ${name}</h2>
       <form id="kitForm">
-        <div style="margin-bottom:15px;">
-          <label style="font-weight:bold;color:#ff9800;">¿Este producto incluye BONUS/KIT?</label>
-          <div style="margin:10px 0;">
-            <label style="display:flex;align-items:center;gap:8px;">
-              <input type="radio" name="has_kit" value="no" ${!product.is_kit ? 'checked' : ''}> ❌ No, es un producto individual
+        <div style="margin-bottom:20px;padding:15px;background:#fff3cd;border:2px solid #ff9800;border-radius:4px;">
+          <label style="font-weight:bold;color:#ff9800;font-size:16px;">¿Tiene BONUS/KIT?</label>
+          <div style="margin:15px 0;">
+            <label style="display:flex;align-items:center;gap:10px;margin:10px 0;">
+              <input type="radio" name="has_kit" value="no" checked> ❌ No, es un producto individual
             </label>
-            <label style="display:flex;align-items:center;gap:8px;">
-              <input type="radio" name="has_kit" value="yes" ${product.is_kit ? 'checked' : ''}> ✅ Sí, este producto VIENE CON KIT
+            <label style="display:flex;align-items:center;gap:10px;margin:10px 0;">
+              <input type="radio" name="has_kit" value="yes"> ✅ Sí, este producto VIENE CON KIT
             </label>
           </div>
         </div>
 
-        <div id="kitSection" style="display:${product.is_kit ? 'block' : 'none'};margin-bottom:15px;">
-          ${kitContent}
-          <div style="margin-top:15px;">
-            <label style="font-weight:bold;">Descripción: ¿Qué lleva el KIT?</label>
-            <textarea id="kitDescription" placeholder="Ej: Incluye 3 ebooks bonus + plantillas + acceso a comunidad" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;min-height:80px;margin-top:5px;">${product.kit_bonus_ids || ''}</textarea>
+        <div id="kitSection" style="display:none;margin-bottom:20px;">
+          <div style="margin-bottom:20px;padding:15px;background:#e8f5e9;border:2px solid #4caf50;border-radius:4px;">
+            <label style="font-weight:bold;color:#2e7d32;font-size:14px;">📁 SUBE AQUÍ LOS ARCHIVOS BONUS DEL KIT</label>
+            <p style="color:#666;margin:10px 0;font-size:13px;">Sube cada archivo como si fuera un libro (HTML, PDF, EPUB)</p>
+
+            <div style="margin:15px 0;padding:15px;background:white;border:1px solid #ddd;border-radius:4px;">
+              <input type="file" id="bonusFile" accept=".html,.pdf,.epub" style="width:100%;padding:10px;border:1px solid #999;border-radius:4px;margin-bottom:10px;">
+              <button type="button" onclick="addBonusFile(); return false;" class="button button-primary" style="width:100%;padding:10px;">➕ Subir este archivo como bonus</button>
+            </div>
+
+            <div id="bonusFilesList" style="margin:15px 0;">
+              <p style="font-weight:bold;color:#2e7d32;">Archivos del KIT:</p>
+              <ul id="bonusFilesUL" style="list-style:none;padding:0;">
+                <li style="color:#666;">Ningún archivo aún</li>
+              </ul>
+            </div>
+          </div>
+
+          <div style="margin-bottom:15px;">
+            <label style="font-weight:bold;">📝 Descripción: ¿Qué lleva el KIT?</label>
+            <textarea id="kitDescription" placeholder="Ej: Incluye 3 ebooks bonus + plantillas + acceso a comunidad" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;min-height:80px;margin-top:5px;"></textarea>
           </div>
         </div>
 
         <div style="display:flex;gap:10px;">
-          <button type="submit" class="button button-primary" style="flex:1;padding:10px;">✅ Guardar Configuración KIT</button>
-          <button type="button" onclick="this.closest('div').parentElement.parentElement.remove();" class="button" style="flex:1;padding:10px;">❌ Cancelar</button>
+          <button type="submit" class="button button-primary" style="flex:1;padding:12px;font-size:14px;">✅ Guardar KIT</button>
+          <button type="button" onclick="this.closest('div').parentElement.parentElement.remove();" class="button" style="flex:1;padding:12px;font-size:14px;">❌ Cancelar</button>
         </div>
       </form>
     </div>
   `;
   document.body.appendChild(modal);
 
+  window.kitProductId = id;
+  window.bonusFiles = [];
+
   const hasKitRadios = document.querySelectorAll('input[name="has_kit"]');
   const kitSection = document.getElementById('kitSection');
-
-  if (!isHTML) {
-    const kitSelect = document.getElementById('kitProductsSelect');
-    fetch('/api/admin/products-list')
-      .then(r => r.json())
-      .then(data => {
-        data.products.forEach(p => {
-          if (p.id !== id) {
-            const opt = document.createElement('option');
-            opt.value = p.id;
-            opt.textContent = `${p.name} ($${p.price_ars})`;
-            kitSelect.appendChild(opt);
-          }
-        });
-        if (product.kit_bonus_ids) {
-          const ids = product.kit_bonus_ids.split(',').map(x => x.trim());
-          Array.from(kitSelect.options).forEach(opt => {
-            if (ids.includes(opt.value)) opt.selected = true;
-          });
-        }
-      });
-  }
 
   hasKitRadios.forEach(radio => {
     radio.addEventListener('change', () => {
@@ -528,17 +498,13 @@ function showKITModal(id, name, product, isHTML) {
     formData.append('is_kit', hasKit);
 
     if (hasKit) {
-      if (isHTML) {
-        const htmlFile = document.querySelector('input[name="html_kit_file"]').files[0];
-        if (htmlFile) formData.append('html_kit_file', htmlFile);
-      } else {
-        const bonusIds = Array.from(document.getElementById('kitProductsSelect').selectedOptions).map(o => o.value).join(',');
-        if (!bonusIds) {
-          alert('⚠️ Debes seleccionar al menos 1 bonus');
-          return;
-        }
-        formData.append('kit_bonus_ids', bonusIds);
+      if (window.bonusFiles.length === 0) {
+        alert('⚠️ Debes subir al menos 1 archivo bonus para el KIT');
+        return;
       }
+      window.bonusFiles.forEach((file, idx) => {
+        formData.append(`bonus_file_${idx}`, file);
+      });
       formData.append('kit_description', document.getElementById('kitDescription').value);
     }
 
@@ -551,6 +517,26 @@ function showKITModal(id, name, product, isHTML) {
       })
       .catch(e => alert('Error: ' + e));
   };
+}
+
+function addBonusFile() {
+  const fileInput = document.getElementById('bonusFile');
+  if (!fileInput.files[0]) {
+    alert('Selecciona un archivo primero');
+    return;
+  }
+  const file = fileInput.files[0];
+  window.bonusFiles.push(file);
+
+  const ul = document.getElementById('bonusFilesUL');
+  if (ul.querySelector('li:first-child').textContent.includes('Ningún')) {
+    ul.innerHTML = '';
+  }
+  const li = document.createElement('li');
+  li.style.cssText = 'padding:8px;margin:5px 0;background:#e8f5e9;border-radius:4px;display:flex;justify-content:space-between;align-items:center;';
+  li.innerHTML = `<span>📄 ${file.name}</span> <button type="button" onclick="this.parentElement.remove(); window.bonusFiles.splice(window.bonusFiles.indexOf(arguments[0]), 1);" style="background:#c33;color:white;border:none;padding:4px 8px;border-radius:3px;cursor:pointer;">✕</button>`;
+  ul.appendChild(li);
+  fileInput.value = '';
 }
 
 function deleteProduct(id) {

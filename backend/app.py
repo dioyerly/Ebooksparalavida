@@ -613,16 +613,36 @@ def update_product_kit(product_id):
         return {"error": "No encontrado"}, 404
     product.is_kit = request.form.get("is_kit") == "True"
     if product.is_kit:
-        html_file = request.files.get("html_kit_file")
-        if html_file and html_file.filename:
-            interactive_dir = (Path(__file__).parent.parent / "storage" /
-                              "interactive_ebooks")
-            interactive_dir.mkdir(parents=True, exist_ok=True)
-            file_name = secure_filename(f"{product.slug}_kit.html")
-            html_file.save(str(interactive_dir / file_name))
-            product.source_html_path = str(Path("interactive_ebooks") / file_name)
-            product.ebook_file = html_file.read()
-        product.kit_bonus_ids = request.form.get("kit_bonus_ids", "")
+        bonus_files = request.files.getlist('bonus_file_0')
+        if not bonus_files or (len(bonus_files) == 1 and bonus_files[0].filename == ''):
+            idx = 0
+            while True:
+                key = f'bonus_file_{idx}'
+                if key not in request.files:
+                    break
+                bonus_files = request.files.getlist(key)
+                idx += 1
+                if bonus_files and bonus_files[0].filename:
+                    break
+
+        bonus_ids = []
+        for i, bfile in enumerate(request.files.getlist('bonus_file_0')):
+            idx = 0
+            while True:
+                key = f'bonus_file_{idx}'
+                if key not in request.files:
+                    break
+                for bonus_file in request.files.getlist(key):
+                    if bonus_file and bonus_file.filename:
+                        ext = Path(bonus_file.filename).suffix.lower()
+                        ebooks_dir = (Path(__file__).parent.parent / "storage" /
+                                     "ebooks")
+                        ebooks_dir.mkdir(parents=True, exist_ok=True)
+                        file_name = secure_filename(f"{product.slug}_bonus_{idx}{ext}")
+                        bonus_file.save(str(ebooks_dir / file_name))
+                        bonus_ids.append(f"{product.slug}_bonus_{idx}")
+                idx += 1
+        product.kit_bonus_ids = ",".join(bonus_ids) if bonus_ids else ""
     db.session.commit()
     return {"message": "Configuración KIT guardada"}
 
