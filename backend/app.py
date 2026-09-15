@@ -585,6 +585,18 @@ def admin_dashboard():
     return render_template("admin/dashboard.html", orders=orders, revenue=revenue, products=Product.query.all(), categories=CATEGORIES)
 
 
+@app.delete("/admin/products/<int:product_id>")
+@admin_required
+def delete_product(product_id):
+    """Delete Product."""
+    product = Product.query.get(product_id)
+    if not product:
+        return {"error": "Producto no encontrado"}, 404
+    db.session.delete(product)
+    db.session.commit()
+    return {"message": "Producto eliminado"}
+
+
 @app.post("/admin/products")
 @admin_required
 def admin_create_product():

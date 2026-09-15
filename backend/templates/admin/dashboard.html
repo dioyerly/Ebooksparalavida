@@ -42,9 +42,9 @@
   <!-- TABS PARA DIFERENTES VISTAS -->
   <div class="admin-tabs">
     <button class="tab-btn active" data-tab="overview">Resumen</button>
+    <button class="tab-btn" data-tab="myproducts">Mis Productos</button>
     <button class="tab-btn" data-tab="orders">Órdenes</button>
-    <button class="tab-btn" data-tab="products">Análisis de Productos</button>
-    <button class="tab-btn" data-tab="customers">Clientes</button>
+    <button class="tab-btn" data-tab="products">Análisis</button>
     <button class="tab-btn" data-tab="settings">Crear Producto</button>
   </div>
 
@@ -89,6 +89,32 @@
         <div class="orders-preview" id="recentOrders">
           <p class="empty">Cargando...</p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: MIS PRODUCTOS -->
+  <div id="myproducts" class="tab-content">
+    <div class="admin-section">
+      <div class="section-title">
+        <h2>Mis Productos</h2>
+        <p>Edita o elimina tus productos existentes</p>
+      </div>
+      <div style="overflow-x: auto;">
+        <table style="width:100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f5f5f5; border-bottom: 2px solid #ddd;">
+              <th style="padding: 12px; text-align: left;">Nombre</th>
+              <th style="padding: 12px; text-align: left;">Slug</th>
+              <th style="padding: 12px; text-align: left;">Precio (ARS)</th>
+              <th style="padding: 12px; text-align: left;">Tipo</th>
+              <th style="padding: 12px; text-align: left;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="productsTableBody">
+            <tr><td colspan="5" style="padding: 20px; text-align: center;">Cargando productos...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -262,6 +288,50 @@ fetch('/api/admin/products-list')
     });
   })
   .catch(e => console.log('Productos no disponibles:', e));
+
+// Cargar productos en tabla de "Mis Productos"
+function loadProductsTable() {
+  fetch('/api/admin/products-list')
+    .then(r => r.json())
+    .then(data => {
+      const tbody = document.getElementById('productsTableBody');
+      const products = data.products || [];
+      if (products.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center;">Sin productos aún</td></tr>';
+        return;
+      }
+      tbody.innerHTML = products.map(p => `
+        <tr style="border-bottom: 1px solid #eee;">
+          <td style="padding: 12px;">${p.name}</td>
+          <td style="padding: 12px;"><code>${p.category}</code></td>
+          <td style="padding: 12px;">$${p.price_ars.toLocaleString('es-AR')}</td>
+          <td style="padding: 12px;"><small>pdf</small></td>
+          <td style="padding: 12px;">
+            <a href="#" onclick="editProduct(${p.id}); return false;" style="color: #3A5F5F; text-decoration: none; margin-right: 10px;">✏️ Editar</a>
+            <a href="#" onclick="deleteProduct(${p.id}); return false;" style="color: #c33; text-decoration: none;">🗑️ Eliminar</a>
+          </td>
+        </tr>
+      `).join('');
+    })
+    .catch(e => console.error('Error cargando productos:', e));
+}
+
+function editProduct(id) {
+  alert('Editar producto #' + id + ' - Próximamente');
+}
+
+function deleteProduct(id) {
+  if (!confirm('¿Eliminar este producto?')) return;
+  fetch(`/admin/products/${id}`, { method: 'DELETE' })
+    .then(r => r.json())
+    .then(data => {
+      alert(data.message || 'Producto eliminado');
+      loadProductsTable();
+    })
+    .catch(e => alert('Error: ' + e));
+}
+
+loadProductsTable();
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
