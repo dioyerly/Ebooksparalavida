@@ -81,18 +81,18 @@ def generate_personalized_html(
     #personalized-login-screen {{
         position: fixed; inset: 0; z-index: 2147483647; display: flex;
         align-items: center; justify-content: center; padding: 24px;
-        background: linear-gradient(135deg, #D8A5A5 0%, #C8B8D8 100%);
-        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #31595a 0%, #24403f 100%);
+        font-family: 'DM Sans', Arial, sans-serif;
     }}
     #personalized-login-screen .login-card {{
         width: min(100%, 420px); background: #fff; padding: 32px;
         border-radius: 12px; box-shadow: 0 16px 50px rgba(0,0,0,.18);
     }}
-    #personalized-login-screen h2 {{ margin: 0 0 8px; color: #4A4A4A; }}
-    #personalized-login-screen p {{ color: #666; }}
-    #personalized-login-screen label {{ display:block; margin:14px 0 6px; color:#4A4A4A; font-weight:bold; }}
-    #personalized-login-screen input {{ width:100%; padding:12px; border:2px solid #A8D5D5; border-radius:6px; box-sizing:border-box; }}
-    #personalized-login-screen button {{ width:100%; margin-top:18px; padding:12px; border:0; border-radius:6px; background:#D8A5A5; color:#fff; font-weight:bold; cursor:pointer; }}
+    #personalized-login-screen h2 {{ margin: 0 0 8px; color: #31595a; }}
+    #personalized-login-screen p {{ color: #7d827d; }}
+    #personalized-login-screen label {{ display:block; margin:14px 0 6px; color:#31595a; font-weight:bold; }}
+    #personalized-login-screen input {{ width:100%; padding:12px; border:2px solid #d6cabb; border-radius:6px; box-sizing:border-box; }}
+    #personalized-login-screen button {{ width:100%; margin-top:18px; padding:12px; border:0; border-radius:6px; background:#c9756b; color:#fff; font-weight:bold; cursor:pointer; }}
     #personalized-login-error {{ min-height:20px; color:#B44E4E!important; font-size:13px; }}
 </style>
 <div id="personalized-login-screen">
