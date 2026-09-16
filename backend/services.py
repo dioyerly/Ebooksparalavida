@@ -3,6 +3,7 @@ import html as html_lib
 import os
 import re
 import secrets
+import ssl
 import string
 import json
 from pathlib import Path
@@ -380,16 +381,25 @@ class EmailService:
             message["To"] = buyer_email
             message.set_content(body)
 
+            # Use certifi's CA bundle explicitly - some minimal container
+            # images lack a complete system CA store, which makes the
+            # default SSL context reject even valid certificates.
+            try:
+                import certifi
+                ssl_context = ssl.create_default_context(cafile=certifi.where())
+            except ImportError:
+                ssl_context = ssl.create_default_context()
+
             # Port 465 expects implicit SSL from the first byte; STARTTLS
             # (used on 587/25) fails or hangs if used against it.
             if smtp_port == 465:
-                smtp_class = smtplib.SMTP_SSL
+                smtp = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=15, context=ssl_context)
             else:
-                smtp_class = smtplib.SMTP
+                smtp = smtplib.SMTP(smtp_host, smtp_port, timeout=15)
 
-            with smtp_class(smtp_host, smtp_port, timeout=15) as smtp:
+            with smtp:
                 if smtp_port != 465:
-                    smtp.starttls()
+                    smtp.starttls(context=ssl_context)
                 smtp.login(smtp_user, smtp_password)
                 smtp.send_message(message)
             print(f"Email sent to {buyer_email}: {subject}")
