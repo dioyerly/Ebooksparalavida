@@ -183,7 +183,11 @@
           </div>
           <div>
             <label>Categoría</label>
-            <input name="category" required placeholder="VIDA & BIENESTAR">
+            <select name="category" required>
+              {% for cat in categories %}
+              <option value="{{ cat }}">{{ cat }}</option>
+              {% endfor %}
+            </select>
           </div>
           <div>
             <label>Precio (ARS)</label>
