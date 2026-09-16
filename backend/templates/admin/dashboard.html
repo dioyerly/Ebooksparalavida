@@ -323,6 +323,11 @@ function showEditModal(product) {
           <small style="color:#666;">Déjalo vacío para mantener el archivo actual</small>
           <input type="file" name="ebook_file" accept=".pdf,.epub,.html" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
         </div>
+        <div style="margin-bottom:15px;">
+          <label style="font-weight:bold;">🖼️ Reemplazar portada</label>
+          <small style="color:#666;">Déjalo vacío para mantener la portada actual</small>
+          <input type="file" name="cover_image" accept=".jpg,.jpeg,.png,.gif" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
+        </div>
         <div style="display:flex;gap:10px;">
           <button type="submit" class="button button-primary" style="flex:1;padding:10px;">✅ Guardar Cambios</button>
           <button type="button" onclick="closeModal(event); return false;" class="button" style="flex:1;padding:10px;">❌ Cancelar</button>

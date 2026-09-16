@@ -861,6 +861,12 @@ def update_product(product_id):
     ebook_file = request.files.get("ebook_file")
     if ebook_file and ebook_file.filename:
         product.ebook_file = ebook_file.read()
+    cover_file = request.files.get("cover_image")
+    if cover_file and cover_file.filename:
+        product.cover_image_blob = cover_file.read()
+        product.cover_image = secure_filename(
+            f"{product.slug}{Path(cover_file.filename).suffix}"
+        )
     db.session.commit()
     return {"message": "Producto actualizado"}
 
