@@ -1,4 +1,5 @@
 """Servicios de pago e integración externa"""
+import html
 import os
 import re
 import secrets
@@ -17,7 +18,8 @@ def generate_access_code():
 
 
 def generate_personalized_html(
-    customer_email, html_original_path, access_code=None, output_path=None, html_content=None
+    customer_email, html_original_path, access_code=None, output_path=None,
+    html_content=None, product_name=None
 ):
     """Create an offline HTML copy with the buyer credentials embedded.
 
@@ -73,6 +75,7 @@ def generate_personalized_html(
     if "id=\"personalized-login-screen\"" not in html:
         email_json = json.dumps(customer_email)
         code_json = json.dumps(access_code)
+        login_title = html.escape(product_name) if product_name else "Tu ebook interactivo"
         login_markup = f"""
 <style id="personalized-login-style">
     #personalized-login-screen {{
@@ -94,7 +97,7 @@ def generate_personalized_html(
 </style>
 <div id="personalized-login-screen">
     <div class="login-card">
-        <h2>The Romance Reader Kit</h2>
+        <h2>{login_title}</h2>
         <p>Ingresá el email de compra y tu código de acceso.</p>
         <label for="personalized-login-email">Email</label>
         <input id="personalized-login-email" type="email" autocomplete="email">

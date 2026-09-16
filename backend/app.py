@@ -509,7 +509,8 @@ def checkout():
                     raise ValueError("El archivo HTML está vacío")
 
                 personalized_html = generate_personalized_html(
-                    buyer_email, None, access_code, None, html_content=html_content
+                    buyer_email, None, access_code, None, html_content=html_content,
+                    product_name=interactive_product.name,
                 )
                 if not personalized_html or not personalized_html.strip():
                     raise ValueError("El HTML personalizado resultó vacío")
@@ -704,7 +705,8 @@ def process_payment(order_id):
 
                 html_content = interactive_product.ebook_file.decode('utf-8')
                 personalized_html = generate_personalized_html(
-                    order.buyer_email, None, access_code, None, html_content=html_content
+                    order.buyer_email, None, access_code, None, html_content=html_content,
+                    product_name=interactive_product.name,
                 )
                 order.access_code = access_code
                 order.personalized_html_blob = personalized_html.encode('utf-8')
@@ -806,7 +808,8 @@ def regenerate_order_html(order_id):
             access_code = generate_access_code()
 
         personalized_html = generate_personalized_html(
-            order.buyer_email, None, access_code, None, html_content=html_content
+            order.buyer_email, None, access_code, None, html_content=html_content,
+            product_name=interactive_product.name,
         )
         if not personalized_html or not personalized_html.strip():
             return {"error": "El HTML personalizado resultó vacío."}, 400
@@ -1374,7 +1377,8 @@ def webhook_mercadopago():
                                         raise ValueError("El archivo HTML está vacío")
 
                                     personalized_html = generate_personalized_html(
-                                        order.buyer_email, None, access_code, None, html_content=html_content
+                                        order.buyer_email, None, access_code, None, html_content=html_content,
+                                        product_name=interactive_product.name,
                                     )
                                     if not personalized_html or not personalized_html.strip():
                                         raise ValueError("El HTML personalizado resultó vacío")
