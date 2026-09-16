@@ -656,6 +656,7 @@ async function loadOrders() {
               <th>Método</th>
               <th>Estado</th>
               <th>Fecha</th>
+              <th>Código de acceso</th>
               <th>Ebook interactivo</th>
             </tr>
           </thead>
@@ -669,6 +670,9 @@ async function loadOrders() {
                 <td>${o.payment_method}</td>
                 <td><span class="status ${o.status}">${o.status}</span></td>
                 <td>${new Date(o.created_at).toLocaleDateString('es-AR')}</td>
+                <td>${o.access_code
+                  ? `<code class="access-code" onclick="copyAccessCode('${o.access_code}', this)" title="Click para copiar">${o.access_code}</code>`
+                  : '-'}</td>
                 <td>${o.ebook_type === 'html_interactive'
                   ? `<button class="btn-regenerate" onclick="regenerateOrderHtml(${o.id}, this)">Regenerar HTML</button>`
                   : '-'}</td>
@@ -694,6 +698,7 @@ async function regenerateOrderHtml(orderId, btn) {
     if (res.ok && data.success) {
       btn.textContent = 'Listo ✓';
       alert(`HTML regenerado para la orden #${orderId}.\nCódigo de acceso: ${data.access_code}`);
+      loadOrders();
     } else {
       btn.textContent = originalText;
       btn.disabled = false;
@@ -704,6 +709,14 @@ async function regenerateOrderHtml(orderId, btn) {
     btn.disabled = false;
     alert('Error de conexión al regenerar el HTML.');
   }
+}
+
+function copyAccessCode(code, el) {
+  navigator.clipboard.writeText(code).then(() => {
+    const original = el.textContent;
+    el.textContent = '✓ Copiado';
+    setTimeout(() => { el.textContent = original; }, 1200);
+  }).catch(() => {});
 }
 
 // Cargar análisis de productos
@@ -1113,6 +1126,21 @@ table tr:hover {
 .btn-regenerate:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.access-code {
+  background: var(--beige, #f1e8da);
+  border: 1px solid var(--line, #d6cabb);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.access-code:hover {
+  background: var(--teal, #31595a);
+  color: #fff;
 }
 
 /* FORM */
