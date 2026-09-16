@@ -296,6 +296,7 @@ function editProduct(id) {
 
 function showEditModal(product) {
   const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
   modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
   modal.innerHTML = `
     <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:550px;max-height:90vh;overflow-y:auto;">
@@ -348,16 +349,13 @@ function showEditModal(product) {
 
 function closeModal(event) {
   event.preventDefault();
-  var modals = document.querySelectorAll('div[style*="position:fixed"]');
-  modals.forEach(function(modal) {
-    if (modal.style.zIndex === '9999' || modal.style.zIndex > 1000) {
-      modal.remove();
-    }
-  });
+  const modal = event.target.closest('.modal-overlay');
+  if (modal) modal.remove();
 }
 
 function createKitModal(id, name) {
   const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
   modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
   modal.innerHTML = `
     <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:560px;max-height:90vh;overflow-y:auto;">
@@ -432,6 +430,7 @@ function createKitModal(id, name) {
 
 function manageBonusFiles(id, name) {
   const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
   modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
   modal.innerHTML = `
     <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:520px;max-height:90vh;overflow-y:auto;">
@@ -494,7 +493,7 @@ function deleteBonusFile(bonusId, productId, name) {
     .then(r => r.json())
     .then(data => {
       if (data.error) return alert('Error: ' + data.error);
-      var modal = document.querySelector('div[style*="position:fixed"]');
+      var modal = document.querySelector('.modal-overlay');
       if (modal) modal.remove();
       manageBonusFiles(productId, name);
     })
