@@ -407,7 +407,7 @@ class EmailService:
             f"Hola,\n\n"
             f"¡Gracias por tu compra! Tus ebooks están listos:\n\n"
             + "\n".join(f"- {name}" for name in product_names)
-            + f"\n\nDescargalos acá: {download_url}\n\n"
+            + f"\n\nDescargalos acá (vas a poder elegir PDF o EPUB si están disponibles): {download_url}\n\n"
             f"Este enlace es personal y no caduca, podés usarlo cuando quieras.\n\n"
             f"Ebooks para la vida"
         )

@@ -161,7 +161,7 @@
       <div class="section-title">
         <h2>Crear Nuevo Producto</h2>
       </div>
-      <form class="product-form" method="post" action="{{ url_for('admin_create_product') }}" enctype="multipart/form-data">
+      <form class="product-form" id="createProductForm" method="post" action="{{ url_for('admin_create_product') }}" enctype="multipart/form-data">
         <div class="form-row">
           <div>
             <label>Nombre del ebook</label>
@@ -218,10 +218,25 @@
           <textarea name="description" required placeholder="Descripción completa del ebook..."></textarea>
         </div>
 
-        <div class="form-row full">
-          <label id="ebookFileLabel" style="font-weight:bold;color:#c33;">📥 Archivo del Ebook *OBLIGATORIO*</label>
-          <input type="file" name="ebook_file" id="ebookFile" accept=".pdf,.epub" required>
-          <small id="ebookFileHelp" style="color: var(--muted);">Sube el archivo PDF o EPUB del ebook. Este es el ARCHIVO PRINCIPAL del producto.</small>
+        <div id="pdfEpubSection">
+          <div class="form-row">
+            <div>
+              <label style="font-weight:bold;">📥 Archivo PDF</label>
+              <input type="file" name="ebook_file_pdf" id="ebookFilePdf" accept=".pdf">
+              <small style="color: var(--muted);">Subí el PDF si vas a ofrecerlo.</small>
+            </div>
+            <div>
+              <label style="font-weight:bold;">📱 Archivo EPUB</label>
+              <input type="file" name="ebook_file_epub" id="ebookFileEpub" accept=".epub">
+              <small style="color: var(--muted);">Subí el EPUB si vas a ofrecerlo. Subí al menos uno de los dos formatos.</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row full" id="htmlSection" style="display:none;">
+          <label id="ebookFileLabel" style="font-weight:bold;">🌐 Archivo HTML interactivo</label>
+          <input type="file" name="ebook_file" id="ebookFile" accept=".html">
+          <small id="ebookFileHelp" style="color: var(--muted);">El HTML original se conserva intacto y se personaliza después del pago.</small>
         </div>
 
         <div class="form-row full">
@@ -243,17 +258,29 @@
 
 <script>
 const productType = document.getElementById('productType');
+const pdfEpubSection = document.getElementById('pdfEpubSection');
+const htmlSection = document.getElementById('htmlSection');
+const ebookFilePdf = document.getElementById('ebookFilePdf');
+const ebookFileEpub = document.getElementById('ebookFileEpub');
 const ebookFile = document.getElementById('ebookFile');
-const ebookFileLabel = document.getElementById('ebookFileLabel');
-const ebookFileHelp = document.getElementById('ebookFileHelp');
 
 // Manejar cambio de tipo de producto
 function updateProductFileField() {
   const interactive = productType.value === 'html_interactive';
-  ebookFile.accept = interactive ? '.html' : '.pdf,.epub';
-  ebookFileLabel.textContent = interactive ? '🌐 Archivo HTML interactivo' : '📥 Archivo PDF/EPUB del Ebook';
-  ebookFileHelp.textContent = interactive ? 'El HTML original se conserva intacto y se personaliza después del pago.' : 'Sube el archivo PDF o EPUB del ebook.';
+  pdfEpubSection.style.display = interactive ? 'none' : 'block';
+  htmlSection.style.display = interactive ? 'block' : 'none';
+  ebookFilePdf.required = false;
+  ebookFileEpub.required = false;
+  ebookFile.required = interactive;
 }
+
+document.getElementById('createProductForm').addEventListener('submit', (e) => {
+  const interactive = productType.value === 'html_interactive';
+  if (!interactive && !ebookFilePdf.files[0] && !ebookFileEpub.files[0]) {
+    e.preventDefault();
+    alert('⚠️ Subí al menos un archivo: PDF o EPUB.');
+  }
+});
 
 productType.addEventListener('change', updateProductFileField);
 updateProductFileField();
@@ -322,11 +349,22 @@ function showEditModal(product) {
           <label style="font-weight:bold;">Categoría</label>
           <input type="text" name="category" value="${product.category}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
         </div>
+        ${product.product_type === 'html_interactive' ? `
         <div style="margin-bottom:15px;">
-          <label style="font-weight:bold;">🔄 Reemplazar archivo del producto</label>
+          <label style="font-weight:bold;">🔄 Reemplazar archivo HTML</label>
           <small style="color:#666;">Déjalo vacío para mantener el archivo actual</small>
-          <input type="file" name="ebook_file" accept=".pdf,.epub,.html" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
+          <input type="file" name="ebook_file" accept=".html" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
         </div>
+        ` : `
+        <div style="margin-bottom:15px;">
+          <label style="font-weight:bold;">🔄 Reemplazar PDF ${product.has_pdf ? '(ya tiene uno cargado)' : '(no tiene todavía)'}</label>
+          <input type="file" name="ebook_file_pdf" accept=".pdf" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
+        </div>
+        <div style="margin-bottom:15px;">
+          <label style="font-weight:bold;">🔄 Reemplazar EPUB ${product.has_epub ? '(ya tiene uno cargado)' : '(no tiene todavía)'}</label>
+          <input type="file" name="ebook_file_epub" accept=".epub" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
+        </div>
+        `}
         <div style="margin-bottom:15px;">
           <label style="font-weight:bold;">🖼️ Reemplazar portada</label>
           <small style="color:#666;">Déjalo vacío para mantener la portada actual</small>

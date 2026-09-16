@@ -23,6 +23,8 @@ class Product(db.Model):
     product_type = db.Column(db.String(30), nullable=False, default="pdf")
     source_html_path = db.Column(db.String(255))
     ebook_file = db.Column(db.LargeBinary)
+    file_name_epub = db.Column(db.String(255))
+    ebook_file_epub = db.Column(db.LargeBinary(length=(2 ** 32) - 1))
     is_kit = db.Column(db.Boolean, default=False)
     kit_price_ars = db.Column(db.Integer)
     kit_description = db.Column(db.Text)

@@ -235,6 +235,8 @@ def migrate_product_columns():
         "kit_price_ars": "INT",
         "kit_description": "TEXT",
         "updated_at": "DATETIME",
+        "file_name_epub": "VARCHAR(255)",
+        "ebook_file_epub": "LONGBLOB",
     }.items():
         if column not in columns:
             db.session.execute(db.text(
@@ -560,9 +562,30 @@ def success(order_id):
 
 @app.route("/download/<token>")
 def download(token):
-    """Download."""
+    """Show the customer a page to choose PDF or EPUB for their purchase."""
+    order = Order.query.filter_by(download_token=token).first_or_404()
+    if order.status not in {"paid_demo", "paid"}:
+        abort(403, description="Esta descarga no está disponible para esta orden.")
+
+    if not order.items:
+        abort(400, description="Esta orden no tiene items.")
+
+    product = Product.query.filter_by(
+        id=order.items[0].product_id).first_or_404()
+
+    if not product.ebook_file and not product.ebook_file_epub:
+        return render_template("download_placeholder.html", product=product, order=order)
+
+    return render_template("download_choose.html", product=product, order=order, token=token)
+
+
+@app.get("/download/<token>/<fmt>")
+def download_file(token, fmt):
+    """Serve the purchased ebook in the requested format (pdf or epub)."""
     from flask import make_response
-    from io import BytesIO
+
+    if fmt not in {"pdf", "epub"}:
+        abort(404)
 
     order = Order.query.filter_by(download_token=token).first_or_404()
     if order.status not in {"paid_demo", "paid"}:
@@ -574,16 +597,18 @@ def download(token):
     product = Product.query.filter_by(
         id=order.items[0].product_id).first_or_404()
 
-    if product.ebook_file:
-        extension = Path(product.file_name).suffix.lower() if product.file_name else ".pdf"
-        mime_type = "application/pdf" if extension == ".pdf" else "application/epub+zip"
+    if fmt == "pdf":
+        blob, filename, mime_type = product.ebook_file, product.file_name, "application/pdf"
+    else:
+        blob, filename, mime_type = product.ebook_file_epub, product.file_name_epub, "application/epub+zip"
 
-        response = make_response(product.ebook_file)
-        response.headers['Content-Type'] = mime_type
-        response.headers['Content-Disposition'] = f'attachment; filename="{product.file_name or product.slug + extension}"'
-        return response
+    if not blob:
+        abort(404, description=f"No hay archivo {fmt.upper()} disponible para este producto.")
 
-    return render_template("download_placeholder.html", product=product, order=order)
+    response = make_response(blob)
+    response.headers['Content-Type'] = mime_type
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename or product.slug + "." + fmt}"'
+    return response
 
 
 @app.get("/download/<token>/bonus/<int:bonus_id>")
@@ -838,6 +863,9 @@ def edit_product_form(product_id):
         "price_ars": product.price_ars,
         "category": product.category,
         "is_kit": product.is_kit,
+        "product_type": product.product_type,
+        "has_pdf": bool(product.ebook_file),
+        "has_epub": bool(product.ebook_file_epub),
     }
 
 
@@ -862,6 +890,15 @@ def update_product(product_id):
     ebook_file = request.files.get("ebook_file")
     if ebook_file and ebook_file.filename:
         product.ebook_file = ebook_file.read()
+        product.file_name = secure_filename(f"{product.slug}{Path(ebook_file.filename).suffix.lower()}")
+    pdf_file = request.files.get("ebook_file_pdf")
+    if pdf_file and pdf_file.filename:
+        product.ebook_file = pdf_file.read()
+        product.file_name = secure_filename(f"{product.slug}.pdf")
+    epub_file = request.files.get("ebook_file_epub")
+    if epub_file and epub_file.filename:
+        product.ebook_file_epub = epub_file.read()
+        product.file_name_epub = secure_filename(f"{product.slug}.epub")
     cover_file = request.files.get("cover_image")
     if cover_file and cover_file.filename:
         product.cover_image_blob = cover_file.read()
@@ -940,11 +977,13 @@ def create_kit_from_product(product_id):
         accent=product.accent,
         featured=product.featured,
         file_name=product.file_name,
+        file_name_epub=product.file_name_epub,
         cover_image=product.cover_image,
         cover_image_blob=product.cover_image_blob,
         product_type=product.product_type,
         source_html_path=product.source_html_path,
         ebook_file=product.ebook_file,
+        ebook_file_epub=product.ebook_file_epub,
         is_kit=True,
         kit_price_ars=kit_price,
         kit_description=kit_description,
@@ -1030,29 +1069,40 @@ def admin_create_product():
     name = request.form["name"].strip()
     product_type = request.form.get("product_type", "pdf")
 
-    ebook_file = request.files.get("ebook_file")
     file_name = None
+    file_name_epub = None
     source_html_path = None
     ebook_binary = None
-    extension = (Path(ebook_file.filename).suffix.lower()
-                 if ebook_file and ebook_file.filename else "")
+    ebook_binary_epub = None
 
-    if not ebook_file:
-        flash("Debes subir un archivo ebook.", "error")
-        return redirect(url_for("admin_dashboard"))
-
-    if product_type == "html_interactive" and extension == ".html":
+    if product_type == "html_interactive":
+        ebook_file = request.files.get("ebook_file")
+        if not ebook_file or not ebook_file.filename:
+            flash("Debes subir el archivo HTML interactivo.", "error")
+            return redirect(url_for("admin_dashboard"))
+        if Path(ebook_file.filename).suffix.lower() != ".html":
+            flash("El archivo debe ser .html para un producto interactivo.", "error")
+            return redirect(url_for("admin_dashboard"))
         file_name = secure_filename(f"{slug}.html")
         ebook_binary = ebook_file.read()
-        source_html_path = None
-    elif product_type in {"pdf", "epub"} and extension in {".pdf",
-                                                             ".epub"}:
-        file_name = secure_filename(f"{slug}{extension}")
-        ebook_binary = ebook_file.read()
     else:
-        flash(("El archivo no coincide con el tipo de producto "
-               "elegido."), "error")
-        return redirect(url_for("admin_dashboard"))
+        pdf_file = request.files.get("ebook_file_pdf")
+        epub_file = request.files.get("ebook_file_epub")
+        if pdf_file and pdf_file.filename:
+            if Path(pdf_file.filename).suffix.lower() != ".pdf":
+                flash("El archivo de PDF debe tener extensión .pdf.", "error")
+                return redirect(url_for("admin_dashboard"))
+            file_name = secure_filename(f"{slug}.pdf")
+            ebook_binary = pdf_file.read()
+        if epub_file and epub_file.filename:
+            if Path(epub_file.filename).suffix.lower() != ".epub":
+                flash("El archivo de EPUB debe tener extensión .epub.", "error")
+                return redirect(url_for("admin_dashboard"))
+            file_name_epub = secure_filename(f"{slug}.epub")
+            ebook_binary_epub = epub_file.read()
+        if not ebook_binary and not ebook_binary_epub:
+            flash("Subí al menos un archivo: PDF o EPUB.", "error")
+            return redirect(url_for("admin_dashboard"))
 
     cover_file = request.files.get("cover_image")
     cover_image = None
@@ -1091,11 +1141,13 @@ def admin_create_product():
         accent=request.form.get("accent", "#C9756B"),
         featured=request.form.get("featured") == "on",
         file_name=file_name,
+        file_name_epub=file_name_epub,
         cover_image=cover_image,
         cover_image_blob=cover_image_blob,
         product_type=product_type,
         source_html_path=source_html_path,
         ebook_file=ebook_binary,
+        ebook_file_epub=ebook_binary_epub,
     )
     db.session.add(product)
     db.session.commit()

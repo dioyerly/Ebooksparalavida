@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Descargar {{ product.name }}{% endblock %}
+{% block content %}
+<section class="success-page wrap">
+  <div class="success-mark">↓</div>
+  <p class="eyebrow">Descarga</p>
+  <h1>{{ product.name }}</h1>
+  <p>Elegí en qué formato querés descargarlo. Podés volver a esta página cuando quieras con el mismo enlace.</p>
+
+  <div class="download-choose-options">
+    {% if product.ebook_file %}
+    <a class="button button-primary full" href="{{ url_for('download_file', token=token, fmt='pdf') }}">↓ Descargar en PDF</a>
+    {% endif %}
+    {% if product.ebook_file_epub %}
+    <a class="button button-primary full" href="{{ url_for('download_file', token=token, fmt='epub') }}">↓ Descargar en EPUB</a>
+    <p class="epub-note">⚠️ En formato EPUB el diseño, los colores y algunos elementos visuales del ebook podrían no verse exactamente igual que en el PDF, ya que depende de cómo cada lector de EPUB interpreta el estilo.</p>
+    {% endif %}
+  </div>
+
+  <div class="action-links">
+    <a href="{{ url_for('home') }}" class="text-link">← Volver a la tienda</a>
+  </div>
+</section>
+<style>
+  .download-choose-options { max-width: 420px; margin: 40px auto; display: flex; flex-direction: column; gap: 14px; }
+  .epub-note { font-size: 12px; color: #8a8e86; text-align: left; margin: 0 0 10px; }
+</style>
+{% endblock %}
