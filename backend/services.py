@@ -1,5 +1,5 @@
 """Servicios de pago e integración externa"""
-import html
+import html as html_lib
 import os
 import re
 import secrets
@@ -75,7 +75,7 @@ def generate_personalized_html(
     if "id=\"personalized-login-screen\"" not in html:
         email_json = json.dumps(customer_email)
         code_json = json.dumps(access_code)
-        login_title = html.escape(product_name) if product_name else "Tu ebook interactivo"
+        login_title = html_lib.escape(product_name) if product_name else "Tu ebook interactivo"
         login_markup = f"""
 <style id="personalized-login-style">
     #personalized-login-screen {{
