@@ -379,17 +379,24 @@ class EmailService:
             message["From"] = sender
             message["To"] = buyer_email
             message.set_content(body)
-            with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as smtp:
-                smtp.starttls()
+
+            # Port 465 expects implicit SSL from the first byte; STARTTLS
+            # (used on 587/25) fails or hangs if used against it.
+            if smtp_port == 465:
+                smtp_class = smtplib.SMTP_SSL
+            else:
+                smtp_class = smtplib.SMTP
+
+            with smtp_class(smtp_host, smtp_port, timeout=15) as smtp:
+                if smtp_port != 465:
+                    smtp.starttls()
                 smtp.login(smtp_user, smtp_password)
                 smtp.send_message(message)
+            print(f"Email sent to {buyer_email}: {subject}")
             return {"success": True, "is_demo": False, "message": "Email sent"}
-        except smtplib.SMTPException as e:
-            print(f"SMTP Error sending to {buyer_email}: {str(e)}")
+        except (smtplib.SMTPException, OSError) as e:
+            print(f"SMTP Error sending to {buyer_email} via {smtp_host}:{smtp_port}: {str(e)}")
             return {"success": False, "error": "Email delivery failed", "message": str(e)}
-        except Exception as e:
-            print(f"Unexpected error sending email to {buyer_email}: {str(e)}")
-            return {"success": False, "error": "Email error", "message": str(e)}
 
     def send_download_link(self, buyer_email, product_names, download_token):
         """Envía el enlace de descarga al cliente (compra de ebook normal)."""
