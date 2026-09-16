@@ -366,13 +366,49 @@ class EmailService:
         configured = all([smtp_host, smtp_user, smtp_password, sender])
         return smtp_host, smtp_port, smtp_user, smtp_password, sender, configured
 
+    def _send_via_sendgrid_api(self, buyer_email, subject, body):
+        """Send via SendGrid's HTTPS API (works even when the host blocks
+        outbound SMTP ports, like Render does)."""
+        from_email = os.getenv("SMTP_FROM") or os.getenv("SENDGRID_FROM_EMAIL", "")
+        if not from_email:
+            return {"success": False, "error": "SENDGRID_FROM_EMAIL/SMTP_FROM not configured",
+                     "message": "Falta configurar el email remitente para SendGrid"}
+        try:
+            response = requests.post(
+                "https://api.sendgrid.com/v3/mail/send",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "personalizations": [{"to": [{"email": buyer_email}]}],
+                    "from": {"email": from_email},
+                    "subject": subject,
+                    "content": [{"type": "text/plain", "value": body}],
+                },
+                timeout=15,
+            )
+            if response.status_code in (200, 202):
+                print(f"Email sent via SendGrid to {buyer_email}: {subject}")
+                return {"success": True, "is_demo": False, "message": "Email sent"}
+            print(f"SendGrid API error sending to {buyer_email}: {response.status_code} {response.text}")
+            return {"success": False, "error": "Email delivery failed", "message": response.text}
+        except requests.RequestException as e:
+            print(f"SendGrid API request failed sending to {buyer_email}: {str(e)}")
+            return {"success": False, "error": "Email delivery failed", "message": str(e)}
+
     def _send(self, buyer_email, subject, body):
-        """Send a plain-text email via SMTP, or log it in demo mode."""
+        """Send an email: SendGrid API first (HTTPS, not blocked by hosts
+        that restrict outbound SMTP), SMTP as a fallback, demo log if
+        neither is configured."""
+        if self.api_key:
+            return self._send_via_sendgrid_api(buyer_email, subject, body)
+
         smtp_host, smtp_port, smtp_user, smtp_password, sender, smtp_configured = self._smtp_config()
 
         if not smtp_configured:
             print(f"DEMO EMAIL TO: {buyer_email}\nSubject: {subject}\n\n{body}")
-            return {"success": True, "is_demo": True, "message": "Email logged (SMTP not configured)"}
+            return {"success": True, "is_demo": True, "message": "Email logged (no email provider configured)"}
 
         try:
             message = EmailMessage()
