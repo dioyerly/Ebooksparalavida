@@ -42,9 +42,9 @@
   <!-- TABS PARA DIFERENTES VISTAS -->
   <div class="admin-tabs">
     <button class="tab-btn active" data-tab="overview">Resumen</button>
+    <button class="tab-btn" data-tab="myproducts">Mis Productos</button>
     <button class="tab-btn" data-tab="orders">Órdenes</button>
-    <button class="tab-btn" data-tab="products">Análisis de Productos</button>
-    <button class="tab-btn" data-tab="customers">Clientes</button>
+    <button class="tab-btn" data-tab="products">Análisis</button>
     <button class="tab-btn" data-tab="settings">Crear Producto</button>
   </div>
 
@@ -89,6 +89,32 @@
         <div class="orders-preview" id="recentOrders">
           <p class="empty">Cargando...</p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: MIS PRODUCTOS -->
+  <div id="myproducts" class="tab-content">
+    <div class="admin-section">
+      <div class="section-title">
+        <h2>Mis Productos</h2>
+        <p>Edita o elimina tus productos existentes</p>
+      </div>
+      <div style="overflow-x: auto;">
+        <table style="width:100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f5f5f5; border-bottom: 2px solid #ddd;">
+              <th style="padding: 12px; text-align: left;">Nombre</th>
+              <th style="padding: 12px; text-align: left;">Slug</th>
+              <th style="padding: 12px; text-align: left;">Precio (ARS)</th>
+              <th style="padding: 12px; text-align: left;">Tipo</th>
+              <th style="padding: 12px; text-align: left;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="productsTableBody">
+            <tr><td colspan="5" style="padding: 20px; text-align: center;">Cargando productos...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -189,15 +215,33 @@
         </div>
 
         <div class="form-row full">
-          <label id="ebookFileLabel">📥 Archivo PDF/EPUB del Ebook</label>
+          <label id="ebookFileLabel" style="font-weight:bold;color:#c33;">📥 Archivo del Ebook *OBLIGATORIO*</label>
           <input type="file" name="ebook_file" id="ebookFile" accept=".pdf,.epub" required>
-          <small id="ebookFileHelp" style="color: var(--muted);">Sube el archivo PDF o EPUB del ebook.</small>
+          <small id="ebookFileHelp" style="color: var(--muted);">Sube el archivo PDF o EPUB del ebook. Este es el ARCHIVO PRINCIPAL del producto.</small>
         </div>
 
         <div class="form-row full">
           <label>🖼️ Imagen de Portada (opcional)</label>
           <input type="file" name="cover_image" accept=".jpg,.jpeg,.png,.gif" >
           <small style="color: var(--muted);">Sube una imagen JPG o PNG. Si no subis, se usa el diseño generado.</small>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label class="checkbox">
+              <input type="checkbox" name="is_kit" id="isKitCheckbox">
+              📦 ¿Este ebook VIENE CON KIT de bonus?
+            </label>
+            <small style="color: var(--muted);">✓ Marca si incluye otros ebooks bonus o material extra.</small>
+          </div>
+        </div>
+
+        <div class="form-row full" id="bonusSection" style="display: none;padding:15px;background:#fff3cd;border:2px solid #c33;border-radius:4px;">
+          <label style="font-weight:bold;color:#c33;">📚 SELECCIONA BONUS DEL KIT *OBLIGATORIO*</label>
+          <select name="kit_bonus_ids" id="kitBonusSelect" multiple style="min-height: 120px;border:2px solid #999;width:100%;padding:8px;margin:10px 0;">
+            <option value="">-- Selecciona los bonus --</option>
+          </select>
+          <small style="color: #c33;">⚠️ IMPORTANTE: Debes seleccionar MÍNIMO 1 producto como bonus. Usa Ctrl/Cmd + Click para múltiples.</small>
         </div>
 
         <button class="button button-primary">Crear Producto →</button>
@@ -211,14 +255,406 @@ const productType = document.getElementById('productType');
 const ebookFile = document.getElementById('ebookFile');
 const ebookFileLabel = document.getElementById('ebookFileLabel');
 const ebookFileHelp = document.getElementById('ebookFileHelp');
+const isKitCheckbox = document.getElementById('isKitCheckbox');
+const bonusSection = document.getElementById('bonusSection');
+const kitBonusSelect = document.getElementById('kitBonusSelect');
+
+// Manejar cambio de tipo de producto
 function updateProductFileField() {
   const interactive = productType.value === 'html_interactive';
   ebookFile.accept = interactive ? '.html' : '.pdf,.epub';
   ebookFileLabel.textContent = interactive ? '🌐 Archivo HTML interactivo' : '📥 Archivo PDF/EPUB del Ebook';
   ebookFileHelp.textContent = interactive ? 'El HTML original se conserva intacto y se personaliza después del pago.' : 'Sube el archivo PDF o EPUB del ebook.';
 }
+
+// Mostrar/ocultar sección de bonus
+isKitCheckbox.addEventListener('change', function() {
+  bonusSection.style.display = this.checked ? 'block' : 'none';
+});
+
 productType.addEventListener('change', updateProductFileField);
 updateProductFileField();
+
+// Cargar lista de productos para bonus
+fetch('/api/admin/products-list')
+  .then(r => r.json())
+  .then(data => {
+    const products = data.products || [];
+    products.forEach(p => {
+      const option = document.createElement('option');
+      option.value = p.id;
+      option.textContent = `${p.name} (${p.price_ars} ARS)`;
+      kitBonusSelect.appendChild(option);
+    });
+  })
+  .catch(e => console.log('Productos no disponibles:', e));
+
+// Cargar productos en tabla de "Mis Productos"
+function loadProductsTable() {
+  fetch('/api/admin/products-list')
+    .then(r => r.json())
+    .then(data => {
+      const tbody = document.getElementById('productsTableBody');
+      const products = data.products || [];
+      if (products.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center;">Sin productos aún</td></tr>';
+        return;
+      }
+      tbody.innerHTML = products.map(p => `
+        <tr style="border-bottom: 1px solid #eee;">
+          <td style="padding: 12px;">${p.name}</td>
+          <td style="padding: 12px;"><code>${p.category}</code></td>
+          <td style="padding: 12px;">$${p.price_ars.toLocaleString('es-AR')}</td>
+          <td style="padding: 12px;"><small>pdf</small></td>
+          <td style="padding: 12px;">
+            <a href="#" onclick="editProduct(${p.id}); return false;" style="color: #3A5F5F; text-decoration: none; margin-right: 8px;">✏️ Editar</a>
+            <a href="#" onclick="manageKIT(${p.id}, '${p.name}'); return false;" style="color: #ff9800; text-decoration: none; margin-right: 8px;font-weight:bold;">📦 KIT</a>
+            <a href="#" onclick="deleteProduct(${p.id}); return false;" style="color: #c33; text-decoration: none;">🗑️ Eliminar</a>
+          </td>
+        </tr>
+      `).join('');
+    })
+    .catch(e => console.error('Error cargando productos:', e));
+}
+
+function editProduct(id) {
+  fetch(`/admin/products/${id}/edit`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) return alert('Error: ' + data.error);
+      showEditModal(data);
+    });
+}
+
+function showEditModal(product) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+  modal.innerHTML = `
+    <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:550px;max-height:90vh;overflow-y:auto;">
+      <h2>Editar: ${product.name}</h2>
+      <form id="editForm">
+        <div style="margin-bottom:15px;">
+          <label style="font-weight:bold;">Nombre</label>
+          <input type="text" name="name" value="${product.name}" required style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
+        </div>
+        <div style="margin-bottom:15px;">
+          <label style="font-weight:bold;">Descripción</label>
+          <textarea name="description" required style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;min-height:80px;">${product.description}</textarea>
+        </div>
+        <div style="margin-bottom:15px;">
+          <label style="font-weight:bold;">Precio (ARS)</label>
+          <input type="number" name="price_ars" value="${product.price_ars}" required style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
+        </div>
+        <div style="margin-bottom:15px;">
+          <label style="font-weight:bold;">Categoría</label>
+          <input type="text" name="category" value="${product.category}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
+        </div>
+        <div style="margin-bottom:15px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" name="is_kit" id="modalIsKit" ${product.is_kit ? 'checked' : ''}>
+            <span style="font-weight:bold;">📦 ¿Es un KIT con bonus?</span>
+          </label>
+        </div>
+        <div id="modalBonusSection" style="margin-bottom:15px;padding:15px;background:#f9f9f9;border-radius:4px;border:2px solid #c33;display:${product.is_kit ? 'block' : 'none'};">
+          <label style="font-weight:bold;color:#c33;">📚 BONUS DEL KIT (OBLIGATORIO)</label>
+          <p style="color:#666;font-size:12px;margin:5px 0;">Selecciona productos ya existentes como bonus:</p>
+          <select name="kit_bonus_ids" id="modalBonusSelect" multiple style="width:100%;padding:8px;border:2px solid #999;border-radius:4px;min-height:100px;font-size:14px;margin-bottom:10px;">
+          </select>
+          <small style="color:#666;">✓ Ctrl/Cmd + Click para seleccionar múltiples</small>
+          <p style="color:#c33;font-weight:bold;margin:10px 0;">⚠️ Debes seleccionar al menos 1 bonus para guardar este KIT</p>
+        </div>
+        <div style="margin-bottom:15px;">
+          <label style="font-weight:bold;">🔄 Reemplazar archivo del producto</label>
+          <small style="color:#666;">Déjalo vacío para mantener el archivo actual</small>
+          <input type="file" name="ebook_file" accept=".pdf,.epub,.html" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button type="submit" class="button button-primary" style="flex:1;padding:10px;">✅ Guardar Cambios</button>
+          <button type="button" onclick="closeModal(event); return false;" class="button" style="flex:1;padding:10px;">❌ Cancelar</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const isKitCheckbox = document.getElementById('modalIsKit');
+  const bonusSection = document.getElementById('modalBonusSection');
+  const bonusSelect = document.getElementById('modalBonusSelect');
+
+  // Cargar lista de productos
+  fetch('/api/admin/products-list')
+    .then(r => r.json())
+    .then(data => {
+      const allProducts = data.products || [];
+      allProducts.forEach(p => {
+        if (p.id !== product.id) {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = `${p.name} ($${p.price_ars})`;
+          bonusSelect.appendChild(opt);
+        }
+      });
+      if (product.kit_bonus_ids) {
+        const ids = product.kit_bonus_ids.split(',').map(x => x.trim());
+        Array.from(bonusSelect.options).forEach(opt => {
+          if (ids.includes(opt.value)) opt.selected = true;
+        });
+      }
+    });
+
+  isKitCheckbox.addEventListener('change', () => {
+    bonusSection.style.display = isKitCheckbox.checked ? 'block' : 'none';
+  });
+
+  document.getElementById('editForm').onsubmit = (e) => {
+    e.preventDefault();
+    if (isKitCheckbox.checked && bonusSelect.selectedOptions.length === 0) {
+      alert('⚠️ Si marcas "KIT", DEBES seleccionar al menos 1 bonus');
+      return;
+    }
+    const formData = new FormData(document.getElementById('editForm'));
+    const bonusIds = Array.from(bonusSelect.selectedOptions).map(o => o.value).join(',');
+    formData.set('kit_bonus_ids', bonusIds);
+    fetch(`/admin/products/${product.id}/edit`, { method: 'POST', body: formData })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) return alert('Error: ' + data.error);
+        alert('✅ ' + (data.message || 'Guardado correctamente'));
+        modal.remove();
+        loadProductsTable();
+      })
+      .catch(e => alert('Error: ' + e));
+  };
+}
+
+function closeModal(event) {
+  event.preventDefault();
+  var modals = document.querySelectorAll('div[style*="position:fixed"]');
+  modals.forEach(function(modal) {
+    if (modal.style.zIndex === '9999' || modal.style.zIndex > 1000) {
+      modal.remove();
+    }
+  });
+}
+
+function createKitAuto(productId, productName) {
+  const formData = new FormData();
+  formData.append('kit_price_ars', '12000');
+
+  fetch(`/admin/products/${productId}/create-kit`, {
+    method: 'POST',
+    body: formData
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        alert('Error: ' + data.error);
+      } else {
+        alert('KIT creado!');
+        loadProductsTable();
+      }
+      var modal = document.querySelector('div[style*="position:fixed"]');
+      if (modal) modal.remove();
+    })
+    .catch(function(e) {
+      alert('Error: ' + e);
+      var modal = document.querySelector('div[style*="position:fixed"]');
+      if (modal) modal.remove();
+    });
+}
+
+function manageKIT(id, name) {
+  fetch(`/admin/products/${id}/edit`)
+    .then(r => r.json())
+    .then(product => {
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+
+      if (!product.is_kit) {
+        // CREAR KIT NUEVO - OPCIÓN SIMPLE
+        modal.innerHTML = `
+          <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:500px;text-align:center;">
+            <h2>📦 Crear KIT para: ${name}</h2>
+            <p style="color:#666;margin:20px 0;font-size:16px;">
+              Se creará automáticamente una versión KIT con precio 15% más alto.
+              <br><br>Podrás editar el precio y descripción después.
+            </p>
+            <div style="background:#f0f0f0;padding:15px;border-radius:4px;margin:20px 0;text-align:left;font-size:13px;">
+              <p><strong>Se incluirá:</strong></p>
+              <ul style="margin:10px 0;">
+                <li>✓ Portada del producto</li>
+                <li>✓ Archivo del ebook</li>
+                <li>✓ Título con "KIT:"</li>
+                <li>✓ Descripción mejorada</li>
+              </ul>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button class="button button-primary" style="flex:1;padding:12px;cursor:pointer;" onclick="createKitAuto(${id}, '${name}'); return false;">✅ Crear KIT Ahora</button>
+              <button class="button" style="flex:1;padding:12px;cursor:pointer;" onclick="closeModal(event); return false;">❌ Cancelar</button>
+            </div>
+          </div>
+        `;
+      } else {
+        // EDITAR KIT EXISTENTE
+        modal.innerHTML = `
+          <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:600px;max-height:90vh;overflow-y:auto;">
+            <h2>📦 Configurar KIT: ${name}</h2>
+            <form id="kitForm">
+              <div style="margin-bottom:20px;padding:15px;background:#fff3cd;border:2px solid #ff9800;border-radius:4px;">
+                <label style="font-weight:bold;color:#ff9800;font-size:16px;">¿Tiene BONUS/KIT?</label>
+                <div style="margin:15px 0;">
+                  <label style="display:flex;align-items:center;gap:10px;margin:10px 0;">
+                    <input type="radio" name="has_kit" value="no" ${!product.is_kit ? 'checked' : ''}> ❌ No
+                  </label>
+                  <label style="display:flex;align-items:center;gap:10px;margin:10px 0;">
+                    <input type="radio" name="has_kit" value="yes" ${product.is_kit ? 'checked' : ''}> ✅ Sí
+                  </label>
+                </div>
+              </div>
+
+            <div id="kitSection" style="display:${product.is_kit ? 'block' : 'none'};margin-bottom:20px;">
+          <div style="margin-bottom:20px;padding:15px;background:#e8f5e9;border:2px solid #4caf50;border-radius:4px;">
+            <label style="font-weight:bold;color:#2e7d32;font-size:14px;">📁 SUBE AQUÍ LOS ARCHIVOS BONUS DEL KIT</label>
+            <p style="color:#666;margin:10px 0;font-size:13px;">Sube cada archivo como si fuera un libro (HTML, PDF, EPUB)</p>
+
+            <div style="margin:15px 0;padding:15px;background:white;border:1px solid #ddd;border-radius:4px;">
+              <input type="file" id="bonusFile" accept=".html,.pdf,.epub" style="width:100%;padding:10px;border:1px solid #999;border-radius:4px;margin-bottom:10px;">
+              <button type="button" onclick="addBonusFile(); return false;" class="button button-primary" style="width:100%;padding:10px;">➕ Subir este archivo como bonus</button>
+            </div>
+
+            <div id="bonusFilesList" style="margin:15px 0;">
+              <p style="font-weight:bold;color:#2e7d32;">Archivos del KIT:</p>
+              <ul id="bonusFilesUL" style="list-style:none;padding:0;">
+                <li style="color:#666;">Ningún archivo aún</li>
+              </ul>
+            </div>
+          </div>
+
+          <div style="margin-bottom:15px;">
+            <label style="font-weight:bold;">💰 Precio del KIT (ARS) - OPCIONAL</label>
+            <input type="number" id="kitPrice" placeholder="Ej: 15999" value="${product.kit_price_ars || ''}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
+            <small style="color:#666;">Si lo dejas vacío, usará el precio del producto individual</small>
+          </div>
+
+          <div style="margin-bottom:15px;">
+            <label style="font-weight:bold;">📝 Descripción: ¿Qué lleva el KIT?</label>
+            <textarea id="kitDescription" placeholder="Ej: Incluye 3 ebooks bonus + plantillas + acceso a comunidad" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;min-height:80px;margin-top:5px;">${product.kit_description || ''}</textarea>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;">
+          <button type="submit" class="button button-primary" style="flex:1;padding:12px;font-size:14px;">✅ Guardar KIT</button>
+          <button type="button" onclick="closeModal(event); return false;" class="button" style="flex:1;padding:12px;font-size:14px;">❌ Cancelar</button>
+        </div>
+      </form>
+    </div>
+  `;
+      }
+      document.body.appendChild(modal);
+
+      window.kitProductId = id;
+      window.bonusFiles = [];
+
+      const hasKitRadios = document.querySelectorAll('input[name="has_kit"]');
+      const kitSection = document.getElementById('kitSection');
+      const bonusFilesUL = document.getElementById('bonusFilesUL');
+
+      // Load existing bonus files
+      if (product.kit_bonus_ids) {
+        const existingFiles = product.kit_bonus_ids.split(',').map(f => f.trim()).filter(f => f);
+        if (existingFiles.length > 0) {
+          bonusFilesUL.innerHTML = '';
+          existingFiles.forEach(file => {
+            const li = document.createElement('li');
+            li.style.cssText = 'padding:8px;margin:5px 0;background:#e8f5e9;border-radius:4px;display:flex;justify-content:space-between;align-items:center;';
+            li.innerHTML = `<span>📄 ${file}</span> <small style="color:#666;">(ya subido)</small>`;
+            bonusFilesUL.appendChild(li);
+          });
+        }
+      }
+
+      hasKitRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+          kitSection.style.display = radio.value === 'yes' ? 'block' : 'none';
+        });
+      });
+
+      document.getElementById('kitForm').onsubmit = (e) => {
+        e.preventDefault();
+        const hasKit = document.querySelector('input[name="has_kit"]:checked').value === 'yes';
+        const formData = new FormData();
+        formData.append('is_kit', hasKit);
+
+        if (hasKit) {
+          if (window.bonusFiles.length === 0) {
+            alert('⚠️ Debes subir al menos 1 archivo bonus para el KIT');
+            return;
+          }
+          window.bonusFiles.forEach((file, idx) => {
+            formData.append(`bonus_file_${idx}`, file);
+          });
+          formData.append('kit_description', document.getElementById('kitDescription').value);
+        }
+
+        if (hasKit) {
+          const kitPrice = document.getElementById('kitPrice').value;
+          if (kitPrice) formData.append('kit_price_ars', kitPrice);
+        }
+
+        fetch(`/admin/products/${id}/kit`, { method: 'POST', body: formData })
+          .then(r => r.json())
+          .then(data => {
+            alert('✅ ' + (data.message || 'KIT guardado'));
+            modal.remove();
+            loadProductsTable();
+          })
+          .catch(e => alert('Error: ' + e));
+      };
+    });
+}
+
+function addBonusFile() {
+  const fileInput = document.getElementById('bonusFile');
+  if (!fileInput.files[0]) {
+    alert('Selecciona un archivo primero');
+    return;
+  }
+  const file = fileInput.files[0];
+  window.bonusFiles.push(file);
+
+  const ul = document.getElementById('bonusFilesUL');
+  if (ul.querySelector('li:first-child').textContent.includes('Ningún')) {
+    ul.innerHTML = '';
+  }
+  const li = document.createElement('li');
+  li.style.cssText = 'padding:8px;margin:5px 0;background:#e8f5e9;border-radius:4px;display:flex;justify-content:space-between;align-items:center;';
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
+  removeBtn.textContent = '✕';
+  removeBtn.style.cssText = 'background:#c33;color:white;border:none;padding:4px 8px;border-radius:3px;cursor:pointer;';
+  removeBtn.onclick = function() {
+    const idx = window.bonusFiles.indexOf(file);
+    if (idx > -1) window.bonusFiles.splice(idx, 1);
+    li.remove();
+  };
+  li.innerHTML = `<span>📄 ${file.name}</span>`;
+  li.appendChild(removeBtn);
+  ul.appendChild(li);
+  fileInput.value = '';
+}
+
+function deleteProduct(id) {
+  if (!confirm('¿Eliminar este producto?')) return;
+  fetch(`/admin/products/${id}`, { method: 'DELETE' })
+    .then(r => r.json())
+    .then(data => {
+      alert(data.message || 'Producto eliminado');
+      loadProductsTable();
+    })
+    .catch(e => alert('Error: ' + e));
+}
+
+loadProductsTable();
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
@@ -526,6 +962,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById(tab).classList.add('active');
 
     // Cargar datos específicos del tab
+    if (tab === 'myproducts') loadProductsTable();
     if (tab === 'orders') loadOrders();
     if (tab === 'products') loadProductsAnalytics();
     if (tab === 'customers') loadCustomers();
