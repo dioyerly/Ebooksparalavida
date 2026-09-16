@@ -286,6 +286,30 @@ def migrate_product_columns():
         db.session.commit()
         print("Conversion complete!")
 
+    # Fix BLOB size limit on Product.ebook_file (uploaded interactive ebooks
+    # larger than 64KB were silently truncated by MySQL's default BLOB type).
+    product_table = Product.__tablename__
+    for blob_column in ("ebook_file", "cover_image_blob"):
+        column_type_query = db.text(f"""
+            SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_NAME = '{product_table}' AND COLUMN_NAME = '{blob_column}' AND TABLE_SCHEMA = DATABASE()
+        """)
+        result = db.session.execute(column_type_query).fetchone()
+        if result and result[0] == 'blob':
+            print(f"Converting {blob_column} from BLOB to LONGBLOB...")
+            truncated = db.session.execute(db.text(f"""
+                SELECT id FROM {product_table}
+                WHERE {blob_column} IS NOT NULL AND LENGTH({blob_column}) = 65535
+            """)).fetchall()
+            if truncated:
+                truncated_ids = [row[0] for row in truncated]
+                print(f"WARNING: {blob_column} truncated for product ids {truncated_ids}. Re-upload these files.")
+            db.session.execute(db.text(
+                f"ALTER TABLE {product_table} MODIFY COLUMN {blob_column} LONGBLOB"
+            ))
+            db.session.commit()
+            print(f"Conversion complete for {blob_column}!")
+
 
 def is_valid_email(email):
     """Validate email format."""
