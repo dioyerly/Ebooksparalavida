@@ -4,7 +4,7 @@
 <section class="product-detail wrap" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}">
   <div class="detail-cover">
     {% if product.cover_image_blob %}
-      <img class="real-cover" src="{{ url_for('serve_cover_image', product_id=product.id) }}" alt="Portada de {{ product.name }}">
+      <img class="real-cover" src="{{ url_for('serve_cover_image', product_id=product.id, v=(product.updated_at.timestamp()|int if product.updated_at else 0)) }}" alt="Portada de {{ product.name }}">
     {% elif product.cover_image %}
       <img class="real-cover" src="{{ url_for('static', filename='images/' + product.cover_image) }}" alt="Portada de {{ product.name }}">
     {% else %}

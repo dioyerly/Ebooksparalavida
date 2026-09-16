@@ -27,6 +27,7 @@ class Product(db.Model):
     kit_price_ars = db.Column(db.Integer)
     kit_description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     bonus_files = db.relationship(
         "ProductBonusFile", backref="product", lazy=True,
         cascade="all, delete-orphan", order_by="ProductBonusFile.id"

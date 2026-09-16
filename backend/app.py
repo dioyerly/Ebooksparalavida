@@ -234,6 +234,7 @@ def migrate_product_columns():
         "is_kit": "BOOLEAN DEFAULT FALSE",
         "kit_price_ars": "INT",
         "kit_description": "TEXT",
+        "updated_at": "DATETIME",
     }.items():
         if column not in columns:
             db.session.execute(db.text(
