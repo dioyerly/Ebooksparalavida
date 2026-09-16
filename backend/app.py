@@ -751,6 +751,51 @@ def admin_dashboard():
     return render_template("admin/dashboard.html", orders=orders, revenue=revenue, products=Product.query.all(), categories=CATEGORIES)
 
 
+@app.post("/admin/orders/<int:order_id>/regenerate-html")
+@admin_required
+def regenerate_order_html(order_id):
+    """Re-generate an order's personalized HTML from the product's current ebook_file.
+
+    Useful after re-uploading a product's interactive ebook (e.g. to fix a
+    previously truncated file) so existing orders don't have to be redone.
+    """
+    order = Order.query.get_or_404(order_id)
+    if order.ebook_type != "html_interactive":
+        return {"error": "Esta orden no es de un ebook interactivo."}, 400
+
+    interactive_product = None
+    for item in order.items:
+        product = Product.query.get(item.product_id)
+        if product and product.product_type == "html_interactive":
+            interactive_product = product
+            break
+
+    if not interactive_product or not interactive_product.ebook_file:
+        return {"error": "El producto no tiene un archivo HTML cargado."}, 400
+
+    try:
+        html_content = interactive_product.ebook_file.decode("utf-8")
+        if not html_content or not html_content.strip():
+            return {"error": "El archivo HTML del producto está vacío."}, 400
+
+        access_code = order.access_code or generate_access_code()
+        while order.access_code != access_code and Order.query.filter_by(access_code=access_code).first():
+            access_code = generate_access_code()
+
+        personalized_html = generate_personalized_html(
+            order.buyer_email, None, access_code, None, html_content=html_content
+        )
+        if not personalized_html or not personalized_html.strip():
+            return {"error": "El HTML personalizado resultó vacío."}, 400
+
+        order.access_code = access_code
+        order.personalized_html_blob = personalized_html.encode("utf-8")
+        db.session.commit()
+        return {"success": True, "access_code": access_code}
+    except UnicodeDecodeError:
+        return {"error": "No se pudo decodificar el archivo HTML del producto."}, 500
+
+
 @app.get("/admin/products/<int:product_id>/edit")
 @admin_required
 def edit_product_form(product_id):
@@ -1087,6 +1132,8 @@ def get_admin_orders():
                 "status": o.status,
                 "payment_method": o.payment_method,
                 "created_at": o.created_at.isoformat(),
+                "ebook_type": o.ebook_type,
+                "access_code": o.access_code,
                 "items": [{"product_name": item.product_name, "unit_price_ars": item.unit_price_ars} for item in o.items]
             }
             for o in orders
