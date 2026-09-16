@@ -24,9 +24,22 @@ class Product(db.Model):
     source_html_path = db.Column(db.String(255))
     ebook_file = db.Column(db.LargeBinary)
     is_kit = db.Column(db.Boolean, default=False)
-    kit_bonus_ids = db.Column(db.String(255))
     kit_price_ars = db.Column(db.Integer)
     kit_description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    bonus_files = db.relationship(
+        "ProductBonusFile", backref="product", lazy=True,
+        cascade="all, delete-orphan", order_by="ProductBonusFile.id"
+    )
+
+
+class ProductBonusFile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False)
+    name = db.Column(db.String(160), nullable=False)
+    file_name = db.Column(db.String(255), nullable=False)
+    content_type = db.Column(db.String(100), nullable=False)
+    file_blob = db.Column(db.LargeBinary(length=(2 ** 32) - 1), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 

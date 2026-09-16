@@ -105,7 +105,7 @@
           <thead>
             <tr style="background: #f5f5f5; border-bottom: 2px solid #ddd;">
               <th style="padding: 12px; text-align: left;">Nombre</th>
-              <th style="padding: 12px; text-align: left;">Slug</th>
+              <th style="padding: 12px; text-align: left;">Categoría</th>
               <th style="padding: 12px; text-align: left;">Precio (ARS)</th>
               <th style="padding: 12px; text-align: left;">Tipo</th>
               <th style="padding: 12px; text-align: left;">Acciones</th>
@@ -226,23 +226,10 @@
           <small style="color: var(--muted);">Sube una imagen JPG o PNG. Si no subis, se usa el diseño generado.</small>
         </div>
 
-        <div class="form-row">
-          <div>
-            <label class="checkbox">
-              <input type="checkbox" name="is_kit" id="isKitCheckbox">
-              📦 ¿Este ebook VIENE CON KIT de bonus?
-            </label>
-            <small style="color: var(--muted);">✓ Marca si incluye otros ebooks bonus o material extra.</small>
-          </div>
-        </div>
-
-        <div class="form-row full" id="bonusSection" style="display: none;padding:15px;background:#fff3cd;border:2px solid #c33;border-radius:4px;">
-          <label style="font-weight:bold;color:#c33;">📚 SELECCIONA BONUS DEL KIT *OBLIGATORIO*</label>
-          <select name="kit_bonus_ids" id="kitBonusSelect" multiple style="min-height: 120px;border:2px solid #999;width:100%;padding:8px;margin:10px 0;">
-            <option value="">-- Selecciona los bonus --</option>
-          </select>
-          <small style="color: #c33;">⚠️ IMPORTANTE: Debes seleccionar MÍNIMO 1 producto como bonus. Usa Ctrl/Cmd + Click para múltiples.</small>
-        </div>
+        <p style="color: var(--muted); font-size: 13px;">
+          💡 ¿Querés vender este ebook como KIT con bonus? Primero creá el producto base acá,
+          y después usá el botón "📦 Crear KIT" en la tabla de "Mis Productos" para armar el combo.
+        </p>
 
         <button class="button button-primary">Crear Producto →</button>
       </form>
@@ -255,9 +242,6 @@ const productType = document.getElementById('productType');
 const ebookFile = document.getElementById('ebookFile');
 const ebookFileLabel = document.getElementById('ebookFileLabel');
 const ebookFileHelp = document.getElementById('ebookFileHelp');
-const isKitCheckbox = document.getElementById('isKitCheckbox');
-const bonusSection = document.getElementById('bonusSection');
-const kitBonusSelect = document.getElementById('kitBonusSelect');
 
 // Manejar cambio de tipo de producto
 function updateProductFileField() {
@@ -267,27 +251,8 @@ function updateProductFileField() {
   ebookFileHelp.textContent = interactive ? 'El HTML original se conserva intacto y se personaliza después del pago.' : 'Sube el archivo PDF o EPUB del ebook.';
 }
 
-// Mostrar/ocultar sección de bonus
-isKitCheckbox.addEventListener('change', function() {
-  bonusSection.style.display = this.checked ? 'block' : 'none';
-});
-
 productType.addEventListener('change', updateProductFileField);
 updateProductFileField();
-
-// Cargar lista de productos para bonus
-fetch('/api/admin/products-list')
-  .then(r => r.json())
-  .then(data => {
-    const products = data.products || [];
-    products.forEach(p => {
-      const option = document.createElement('option');
-      option.value = p.id;
-      option.textContent = `${p.name} (${p.price_ars} ARS)`;
-      kitBonusSelect.appendChild(option);
-    });
-  })
-  .catch(e => console.log('Productos no disponibles:', e));
 
 // Cargar productos en tabla de "Mis Productos"
 function loadProductsTable() {
@@ -302,13 +267,16 @@ function loadProductsTable() {
       }
       tbody.innerHTML = products.map(p => `
         <tr style="border-bottom: 1px solid #eee;">
-          <td style="padding: 12px;">${p.name}</td>
+          <td style="padding: 12px;">${p.name}${p.is_kit ? ' <span style="background:#ff9800;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;">KIT</span>' : ''}</td>
           <td style="padding: 12px;"><code>${p.category}</code></td>
           <td style="padding: 12px;">$${p.price_ars.toLocaleString('es-AR')}</td>
-          <td style="padding: 12px;"><small>pdf</small></td>
+          <td style="padding: 12px;"><small>${p.product_type === 'html_interactive' ? 'html' : 'pdf/epub'}</small></td>
           <td style="padding: 12px;">
             <a href="#" onclick="editProduct(${p.id}); return false;" style="color: #3A5F5F; text-decoration: none; margin-right: 8px;">✏️ Editar</a>
-            <a href="#" onclick="manageKIT(${p.id}, '${p.name}'); return false;" style="color: #ff9800; text-decoration: none; margin-right: 8px;font-weight:bold;">📦 KIT</a>
+            ${p.is_kit
+              ? `<a href="#" onclick="manageBonusFiles(${p.id}, '${p.name}'); return false;" style="color: #ff9800; text-decoration: none; margin-right: 8px; font-weight:bold;">📁 Gestionar Bonus</a>`
+              : `<a href="#" onclick="createKitModal(${p.id}, '${p.name}'); return false;" style="color: #ff9800; text-decoration: none; margin-right: 8px; font-weight:bold;">📦 Crear KIT</a>`
+            }
             <a href="#" onclick="deleteProduct(${p.id}); return false;" style="color: #c33; text-decoration: none;">🗑️ Eliminar</a>
           </td>
         </tr>
@@ -350,20 +318,6 @@ function showEditModal(product) {
           <input type="text" name="category" value="${product.category}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
         </div>
         <div style="margin-bottom:15px;">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-            <input type="checkbox" name="is_kit" id="modalIsKit" ${product.is_kit ? 'checked' : ''}>
-            <span style="font-weight:bold;">📦 ¿Es un KIT con bonus?</span>
-          </label>
-        </div>
-        <div id="modalBonusSection" style="margin-bottom:15px;padding:15px;background:#f9f9f9;border-radius:4px;border:2px solid #c33;display:${product.is_kit ? 'block' : 'none'};">
-          <label style="font-weight:bold;color:#c33;">📚 BONUS DEL KIT (OBLIGATORIO)</label>
-          <p style="color:#666;font-size:12px;margin:5px 0;">Selecciona productos ya existentes como bonus:</p>
-          <select name="kit_bonus_ids" id="modalBonusSelect" multiple style="width:100%;padding:8px;border:2px solid #999;border-radius:4px;min-height:100px;font-size:14px;margin-bottom:10px;">
-          </select>
-          <small style="color:#666;">✓ Ctrl/Cmd + Click para seleccionar múltiples</small>
-          <p style="color:#c33;font-weight:bold;margin:10px 0;">⚠️ Debes seleccionar al menos 1 bonus para guardar este KIT</p>
-        </div>
-        <div style="margin-bottom:15px;">
           <label style="font-weight:bold;">🔄 Reemplazar archivo del producto</label>
           <small style="color:#666;">Déjalo vacío para mantener el archivo actual</small>
           <input type="file" name="ebook_file" accept=".pdf,.epub,.html" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
@@ -377,44 +331,9 @@ function showEditModal(product) {
   `;
   document.body.appendChild(modal);
 
-  const isKitCheckbox = document.getElementById('modalIsKit');
-  const bonusSection = document.getElementById('modalBonusSection');
-  const bonusSelect = document.getElementById('modalBonusSelect');
-
-  // Cargar lista de productos
-  fetch('/api/admin/products-list')
-    .then(r => r.json())
-    .then(data => {
-      const allProducts = data.products || [];
-      allProducts.forEach(p => {
-        if (p.id !== product.id) {
-          const opt = document.createElement('option');
-          opt.value = p.id;
-          opt.textContent = `${p.name} ($${p.price_ars})`;
-          bonusSelect.appendChild(opt);
-        }
-      });
-      if (product.kit_bonus_ids) {
-        const ids = product.kit_bonus_ids.split(',').map(x => x.trim());
-        Array.from(bonusSelect.options).forEach(opt => {
-          if (ids.includes(opt.value)) opt.selected = true;
-        });
-      }
-    });
-
-  isKitCheckbox.addEventListener('change', () => {
-    bonusSection.style.display = isKitCheckbox.checked ? 'block' : 'none';
-  });
-
   document.getElementById('editForm').onsubmit = (e) => {
     e.preventDefault();
-    if (isKitCheckbox.checked && bonusSelect.selectedOptions.length === 0) {
-      alert('⚠️ Si marcas "KIT", DEBES seleccionar al menos 1 bonus');
-      return;
-    }
     const formData = new FormData(document.getElementById('editForm'));
-    const bonusIds = Array.from(bonusSelect.selectedOptions).map(o => o.value).join(',');
-    formData.set('kit_bonus_ids', bonusIds);
     fetch(`/admin/products/${product.id}/edit`, { method: 'POST', body: formData })
       .then(r => r.json())
       .then(data => {
@@ -437,217 +356,157 @@ function closeModal(event) {
   });
 }
 
-function createKitAuto(productId, productName) {
-  const formData = new FormData();
-  formData.append('kit_price_ars', '12000');
+function createKitModal(id, name) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+  modal.innerHTML = `
+    <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:560px;max-height:90vh;overflow-y:auto;">
+      <h2>📦 Crear KIT para: ${name}</h2>
+      <p style="color:#666;font-size:13px;margin:10px 0 20px;">
+        Se crea un producto nuevo (KIT: ${name}) con la portada y el ebook original, más los archivos bonus que subas acá.
+      </p>
+      <form id="createKitForm">
+        <div id="kitBonusRows"></div>
+        <button type="button" id="addBonusRowBtn" class="button" style="width:100%;margin-bottom:15px;">➕ Agregar otro bonus</button>
 
-  fetch(`/admin/products/${productId}/create-kit`, {
-    method: 'POST',
-    body: formData
-  })
-    .then(r => r.json())
-    .then(data => {
-      if (data.error) {
-        alert('Error: ' + data.error);
-      } else {
-        alert('KIT creado!');
-        loadProductsTable();
-      }
-      var modal = document.querySelector('div[style*="position:fixed"]');
-      if (modal) modal.remove();
-    })
-    .catch(function(e) {
-      alert('Error: ' + e);
-      var modal = document.querySelector('div[style*="position:fixed"]');
-      if (modal) modal.remove();
-    });
-}
-
-function manageKIT(id, name) {
-  fetch(`/admin/products/${id}/edit`)
-    .then(r => r.json())
-    .then(product => {
-      const modal = document.createElement('div');
-      modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
-
-      if (!product.is_kit) {
-        // CREAR KIT NUEVO - OPCIÓN SIMPLE
-        modal.innerHTML = `
-          <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:500px;text-align:center;">
-            <h2>📦 Crear KIT para: ${name}</h2>
-            <p style="color:#666;margin:20px 0;font-size:16px;">
-              Se creará automáticamente una versión KIT con precio 15% más alto.
-              <br><br>Podrás editar el precio y descripción después.
-            </p>
-            <div style="background:#f0f0f0;padding:15px;border-radius:4px;margin:20px 0;text-align:left;font-size:13px;">
-              <p><strong>Se incluirá:</strong></p>
-              <ul style="margin:10px 0;">
-                <li>✓ Portada del producto</li>
-                <li>✓ Archivo del ebook</li>
-                <li>✓ Título con "KIT:"</li>
-                <li>✓ Descripción mejorada</li>
-              </ul>
-            </div>
-            <div style="display:flex;gap:10px;">
-              <button class="button button-primary" style="flex:1;padding:12px;cursor:pointer;" onclick="createKitAuto(${id}, '${name}'); return false;">✅ Crear KIT Ahora</button>
-              <button class="button" style="flex:1;padding:12px;cursor:pointer;" onclick="closeModal(event); return false;">❌ Cancelar</button>
-            </div>
-          </div>
-        `;
-      } else {
-        // EDITAR KIT EXISTENTE
-        modal.innerHTML = `
-          <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:600px;max-height:90vh;overflow-y:auto;">
-            <h2>📦 Configurar KIT: ${name}</h2>
-            <form id="kitForm">
-              <div style="margin-bottom:20px;padding:15px;background:#fff3cd;border:2px solid #ff9800;border-radius:4px;">
-                <label style="font-weight:bold;color:#ff9800;font-size:16px;">¿Tiene BONUS/KIT?</label>
-                <div style="margin:15px 0;">
-                  <label style="display:flex;align-items:center;gap:10px;margin:10px 0;">
-                    <input type="radio" name="has_kit" value="no" ${!product.is_kit ? 'checked' : ''}> ❌ No
-                  </label>
-                  <label style="display:flex;align-items:center;gap:10px;margin:10px 0;">
-                    <input type="radio" name="has_kit" value="yes" ${product.is_kit ? 'checked' : ''}> ✅ Sí
-                  </label>
-                </div>
-              </div>
-
-            <div id="kitSection" style="display:${product.is_kit ? 'block' : 'none'};margin-bottom:20px;">
-          <div style="margin-bottom:20px;padding:15px;background:#e8f5e9;border:2px solid #4caf50;border-radius:4px;">
-            <label style="font-weight:bold;color:#2e7d32;font-size:14px;">📁 SUBE AQUÍ LOS ARCHIVOS BONUS DEL KIT</label>
-            <p style="color:#666;margin:10px 0;font-size:13px;">Sube cada archivo como si fuera un libro (HTML, PDF, EPUB)</p>
-
-            <div style="margin:15px 0;padding:15px;background:white;border:1px solid #ddd;border-radius:4px;">
-              <input type="file" id="bonusFile" accept=".html,.pdf,.epub" style="width:100%;padding:10px;border:1px solid #999;border-radius:4px;margin-bottom:10px;">
-              <button type="button" onclick="addBonusFile(); return false;" class="button button-primary" style="width:100%;padding:10px;">➕ Subir este archivo como bonus</button>
-            </div>
-
-            <div id="bonusFilesList" style="margin:15px 0;">
-              <p style="font-weight:bold;color:#2e7d32;">Archivos del KIT:</p>
-              <ul id="bonusFilesUL" style="list-style:none;padding:0;">
-                <li style="color:#666;">Ningún archivo aún</li>
-              </ul>
-            </div>
-          </div>
-
-          <div style="margin-bottom:15px;">
-            <label style="font-weight:bold;">💰 Precio del KIT (ARS) - OPCIONAL</label>
-            <input type="number" id="kitPrice" placeholder="Ej: 15999" value="${product.kit_price_ars || ''}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
-            <small style="color:#666;">Si lo dejas vacío, usará el precio del producto individual</small>
-          </div>
-
-          <div style="margin-bottom:15px;">
-            <label style="font-weight:bold;">📝 Descripción: ¿Qué lleva el KIT?</label>
-            <textarea id="kitDescription" placeholder="Ej: Incluye 3 ebooks bonus + plantillas + acceso a comunidad" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;min-height:80px;margin-top:5px;">${product.kit_description || ''}</textarea>
-          </div>
+        <div style="margin-bottom:15px;">
+          <label style="font-weight:bold;">💰 Precio del KIT (ARS) — opcional</label>
+          <input type="number" name="kit_price_ars" placeholder="Si lo dejás vacío, +15% sobre el original" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
         </div>
-
+        <div style="margin-bottom:15px;">
+          <label style="font-weight:bold;">📝 Descripción del KIT — opcional</label>
+          <textarea name="kit_description" placeholder="Ej: Incluye el ebook + 3 bonus exclusivos" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;min-height:70px;margin-top:5px;"></textarea>
+        </div>
         <div style="display:flex;gap:10px;">
-          <button type="submit" class="button button-primary" style="flex:1;padding:12px;font-size:14px;">✅ Guardar KIT</button>
-          <button type="button" onclick="closeModal(event); return false;" class="button" style="flex:1;padding:12px;font-size:14px;">❌ Cancelar</button>
+          <button type="submit" class="button button-primary" style="flex:1;padding:10px;">✅ Crear KIT</button>
+          <button type="button" onclick="closeModal(event); return false;" class="button" style="flex:1;padding:10px;">❌ Cancelar</button>
         </div>
       </form>
     </div>
   `;
+  document.body.appendChild(modal);
+
+  const rowsContainer = modal.querySelector('#kitBonusRows');
+  function addBonusRow() {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:8px;margin-bottom:10px;';
+    row.innerHTML = `
+      <input type="text" placeholder="Nombre del bonus (ej: Modo Supervivencia)" class="bonus-name" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:4px;">
+      <input type="file" accept=".html,.pdf,.epub" class="bonus-file" style="flex:1;">
+    `;
+    rowsContainer.appendChild(row);
+  }
+  addBonusRow();
+  modal.querySelector('#addBonusRowBtn').onclick = addBonusRow;
+
+  modal.querySelector('#createKitForm').onsubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('kit_price_ars', modal.querySelector('[name="kit_price_ars"]').value);
+    formData.append('kit_description', modal.querySelector('[name="kit_description"]').value);
+
+    let fileCount = 0;
+    rowsContainer.querySelectorAll('.bonus-file').forEach((fileInput, idx) => {
+      if (fileInput.files[0]) {
+        formData.append('bonus_files', fileInput.files[0]);
+        formData.append('bonus_names', rowsContainer.querySelectorAll('.bonus-name')[idx].value);
+        fileCount++;
       }
-      document.body.appendChild(modal);
-
-      window.kitProductId = id;
-      window.bonusFiles = [];
-
-      const hasKitRadios = document.querySelectorAll('input[name="has_kit"]');
-      const kitSection = document.getElementById('kitSection');
-      const bonusFilesUL = document.getElementById('bonusFilesUL');
-
-      // Load existing bonus files
-      if (product.kit_bonus_ids) {
-        const existingFiles = product.kit_bonus_ids.split(',').map(f => f.trim()).filter(f => f);
-        if (existingFiles.length > 0) {
-          bonusFilesUL.innerHTML = '';
-          existingFiles.forEach(file => {
-            const li = document.createElement('li');
-            li.style.cssText = 'padding:8px;margin:5px 0;background:#e8f5e9;border-radius:4px;display:flex;justify-content:space-between;align-items:center;';
-            li.innerHTML = `<span>📄 ${file}</span> <small style="color:#666;">(ya subido)</small>`;
-            bonusFilesUL.appendChild(li);
-          });
-        }
-      }
-
-      hasKitRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
-          kitSection.style.display = radio.value === 'yes' ? 'block' : 'none';
-        });
-      });
-
-      document.getElementById('kitForm').onsubmit = (e) => {
-        e.preventDefault();
-        const hasKit = document.querySelector('input[name="has_kit"]:checked').value === 'yes';
-        const formData = new FormData();
-        formData.append('is_kit', hasKit);
-
-        if (hasKit) {
-          if (window.bonusFiles.length === 0) {
-            alert('⚠️ Debes subir al menos 1 archivo bonus para el KIT');
-            return;
-          }
-          window.bonusFiles.forEach((file, idx) => {
-            formData.append(`bonus_file_${idx}`, file);
-          });
-          formData.append('kit_description', document.getElementById('kitDescription').value);
-        }
-
-        if (hasKit) {
-          const kitPrice = document.getElementById('kitPrice').value;
-          if (kitPrice) formData.append('kit_price_ars', kitPrice);
-        }
-
-        fetch(`/admin/products/${id}/kit`, { method: 'POST', body: formData })
-          .then(r => r.json())
-          .then(data => {
-            alert('✅ ' + (data.message || 'KIT guardado'));
-            modal.remove();
-            loadProductsTable();
-          })
-          .catch(e => alert('Error: ' + e));
-      };
     });
+    if (fileCount === 0) {
+      alert('⚠️ Subí al menos 1 archivo bonus.');
+      return;
+    }
+
+    fetch(`/admin/products/${id}/create-kit`, { method: 'POST', body: formData })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) return alert('Error: ' + data.error);
+        alert('✅ ' + data.message);
+        modal.remove();
+        loadProductsTable();
+      })
+      .catch(e => alert('Error: ' + e));
+  };
 }
 
-function addBonusFile() {
-  const fileInput = document.getElementById('bonusFile');
-  if (!fileInput.files[0]) {
-    alert('Selecciona un archivo primero');
-    return;
-  }
-  const file = fileInput.files[0];
-  window.bonusFiles.push(file);
+function manageBonusFiles(id, name) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+  modal.innerHTML = `
+    <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:520px;max-height:90vh;overflow-y:auto;">
+      <h2>📁 Bonus del KIT: ${name}</h2>
+      <ul id="bonusList" style="list-style:none;padding:0;margin:15px 0;">
+        <li style="color:#666;">Cargando...</li>
+      </ul>
+      <div style="display:flex;gap:8px;margin:15px 0;padding-top:15px;border-top:1px solid #eee;">
+        <input type="text" id="newBonusName" placeholder="Nombre del bonus" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:4px;">
+        <input type="file" id="newBonusFile" accept=".html,.pdf,.epub" style="flex:1;">
+      </div>
+      <button type="button" id="addSingleBonusBtn" class="button button-primary" style="width:100%;margin-bottom:15px;">➕ Agregar bonus</button>
+      <button type="button" onclick="closeModal(event); return false;" class="button" style="width:100%;">Cerrar</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
 
-  const ul = document.getElementById('bonusFilesUL');
-  if (ul.querySelector('li:first-child').textContent.includes('Ningún')) {
-    ul.innerHTML = '';
+  const list = modal.querySelector('#bonusList');
+
+  function loadBonusList() {
+    fetch(`/admin/products/${id}/bonus-files`)
+      .then(r => r.json())
+      .then(data => {
+        const files = data.bonus_files || [];
+        list.innerHTML = files.length
+          ? files.map(b => `
+              <li style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">
+                <span>📄 ${b.name} <small style="color:#999;">(${b.size_kb} KB)</small></span>
+                <button type="button" onclick="deleteBonusFile(${b.id}, ${id}, '${name}'); return false;" style="background:#c33;color:#fff;border:none;padding:4px 10px;border-radius:3px;cursor:pointer;">✕</button>
+              </li>
+            `).join('')
+          : '<li style="color:#666;">Sin bonus todavía</li>';
+      });
   }
-  const li = document.createElement('li');
-  li.style.cssText = 'padding:8px;margin:5px 0;background:#e8f5e9;border-radius:4px;display:flex;justify-content:space-between;align-items:center;';
-  const removeBtn = document.createElement('button');
-  removeBtn.type = 'button';
-  removeBtn.textContent = '✕';
-  removeBtn.style.cssText = 'background:#c33;color:white;border:none;padding:4px 8px;border-radius:3px;cursor:pointer;';
-  removeBtn.onclick = function() {
-    const idx = window.bonusFiles.indexOf(file);
-    if (idx > -1) window.bonusFiles.splice(idx, 1);
-    li.remove();
+  loadBonusList();
+
+  modal.querySelector('#addSingleBonusBtn').onclick = () => {
+    const fileInput = modal.querySelector('#newBonusFile');
+    const nameInput = modal.querySelector('#newBonusName');
+    if (!fileInput.files[0]) return alert('Seleccioná un archivo primero.');
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('name', nameInput.value);
+    fetch(`/admin/products/${id}/bonus-files`, { method: 'POST', body: formData })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) return alert('Error: ' + data.error);
+        fileInput.value = '';
+        nameInput.value = '';
+        loadBonusList();
+        loadProductsTable();
+      })
+      .catch(e => alert('Error: ' + e));
   };
-  li.innerHTML = `<span>📄 ${file.name}</span>`;
-  li.appendChild(removeBtn);
-  ul.appendChild(li);
-  fileInput.value = '';
+}
+
+function deleteBonusFile(bonusId, productId, name) {
+  if (!confirm('¿Eliminar este bonus?')) return;
+  fetch(`/admin/bonus-files/${bonusId}`, { method: 'DELETE' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) return alert('Error: ' + data.error);
+      var modal = document.querySelector('div[style*="position:fixed"]');
+      if (modal) modal.remove();
+      manageBonusFiles(productId, name);
+    })
+    .catch(e => alert('Error: ' + e));
 }
 
 function deleteProduct(id) {
   if (!confirm('¿Eliminar este producto?')) return;
   fetch(`/admin/products/${id}`, { method: 'DELETE' })
-    .then(r => r.json())
-    .then(data => {
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (!ok) return alert('⚠️ ' + (data.error || 'No se pudo eliminar.'));
       alert(data.message || 'Producto eliminado');
       loadProductsTable();
     })

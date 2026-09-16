@@ -16,7 +16,7 @@ from werkzeug.utils import secure_filename
 
 from backend.config import Config
 from backend.models import (
-    db, Product, Order, OrderItem, ProductClick, PageVisit
+    db, Product, Order, OrderItem, ProductClick, PageVisit, ProductBonusFile
 )
 from backend.services import (
     MercadoPagoService, PayPalService, EmailService,
@@ -232,7 +232,6 @@ def migrate_product_columns():
         "product_type": "VARCHAR(30) NOT NULL DEFAULT 'pdf'",
         "source_html_path": "VARCHAR(255)",
         "is_kit": "BOOLEAN DEFAULT FALSE",
-        "kit_bonus_ids": "VARCHAR(255)",
         "kit_price_ars": "INT",
         "kit_description": "TEXT",
     }.items():
@@ -550,7 +549,11 @@ def success(order_id):
     order = Order.query.get_or_404(order_id)
     if order.status not in {"paid_demo", "paid"}:
         abort(403)
-    return render_template("success.html", order=order)
+    purchased_product_ids = [item.product_id for item in order.items]
+    bonus_files = ProductBonusFile.query.filter(
+        ProductBonusFile.product_id.in_(purchased_product_ids)
+    ).all() if purchased_product_ids else []
+    return render_template("success.html", order=order, bonus_files=bonus_files)
 
 
 @app.route("/download/<token>")
@@ -579,6 +582,26 @@ def download(token):
         return response
 
     return render_template("download_placeholder.html", product=product, order=order)
+
+
+@app.get("/download/<token>/bonus/<int:bonus_id>")
+def download_bonus(token, bonus_id):
+    """Download a single bonus file from a KIT the customer purchased."""
+    from flask import make_response
+
+    order = Order.query.filter_by(download_token=token).first_or_404()
+    if order.status not in {"paid_demo", "paid"}:
+        abort(403, description="Esta descarga no está disponible para esta orden.")
+
+    bonus = ProductBonusFile.query.get_or_404(bonus_id)
+    purchased_product_ids = {item.product_id for item in order.items}
+    if bonus.product_id not in purchased_product_ids:
+        abort(403, description="Este bonus no pertenece a tu compra.")
+
+    response = make_response(bonus.file_blob)
+    response.headers["Content-Type"] = bonus.content_type
+    response.headers["Content-Disposition"] = f'attachment; filename="{bonus.file_name}"'
+    return response
 
 
 @app.get("/leer/<access_code>")
@@ -811,41 +834,7 @@ def edit_product_form(product_id):
         "price_ars": product.price_ars,
         "category": product.category,
         "is_kit": product.is_kit,
-        "kit_bonus_ids": product.kit_bonus_ids,
     }
-
-
-@app.post("/admin/products/<int:product_id>/kit")
-@admin_required
-def update_product_kit(product_id):
-    """Update Product KIT configuration."""
-    product = Product.query.get(product_id)
-    if not product:
-        return {"error": "No encontrado"}, 404
-    product.is_kit = request.form.get("is_kit") == "True"
-    if product.is_kit:
-        bonus_ids = []
-        idx = 0
-        while True:
-            key = f'bonus_file_{idx}'
-            if key not in request.files:
-                break
-            for bonus_file in request.files.getlist(key):
-                if bonus_file and bonus_file.filename:
-                    bonus_ids.append(f"{product.slug}_bonus_{idx}")
-            idx += 1
-        product.kit_bonus_ids = ",".join(bonus_ids) if bonus_ids else ""
-        kit_price = request.form.get("kit_price_ars")
-        if kit_price:
-            product.kit_price_ars = int(kit_price)
-        kit_desc = request.form.get("kit_description", "").strip()
-        if kit_desc:
-            product.kit_description = kit_desc
-    else:
-        product.kit_price_ars = None
-        product.kit_description = None
-    db.session.commit()
-    return {"message": "Configuración KIT guardada"}
 
 
 @app.post("/admin/products/<int:product_id>/edit")
@@ -855,12 +844,17 @@ def update_product(product_id):
     product = Product.query.get(product_id)
     if not product:
         return {"error": "No encontrado"}, 404
+    try:
+        price_ars = int(request.form.get("price_ars", product.price_ars))
+    except ValueError:
+        return {"error": "El precio debe ser un número válido."}, 400
+    if price_ars <= 0:
+        return {"error": "El precio debe ser mayor a 0."}, 400
+
     product.name = request.form.get("name", product.name).strip()
     product.description = request.form.get("description", product.description).strip()
-    product.price_ars = int(request.form.get("price_ars", product.price_ars))
+    product.price_ars = price_ars
     product.category = request.form.get("category", product.category).strip()
-    product.is_kit = request.form.get("is_kit") == "on"
-    product.kit_bonus_ids = request.form.get("kit_bonus_ids", "") if product.is_kit else None
     ebook_file = request.files.get("ebook_file")
     if ebook_file and ebook_file.filename:
         product.ebook_file = ebook_file.read()
@@ -871,34 +865,65 @@ def update_product(product_id):
 @app.delete("/admin/products/<int:product_id>")
 @admin_required
 def delete_product(product_id):
-    """Delete Product."""
+    """Delete Product, refusing when orders still reference it."""
     product = Product.query.get(product_id)
     if not product:
         return {"error": "Producto no encontrado"}, 404
+
+    orders_count = (
+        OrderItem.query.filter_by(product_id=product_id).count()
+    )
+    if orders_count:
+        return {
+            "error": (
+                f"No se puede eliminar: tiene {orders_count} orden(es) "
+                "asociada(s). Ya fue comprado por al menos un cliente."
+            )
+        }, 409
+
+    ProductClick.query.filter_by(product_id=product_id).delete()
+
     db.session.delete(product)
     db.session.commit()
     return {"message": "Producto eliminado"}
 
 
+def _guess_content_type(filename):
+    """Guess Content Type."""
+    ext = Path(filename).suffix.lower()
+    return {
+        ".pdf": "application/pdf",
+        ".epub": "application/epub+zip",
+        ".html": "text/html; charset=utf-8",
+    }.get(ext, "application/octet-stream")
+
+
 @app.post("/admin/products/<int:product_id>/create-kit")
 @admin_required
 def create_kit_from_product(product_id):
-    """Create KIT version from existing product."""
+    """Create a KIT product bundling the original ebook with bonus files."""
     product = Product.query.get_or_404(product_id)
 
     kit_slug = f"kit-{product.slug}"
     if Product.query.filter_by(slug=kit_slug).first():
-        return {"error": f"KIT ya existe: {kit_slug}"}, 400
+        return {"error": f"Ya existe un KIT para este producto: {kit_slug}"}, 400
 
-    kit_price = int(request.form.get("kit_price_ars", int(product.price_ars * 1.15)))
-    kit_description = request.form.get("kit_description",
-        f"{product.description}\n\nIncluye el ebook principal y 3 bonus exclusivos: Modo Supervivencia, Mi Casa Funciona Así, Tarjetas Antibloqueo.")
+    bonus_files = [f for f in request.files.getlist("bonus_files") if f and f.filename]
+    bonus_names = request.form.getlist("bonus_names")
+    if not bonus_files:
+        return {"error": "Subí al menos un archivo bonus para crear el KIT."}, 400
+
+    kit_price = int(request.form.get("kit_price_ars") or int(product.price_ars * 1.15))
+    kit_description = request.form.get("kit_description", "").strip() or (
+        f"{product.description}\n\nIncluye el ebook principal y "
+        f"{len(bonus_files)} bonus exclusivo(s)."
+    )
 
     kit = Product(
         slug=kit_slug,
         name=f"KIT: {product.name}",
         description=kit_description,
-        short_description=f"KIT completo con 3 bonus",
+        short_description=f"KIT completo con {len(bonus_files)} bonus",
         category=product.category,
         price_ars=kit_price,
         cover_class=product.cover_class,
@@ -915,9 +940,76 @@ def create_kit_from_product(product_id):
         kit_description=kit_description,
     )
     db.session.add(kit)
+    db.session.flush()
+
+    for idx, bonus_file in enumerate(bonus_files):
+        name = (bonus_names[idx].strip() if idx < len(bonus_names) and bonus_names[idx].strip()
+                else Path(bonus_file.filename).stem)
+        db.session.add(ProductBonusFile(
+            product_id=kit.id,
+            name=name,
+            file_name=secure_filename(bonus_file.filename),
+            content_type=_guess_content_type(bonus_file.filename),
+            file_blob=bonus_file.read(),
+        ))
     db.session.commit()
 
-    return {"message": f"KIT '{kit_slug}' creado exitosamente", "kit_id": kit.id}
+    return {"message": f"KIT '{kit_slug}' creado con {len(bonus_files)} bonus.", "kit_id": kit.id}
+
+
+@app.get("/admin/products/<int:product_id>/bonus-files")
+@admin_required
+def list_bonus_files(product_id):
+    """List a KIT's bonus files."""
+    product = Product.query.get_or_404(product_id)
+    return {
+        "bonus_files": [
+            {
+                "id": b.id,
+                "name": b.name,
+                "file_name": b.file_name,
+                "size_kb": round(len(b.file_blob) / 1024, 1),
+            }
+            for b in product.bonus_files
+        ]
+    }
+
+
+@app.post("/admin/products/<int:product_id>/bonus-files")
+@admin_required
+def add_bonus_file(product_id):
+    """Add a single bonus file to an existing KIT."""
+    product = Product.query.get_or_404(product_id)
+    if not product.is_kit:
+        return {"error": "Este producto no es un KIT."}, 400
+
+    bonus_file = request.files.get("file")
+    if not bonus_file or not bonus_file.filename:
+        return {"error": "Seleccioná un archivo."}, 400
+
+    name = request.form.get("name", "").strip() or Path(bonus_file.filename).stem
+    bonus = ProductBonusFile(
+        product_id=product.id,
+        name=name,
+        file_name=secure_filename(bonus_file.filename),
+        content_type=_guess_content_type(bonus_file.filename),
+        file_blob=bonus_file.read(),
+    )
+    db.session.add(bonus)
+    db.session.commit()
+    return {"message": "Bonus agregado.", "id": bonus.id}
+
+
+@app.delete("/admin/bonus-files/<int:bonus_id>")
+@admin_required
+def delete_bonus_file(bonus_id):
+    """Delete a single bonus file from a KIT."""
+    bonus = ProductBonusFile.query.get(bonus_id)
+    if not bonus:
+        return {"error": "No encontrado"}, 404
+    db.session.delete(bonus)
+    db.session.commit()
+    return {"message": "Bonus eliminado."}
 
 
 @app.post("/admin/products")
@@ -927,8 +1019,6 @@ def admin_create_product():
     slug = request.form["slug"].strip()
     name = request.form["name"].strip()
     product_type = request.form.get("product_type", "pdf")
-    is_kit = request.form.get("is_kit") == "on"
-    kit_bonus_ids = request.form.get("kit_bonus_ids", "")
 
     ebook_file = request.files.get("ebook_file")
     file_name = None
@@ -996,8 +1086,6 @@ def admin_create_product():
         product_type=product_type,
         source_html_path=source_html_path,
         ebook_file=ebook_binary,
-        is_kit=is_kit,
-        kit_bonus_ids=kit_bonus_ids if is_kit else None,
     )
     db.session.add(product)
     db.session.commit()
@@ -1187,8 +1275,11 @@ def get_products_list():
                 {
                     "id": p.id,
                     "name": p.name,
+                    "slug": p.slug,
                     "price_ars": p.price_ars,
                     "category": p.category,
+                    "product_type": p.product_type,
+                    "is_kit": p.is_kit,
                 }
                 for p in products
             ]
