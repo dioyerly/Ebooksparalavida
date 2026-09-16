@@ -355,34 +355,23 @@ class EmailService:
         self.api_key = api_key or os.getenv("SENDGRID_API_KEY", "")
         self.is_demo = not self.api_key or self.api_key == ""
 
-    def send_download_link(self, buyer_email, product_names, download_token):
-        """Envía el enlace de descarga al cliente"""
-        if self.is_demo:
-            return self._log_demo_email(buyer_email, product_names, download_token)
-
-        # Implementar con SendGrid cuando esté disponible
-        return {"success": False, "message": "SendGrid not configured"}
-
-    def send_interactive_ebook(self, buyer_email, product_name, access_code, file_path):
-        """Send notification with access code (no file attachment)."""
-        subject = f"¡Tu compra de {product_name} está lista!"
-        body = (
-            f"Hola,\n\n"
-            f"¡Gracias por tu compra de {product_name}!\n\n"
-            f"Tu código de acceso es: {access_code}\n\n"
-            f"Descargá tu ebook desde tu cuenta y usa este código para acceder.\n\n"
-            f"Ebooks para la vida"
-        )
+    def _smtp_config(self):
+        """Smtp Config."""
         smtp_host = os.getenv("SMTP_HOST", "")
         smtp_port = int(os.getenv("SMTP_PORT", "587"))
         smtp_user = os.getenv("SMTP_USER", "")
         smtp_password = os.getenv("SMTP_PASSWORD", "")
         sender = os.getenv("SMTP_FROM", smtp_user)
-        smtp_configured = all([smtp_host, smtp_user, smtp_password, sender])
+        configured = all([smtp_host, smtp_user, smtp_password, sender])
+        return smtp_host, smtp_port, smtp_user, smtp_password, sender, configured
+
+    def _send(self, buyer_email, subject, body):
+        """Send a plain-text email via SMTP, or log it in demo mode."""
+        smtp_host, smtp_port, smtp_user, smtp_password, sender, smtp_configured = self._smtp_config()
 
         if not smtp_configured:
             print(f"DEMO EMAIL TO: {buyer_email}\nSubject: {subject}\n\n{body}")
-            return {"success": True, "is_demo": True, "message": "Interactive email logged"}
+            return {"success": True, "is_demo": True, "message": "Email logged (SMTP not configured)"}
 
         try:
             message = EmailMessage()
@@ -394,7 +383,7 @@ class EmailService:
                 smtp.starttls()
                 smtp.login(smtp_user, smtp_password)
                 smtp.send_message(message)
-            return {"success": True, "is_demo": False, "message": "Interactive email sent"}
+            return {"success": True, "is_demo": False, "message": "Email sent"}
         except smtplib.SMTPException as e:
             print(f"SMTP Error sending to {buyer_email}: {str(e)}")
             return {"success": False, "error": "Email delivery failed", "message": str(e)}
@@ -402,39 +391,33 @@ class EmailService:
             print(f"Unexpected error sending email to {buyer_email}: {str(e)}")
             return {"success": False, "error": "Email error", "message": str(e)}
 
-    def _log_demo_email(self, buyer_email, product_names, download_token):
-        """En modo demo, solo registra que se enviaría el email"""
-        download_url = (
-            f"{os.getenv('PUBLIC_BASE_URL', 'http://127.0.0.1:5000')}"
-            f"/download/{download_token}"
+    def send_download_link(self, buyer_email, product_names, download_token):
+        """Envía el enlace de descarga al cliente (compra de ebook normal)."""
+        base_url = os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:5000")
+        download_url = f"{base_url}/download/{download_token}"
+        subject = "¡Tu compra está lista!"
+        body = (
+            f"Hola,\n\n"
+            f"¡Gracias por tu compra! Tus ebooks están listos:\n\n"
+            + "\n".join(f"- {name}" for name in product_names)
+            + f"\n\nDescargalos acá: {download_url}\n\n"
+            f"Este enlace es personal y no caduca, podés usarlo cuando quieras.\n\n"
+            f"Ebooks para la vida"
         )
+        return self._send(buyer_email, subject, body)
 
-        email_content = f"""
-        DEMO - EMAIL QUE SE ENVIARÍA A: {buyer_email}
-
-        Asunto: ¡Tu ebook está listo para descargar!
-
-        ---
-
-        ¡Hola!
-
-        Gracias por tu compra. Tus ebooks están listos:
-
-        {chr(10).join(f"- {name}" for name in product_names)}
-
-        Descargá aquí: {download_url}
-
-        Este enlace es personal y no caduca.
-
-        ---
-        Ebooks para la vida
-        """
-
-        print(email_content)
-
-        return {
-            "success": True,
-            "is_demo": True,
-            "message": f"Demo: email sent to {buyer_email}",
-            "download_url": download_url,
-        }
+    def send_interactive_ebook(self, buyer_email, product_name, access_code, file_path):
+        """Send notification with access code and read-online link."""
+        base_url = os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:5000")
+        read_url = f"{base_url}/leer/{access_code}"
+        subject = f"¡Tu compra de {product_name} está lista!"
+        body = (
+            f"Hola,\n\n"
+            f"¡Gracias por tu compra de {product_name}!\n\n"
+            f"Tu código de acceso es: {access_code}\n\n"
+            f"Entrá acá cuando quieras leerlo: {read_url}\n\n"
+            f"Guardá este email: el enlace y el código son personales, no caducan, "
+            f"y los vas a necesitar para volver a entrar.\n\n"
+            f"Ebooks para la vida"
+        )
+        return self._send(buyer_email, subject, body)
