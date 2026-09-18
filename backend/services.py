@@ -235,6 +235,7 @@ class MercadoPagoService:
             data = response.json()
             return {
                 "status": data.get("status"),  # approved, pending, rejected, cancelled
+                "external_reference": data.get("external_reference", ""),
                 "verified": True,
             }
         except Exception as e:

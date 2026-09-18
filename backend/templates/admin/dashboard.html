@@ -705,6 +705,7 @@ async function loadOrders() {
               <th>Fecha</th>
               <th>Código de acceso</th>
               <th>Ebook interactivo</th>
+              <th>Reparar pago</th>
             </tr>
           </thead>
           <tbody>
@@ -722,6 +723,9 @@ async function loadOrders() {
                   : '-'}</td>
                 <td>${o.ebook_type === 'html_interactive'
                   ? `<button class="btn-regenerate" onclick="regenerateOrderHtml(${o.id}, this)">Regenerar HTML</button>`
+                  : '-'}</td>
+                <td>${o.status === 'pending'
+                  ? `<button class="btn-regenerate" onclick="markOrderPaid(${o.id}, this)">Marcar pagada y reenviar</button>`
                   : '-'}</td>
               </tr>
             `).join('')}
@@ -755,6 +759,32 @@ async function regenerateOrderHtml(orderId, btn) {
     btn.textContent = originalText;
     btn.disabled = false;
     alert('Error de conexión al regenerar el HTML.');
+  }
+}
+
+async function markOrderPaid(orderId, btn) {
+  if (!confirm(`¿Confirmás que la orden #${orderId} fue cobrada de verdad en Mercado Pago y hay que marcarla pagada y reenviar el mail?`)) {
+    return;
+  }
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'Procesando...';
+  try {
+    const res = await fetch(`/admin/orders/${orderId}/mark-paid`, { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      btn.textContent = 'Listo ✓';
+      alert(`Orden #${orderId} marcada como pagada y reenviada.`);
+      loadOrders();
+    } else {
+      btn.textContent = originalText;
+      btn.disabled = false;
+      alert(`Error: ${data.error || 'No se pudo procesar la orden.'}`);
+    }
+  } catch (e) {
+    btn.textContent = originalText;
+    btn.disabled = false;
+    alert('Error de conexión al procesar la orden.');
   }
 }
 
