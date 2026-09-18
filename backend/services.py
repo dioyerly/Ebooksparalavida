@@ -249,7 +249,7 @@ class PayPalService:
         self.client_id = client_id or os.getenv("PAYPAL_CLIENT_ID", "")
         self.client_secret = client_secret or os.getenv("PAYPAL_CLIENT_SECRET", "")
         self.is_demo = not self.client_id or self.client_id == ""
-        self.sandbox = True  # Siempre usar sandbox en desarrollo
+        self.sandbox = os.getenv("PAYPAL_MODE", "live").lower() == "sandbox"
 
     def create_order(self, order_id, buyer_email, total_ars, items):
         """Crea una orden en PayPal"""
