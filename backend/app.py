@@ -476,6 +476,15 @@ def checkout():
 
         # Crear preferencia de pago según método
         if payment_method == "mercadopago":
+            mp_service = MercadoPagoService(app.config.get("MP_ACCESS_TOKEN"))
+            payment_result = mp_service.create_preference(
+                order.id, buyer_name, buyer_email, total, items)
+
+            if payment_result.get("success") and not payment_result.get("is_demo"):
+                session["cart"] = []
+                return redirect(payment_result.get("checkout_url"))
+
+            # Sin MP_ACCESS_TOKEN configurado (solo desarrollo local): usar el simulador.
             session["cart"] = []
             return redirect(url_for("payment_simulator", order_id=order.id))
 
@@ -676,7 +685,10 @@ def read_interactive_ebook(access_code):
 
 @app.get("/pay/mercadopago/<int:order_id>")
 def payment_simulator(order_id):
-    """Simulador de pago de Mercado Pago para localhost."""
+    """Simulador de pago de Mercado Pago - solo disponible si no hay
+    MP_ACCESS_TOKEN configurado (desarrollo local sin credenciales reales)."""
+    if app.config.get("MP_ACCESS_TOKEN"):
+        abort(404)
     order = Order.query.get_or_404(order_id)
     if order.status != "pending":
         abort(403, description="Esta orden ya fue pagada.")
@@ -685,7 +697,10 @@ def payment_simulator(order_id):
 
 @app.post("/process-payment/<int:order_id>")
 def process_payment(order_id):
-    """Procesa el pago simulado de Mercado Pago."""
+    """Procesa el pago simulado de Mercado Pago - solo disponible si no hay
+    MP_ACCESS_TOKEN configurado (desarrollo local sin credenciales reales)."""
+    if app.config.get("MP_ACCESS_TOKEN"):
+        abort(404)
     try:
         order = Order.query.get_or_404(order_id)
         if order.status != "pending":
