@@ -726,7 +726,9 @@ async function loadOrders() {
                   : '-'}</td>
                 <td>${o.status === 'pending'
                   ? `<button class="btn-regenerate" onclick="markOrderPaid(${o.id}, this)">Marcar pagada y reenviar</button>`
-                  : '-'}</td>
+                  : (o.status === 'paid' || o.status === 'paid_demo')
+                    ? `<button class="btn-regenerate" onclick="resendOrderEmail(${o.id}, this)">Reenviar mail</button>`
+                    : '-'}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -785,6 +787,28 @@ async function markOrderPaid(orderId, btn) {
     btn.textContent = originalText;
     btn.disabled = false;
     alert('Error de conexión al procesar la orden.');
+  }
+}
+
+async function resendOrderEmail(orderId, btn) {
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'Enviando...';
+  try {
+    const res = await fetch(`/admin/orders/${orderId}/resend-email`, { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      btn.textContent = 'Listo ✓';
+      alert(`Mail reenviado para la orden #${orderId}.`);
+    } else {
+      btn.textContent = originalText;
+      alert(`Error: ${data.error || 'No se pudo reenviar el mail.'}`);
+    }
+  } catch (e) {
+    btn.textContent = originalText;
+    alert('Error de conexión al reenviar el mail.');
+  } finally {
+    btn.disabled = false;
   }
 }
 

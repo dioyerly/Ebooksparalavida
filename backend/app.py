@@ -1404,12 +1404,11 @@ def serve_ebook_file(product_id):
     )
 
 
-def fulfill_paid_order(order):
-    """Mark an order as paid and deliver it: generate access code + send the
-    right email (interactive access code or plain download link)."""
-    order.status = "paid"
-    db.session.commit()
-
+def deliver_order_email(order):
+    """Send the delivery email for an already-paid order: generate access
+    code + send the right email (interactive access code or plain download
+    link). Safe to call again to resend (e.g. after an email provider outage) -
+    reuses the order's existing access code instead of generating a new one."""
     email_service = EmailService(app.config.get("SENDGRID_API_KEY"))
 
     interactive_product = None
@@ -1420,9 +1419,11 @@ def fulfill_paid_order(order):
             break
 
     if interactive_product:
-        access_code = generate_access_code()
-        while Order.query.filter_by(access_code=access_code).first():
+        access_code = order.access_code
+        if not access_code:
             access_code = generate_access_code()
+            while Order.query.filter_by(access_code=access_code).first():
+                access_code = generate_access_code()
 
         if interactive_product.ebook_file:
             try:
@@ -1454,6 +1455,13 @@ def fulfill_paid_order(order):
             product_names,
             order.download_token
         )
+
+
+def fulfill_paid_order(order):
+    """Mark a pending order as paid and deliver it by email."""
+    order.status = "paid"
+    db.session.commit()
+    deliver_order_email(order)
 
 
 @app.post("/webhook/mercadopago")
@@ -1497,6 +1505,19 @@ def admin_mark_order_paid(order_id):
         return {"error": "Esta orden ya estaba pagada o no está pendiente."}, 400
 
     fulfill_paid_order(order)
+    return {"success": True}
+
+
+@app.post("/admin/orders/<int:order_id>/resend-email")
+@admin_required
+def admin_resend_order_email(order_id):
+    """Resend the delivery email for an order that's already paid but whose
+    email failed to send (e.g. an email provider outage)."""
+    order = Order.query.get_or_404(order_id)
+    if order.status not in {"paid", "paid_demo"}:
+        return {"error": "Esta orden todavía no está pagada."}, 400
+
+    deliver_order_email(order)
     return {"success": True}
 
 
