@@ -258,7 +258,6 @@ class PayPalService:
 
         # Convertir ARS a USD (aproximado)
         ars_per_usd = float(os.getenv("ARS_PER_USD", "1450"))
-        total_usd = round(total_ars / ars_per_usd, 2)
 
         base_url = (
             "https://api.sandbox.paypal.com"
@@ -282,17 +281,25 @@ class PayPalService:
         access_token = auth_response.json()["access_token"]
         headers = {"Authorization": f"Bearer {access_token}"}
 
+        # PayPal requires amount.value to be a fixed-point string with exactly
+        # 2 decimals ("4.80", not "4.8") and to exactly equal the sum of the
+        # item breakdown - otherwise it rejects the whole request.
+        item_amounts = [
+            round(float(item["price_ars"]) / ars_per_usd, 2) for item in items
+        ]
+        total_usd = round(sum(item_amounts), 2)
+
         order_data = {
             "intent": "CAPTURE",
             "purchase_units": [
                 {
                     "amount": {
                         "currency_code": "USD",
-                        "value": str(total_usd),
+                        "value": f"{total_usd:.2f}",
                         "breakdown": {
                             "item_total": {
                                 "currency_code": "USD",
-                                "value": str(total_usd),
+                                "value": f"{total_usd:.2f}",
                             }
                         },
                     },
@@ -302,12 +309,10 @@ class PayPalService:
                             "quantity": "1",
                             "unit_amount": {
                                 "currency_code": "USD",
-                                "value": str(
-                                    round(item["price_ars"] / ars_per_usd, 2)
-                                ),
+                                "value": f"{amount:.2f}",
                             },
                         }
-                        for item in items
+                        for item, amount in zip(items, item_amounts)
                     ],
                 }
             ],
@@ -317,6 +322,8 @@ class PayPalService:
                 "cancel_url": f"{os.getenv('PUBLIC_BASE_URL')}/checkout",
             },
         }
+
+        print(f"PayPal create_order request for order {order_id}: {order_data}")
 
         try:
             response = requests.post(
