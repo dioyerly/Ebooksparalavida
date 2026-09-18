@@ -498,7 +498,14 @@ def checkout():
             session["cart"] = []
             return redirect(payment_result.get("checkout_url"))
 
-        # PayPal demo: marcar como pagado y procesar
+        if not pp_service.is_demo:
+            # Hay credenciales reales configuradas pero la llamada a la API
+            # de PayPal falló - NO hay que entregar el producto gratis.
+            flash("No se pudo iniciar el pago con PayPal. Probá de nuevo o "
+                  "elegí Mercado Pago.", "error")
+            return render_template("checkout.html", products=products, total=total)
+
+        # Sin PAYPAL_CLIENT_ID configurado (solo desarrollo local): modo demo.
         order.status = "paid_demo"
         db.session.commit()
         session["cart"] = []
