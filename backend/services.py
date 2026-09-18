@@ -275,6 +275,8 @@ class PayPalService:
         )
 
         if auth_response.status_code != 200:
+            print(f"PayPal auth failed for order {order_id}: "
+                  f"{auth_response.status_code} {auth_response.text}")
             return {"success": False, "error": "Authentication failed"}
 
         access_token = auth_response.json()["access_token"]
@@ -333,7 +335,12 @@ class PayPalService:
                     None,
                 ),
             }
+        except requests.exceptions.HTTPError as e:
+            print(f"PayPal create_order failed for order {order_id}: "
+                  f"{response.status_code} {response.text}")
+            return {"success": False, "error": str(e)}
         except Exception as e:
+            print(f"PayPal create_order error for order {order_id}: {str(e)}")
             return {"success": False, "error": str(e)}
 
     def _create_demo_order(self, order_id, total_ars):
