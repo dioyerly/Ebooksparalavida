@@ -14,6 +14,8 @@ from flask import (
     Flask, abort, flash, redirect, render_template, request, session,
     url_for, send_from_directory
 )
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 
 from backend.config import Config
@@ -30,6 +32,8 @@ app = Flask(__name__, template_folder="templates",
             static_folder="../frontend/assets")
 app.config.from_object(Config)
 db.init_app(app)
+
+limiter = Limiter(get_remote_address, app=app, default_limits=[])
 
 
 SEED_PRODUCTS = [
@@ -597,6 +601,7 @@ def success(order_id):
 
 
 @app.route("/download/<token>")
+@limiter.limit("30 per minute")
 def download(token):
     """Show the customer a page to choose PDF or EPUB for their purchase."""
     order = Order.query.filter_by(download_token=token).first_or_404()
@@ -616,6 +621,7 @@ def download(token):
 
 
 @app.get("/download/<token>/<fmt>")
+@limiter.limit("30 per minute")
 def download_file(token, fmt):
     """Serve the purchased ebook in the requested format (pdf or epub)."""
     from flask import make_response
@@ -648,6 +654,7 @@ def download_file(token, fmt):
 
 
 @app.get("/download/<token>/bonus/<int:bonus_id>")
+@limiter.limit("30 per minute")
 def download_bonus(token, bonus_id):
     """Download a single bonus file from a KIT the customer purchased."""
     from flask import make_response
@@ -668,6 +675,7 @@ def download_bonus(token, bonus_id):
 
 
 @app.get("/leer/<access_code>")
+@limiter.limit("30 per minute")
 def read_interactive_ebook(access_code):
     """Read interactive ebook with device protection (max 2 devices)."""
     order = Order.query.filter_by(access_code=access_code).first_or_404()
@@ -807,6 +815,7 @@ def process_payment(order_id):
 
 
 @app.route("/admin/login", methods=["GET", "POST"])
+@limiter.limit("10 per minute")
 def admin_login():
     """Admin Login."""
     if request.method == "POST":
