@@ -1231,6 +1231,9 @@ def admin_create_product():
 @app.post("/api/track-click")
 def track_product_click():
     """Track Product Click."""
+    if session.get("is_admin"):
+        return {"status": "ok"}
+
     data = request.get_json() or {}
     product_id = data.get("product_id")
     product_name = data.get("product_name", "Unknown")
@@ -1254,6 +1257,9 @@ def track_product_click():
 @app.post("/api/track-visit")
 def track_page_visit():
     """Track Page Visit."""
+    if session.get("is_admin"):
+        return {"status": "ok"}
+
     data = request.get_json() or {}
     page_path = data.get("page_path", request.path)
 
