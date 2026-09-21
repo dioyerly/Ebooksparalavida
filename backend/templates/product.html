@@ -3,6 +3,7 @@
 {% block content %}
 <section class="product-detail wrap" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}">
   <div class="detail-cover">
+    {% if product.product_type == 'html_interactive' %}<span class="badge-interactive">Interactivo</span>{% endif %}
     {% if product.cover_image_blob %}
       <img class="real-cover" src="{{ url_for('serve_cover_image', product_id=product.id, v=(product.updated_at.timestamp()|int if product.updated_at else 0)) }}" alt="Portada de {{ product.name }}">
     {% elif product.cover_image %}
