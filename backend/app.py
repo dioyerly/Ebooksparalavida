@@ -614,6 +614,9 @@ def download(token):
     product = Product.query.filter_by(
         id=order.items[0].product_id).first_or_404()
 
+    if product.product_type == "html_interactive":
+        abort(404)
+
     if not product.ebook_file and not product.ebook_file_epub:
         return render_template("download_placeholder.html", product=product, order=order)
 
@@ -638,6 +641,9 @@ def download_file(token, fmt):
 
     product = Product.query.filter_by(
         id=order.items[0].product_id).first_or_404()
+
+    if product.product_type == "html_interactive":
+        abort(404)
 
     if fmt == "pdf":
         blob, filename, mime_type = product.ebook_file, product.file_name, "application/pdf"
