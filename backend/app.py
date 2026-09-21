@@ -369,6 +369,12 @@ def refund_policy():
     return render_template("refund_policy.html")
 
 
+@app.get("/ebooks-interactivos")
+def how_interactive_works():
+    """Explains how interactive ebooks (access code, device limit) work."""
+    return render_template("how_interactive_works.html")
+
+
 @app.route("/")
 def home():
     """Render home page with featured and recent products."""
