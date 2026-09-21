@@ -30,7 +30,7 @@
   </main>
   <footer class="site-footer">
     <div><a class="brand footer-brand" href="{{ url_for('home') }}"><img class="brand-logo" src="{{ url_for('static', filename='images/logo-ebooks-para-la-vida.jpeg') }}" alt=""><span>Ebooks <em>para la vida</em></span></a><p>Ideas prácticas para hacer lugar a lo que importa.</p></div>
-    <div class="footer-links"><a href="https://www.tiktok.com/" target="_blank" rel="noreferrer">TikTok</a><a href="https://www.amazon.com/" target="_blank" rel="noreferrer">Amazon KDP</a><a href="mailto:hola@ebooksparalavida.com">Contacto</a></div>
+    <div class="footer-links"><a href="https://www.tiktok.com/" target="_blank" rel="noreferrer">TikTok</a><a href="https://www.amazon.com/" target="_blank" rel="noreferrer">Amazon KDP</a><a href="{{ url_for('terms') }}">Términos</a><a href="{{ url_for('refund_policy') }}">Reembolsos</a><a href="mailto:hola@ebooksparalavida.com">Contacto</a></div>
     <p class="copyright">© {{ current_year }} Ebooks para la vida</p>
   </footer>
 

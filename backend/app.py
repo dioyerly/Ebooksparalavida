@@ -357,6 +357,18 @@ def inject_globals():
     }
 
 
+@app.get("/terminos")
+def terms():
+    """Terms and conditions page."""
+    return render_template("terms.html")
+
+
+@app.get("/reembolsos")
+def refund_policy():
+    """Refund/return policy page."""
+    return render_template("refund_policy.html")
+
+
 @app.route("/")
 def home():
     """Render home page with featured and recent products."""

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Términos y Condiciones{% endblock %}
+{% block content %}
+<section class="legal-page wrap">
+  <div class="page-heading"><p class="eyebrow">Legal</p><h1>Términos y<br><em>Condiciones</em></h1></div>
+
+  <h2>1. Quién vende</h2>
+  <p>Este sitio (estrategia.site, "Ebooks para la vida") es operado por un emprendimiento unipersonal argentino. Ante cualquier consulta, reclamo o problema con tu compra, podés escribirnos a <a href="mailto:estrategia.datos@estrategia.site">estrategia.datos@estrategia.site</a>.</p>
+
+  <h2>2. Qué vendemos</h2>
+  <p>Vendemos ebooks digitales en formato PDF, EPUB y/o HTML interactivo. Son productos digitales: no se envía nada físico, y el acceso se entrega por email inmediatamente después de confirmado el pago.</p>
+
+  <h2>3. Precios y pagos</h2>
+  <p>Los precios se muestran en pesos argentinos (ARS) e incluyen los impuestos aplicables. El pago se procesa a través de Mercado Pago. La compra se confirma solo cuando Mercado Pago aprueba el pago; hasta ese momento la orden queda pendiente y no se entrega ningún acceso.</p>
+
+  <h2>4. Entrega</h2>
+  <p>Una vez aprobado el pago, vas a recibir un email con:</p>
+  <ul>
+    <li>Un link de descarga personal (para PDF/EPUB), que no caduca, o</li>
+    <li>Un código de acceso personal para leer tu ebook interactivo online (para los productos de ese tipo, con un límite de 2 dispositivos autorizados).</li>
+  </ul>
+  <p>Si no te llega el email en un plazo razonable, revisá spam/promociones antes de escribirnos — a veces los proveedores de correo lo filtran ahí.</p>
+
+  <h2>5. Uso permitido</h2>
+  <p>El acceso que comprás es personal e intransferible. No está permitido revender, redistribuir, compartir públicamente ni publicar el contenido de los ebooks, total o parcialmente, sin autorización expresa.</p>
+
+  <h2>6. Reembolsos y devoluciones</h2>
+  <p>Ver nuestra <a href="{{ url_for('refund_policy') }}">Política de reembolso y devolución</a> para el detalle completo.</p>
+
+  <h2>7. Disponibilidad y errores</h2>
+  <p>Hacemos lo posible para que la información de precios, descripciones y disponibilidad sea correcta. Si detectamos un error evidente de precio o descripción antes de procesar tu pedido, nos vamos a poner en contacto para resolverlo antes de cobrar.</p>
+
+  <h2>8. Ley aplicable</h2>
+  <p>Estos términos se rigen por las leyes de la República Argentina, incluyendo la Ley de Defensa del Consumidor (24.240) y sus normas complementarias.</p>
+
+  <h2>9. Contacto</h2>
+  <p>Para cualquier consulta sobre estos términos: <a href="mailto:estrategia.datos@estrategia.site">estrategia.datos@estrategia.site</a>.</p>
+
+  <p class="legal-updated">Última actualización: {{ current_year }}.</p>
+</section>
+{% endblock %}
