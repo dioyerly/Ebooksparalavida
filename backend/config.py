@@ -28,6 +28,9 @@ class Config:
     if not ADMIN_EMAIL or not ADMIN_PASSWORD:
         raise ValueError("ADMIN_EMAIL and ADMIN_PASSWORD are required")
     PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:5000")
+    SESSION_COOKIE_SECURE = PUBLIC_BASE_URL.startswith("https://")
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
     MP_ACCESS_TOKEN = os.getenv("MP_ACCESS_TOKEN", "")
     MP_WEBHOOK_SECRET = os.getenv("MP_WEBHOOK_SECRET", "")
     PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")

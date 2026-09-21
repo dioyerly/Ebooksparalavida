@@ -325,6 +325,20 @@ def is_valid_email(email):
     return re.match(pattern, email) is not None
 
 
+def safe_redirect_target(candidate, default):
+    """Only follow a `next`/referrer redirect target if it's same-site (a
+    relative path, or an absolute URL on our own PUBLIC_BASE_URL), to avoid
+    open-redirect phishing via a crafted `?next=` link or Referer header."""
+    if not candidate:
+        return default
+    if candidate.startswith("/") and not candidate.startswith("//"):
+        return candidate
+    base_url = app.config.get("PUBLIC_BASE_URL", "")
+    if base_url and candidate.startswith(base_url):
+        return candidate
+    return default
+
+
 def cart_products():
     """Cart Products."""
     ids = session.get("cart", [])
@@ -429,7 +443,8 @@ def add_to_cart(product_id):
         cart_list.append(product_id)
         session.modified = True
         flash("Ebook agregado a tu carrito.", "success")
-    next_url = request.form.get("next") or request.referrer or url_for("shop")
+    next_url = safe_redirect_target(
+        request.form.get("next"), safe_redirect_target(request.referrer, url_for("shop")))
     return redirect(next_url)
 
 
@@ -837,7 +852,8 @@ def admin_login():
 
         if email_matches and password_matches:
             session["is_admin"] = True
-            return redirect(request.args.get("next") or url_for("admin_dashboard"))
+            return redirect(safe_redirect_target(
+                request.args.get("next"), url_for("admin_dashboard")))
         flash("Credenciales incorrectas.", "error")
     return render_template("admin/login.html")
 
