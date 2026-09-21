@@ -566,6 +566,15 @@ loadProductsTable();
 <script>
 let revenueChart;
 
+// Buyer-supplied fields (name, email) go through this before landing in
+// innerHTML - without it, a buyer could put <script> in their checkout name
+// and run it in the admin's session when the orders table loads.
+function escapeHtml(value) {
+  const div = document.createElement('div');
+  div.textContent = value ?? '';
+  return div.innerHTML;
+}
+
 // Cargar datos estadísticos
 async function loadStats() {
   try {
@@ -681,7 +690,7 @@ async function loadOrders() {
           <span class="status ${o.status}">${o.status}</span>
         </div>
         <div class="order-info">
-          <div>${o.buyer_name} <small>${o.buyer_email}</small></div>
+          <div>${escapeHtml(o.buyer_name)} <small>${escapeHtml(o.buyer_email)}</small></div>
           <div class="order-price">$${o.total_ars.toLocaleString('es-AR')}</div>
         </div>
         <div class="order-date">${new Date(o.created_at).toLocaleDateString('es-AR')}</div>
@@ -712,8 +721,8 @@ async function loadOrders() {
             ${orders.map(o => `
               <tr>
                 <td>#${o.id}</td>
-                <td>${o.buyer_name}</td>
-                <td><small>${o.buyer_email}</small></td>
+                <td>${escapeHtml(o.buyer_name)}</td>
+                <td><small>${escapeHtml(o.buyer_email)}</small></td>
                 <td>$${o.total_ars.toLocaleString('es-AR')}</td>
                 <td>${o.payment_method}</td>
                 <td><span class="status ${o.status}">${o.status}</span></td>
@@ -907,8 +916,8 @@ async function loadCustomers() {
           <tbody>
             ${customerList.map(c => `
               <tr>
-                <td>${c.name}</td>
-                <td><small>${c.email}</small></td>
+                <td>${escapeHtml(c.name)}</td>
+                <td><small>${escapeHtml(c.email)}</small></td>
                 <td>${c.orders_count}</td>
                 <td>$${c.total_spent.toLocaleString('es-AR')}</td>
                 <td>${new Date(c.last_order).toLocaleDateString('es-AR')}</td>
