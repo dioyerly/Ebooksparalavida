@@ -1622,6 +1622,47 @@ def admin_resend_order_email(order_id):
     return {"success": True}
 
 
+@app.post("/admin/cleanup-test-data")
+@admin_required
+def admin_cleanup_test_data():
+    """One-off: delete all orders except the given ones (test data cleanup
+    for the 2026-09-21 launch), plus all click/visit tracking rows.
+    Requires the exact confirmation phrase to avoid an accidental click."""
+    from backend.models import DeviceSession
+
+    if request.form.get("confirm") != "BORRAR DATOS DE PRUEBA":
+        return {"error": "Frase de confirmación incorrecta."}, 400
+
+    keep_ids_raw = request.form.get("keep_ids", "")
+    try:
+        keep_ids = {int(x.strip()) for x in keep_ids_raw.split(",") if x.strip()}
+    except ValueError:
+        return {"error": "keep_ids inválido, debe ser una lista de números separados por coma."}, 400
+
+    if not keep_ids:
+        return {"error": "Tenés que indicar al menos un ID de orden a conservar."}, 400
+
+    orders_to_delete = Order.query.filter(~Order.id.in_(keep_ids)).all()
+    delete_ids = [o.id for o in orders_to_delete]
+
+    if delete_ids:
+        OrderItem.query.filter(OrderItem.order_id.in_(delete_ids)).delete(synchronize_session=False)
+        DeviceSession.query.filter(DeviceSession.order_id.in_(delete_ids)).delete(synchronize_session=False)
+        Order.query.filter(Order.id.in_(delete_ids)).delete(synchronize_session=False)
+
+    clicks_deleted = ProductClick.query.delete(synchronize_session=False)
+    visits_deleted = PageVisit.query.delete(synchronize_session=False)
+    db.session.commit()
+
+    return {
+        "success": True,
+        "orders_deleted": len(delete_ids),
+        "orders_kept": sorted(keep_ids),
+        "clicks_deleted": clicks_deleted,
+        "visits_deleted": visits_deleted,
+    }
+
+
 with app.app_context():
     db.create_all()
     migrate_product_columns()
