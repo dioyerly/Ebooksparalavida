@@ -4,6 +4,8 @@ Handles product catalog, shopping cart, checkout, and payments.
 """
 import secrets
 import datetime
+import hashlib
+import hmac
 import re
 from functools import wraps
 from pathlib import Path
@@ -1471,10 +1473,53 @@ def fulfill_paid_order(order):
     deliver_order_email(order)
 
 
+def verify_mp_webhook_signature(req):
+    """Verify Mercado Pago's x-signature header (HMAC-SHA256) so only
+    genuine MP requests can mark an order paid.
+
+    See https://www.mercadopago.com.ar/developers/en/docs/your-integrations/notifications/webhooks
+    Skips verification (returns True) if MP_WEBHOOK_SECRET isn't configured,
+    so local/demo setups keep working without it.
+    """
+    secret = app.config.get("MP_WEBHOOK_SECRET")
+    if not secret:
+        return True
+
+    x_signature = req.headers.get("x-signature", "")
+    x_request_id = req.headers.get("x-request-id", "")
+    if not x_signature:
+        return False
+
+    ts, received_hash = None, None
+    for part in x_signature.split(","):
+        if "=" not in part:
+            continue
+        key, value = part.split("=", 1)
+        key, value = key.strip(), value.strip()
+        if key == "ts":
+            ts = value
+        elif key == "v1":
+            received_hash = value
+
+    if not ts or not received_hash:
+        return False
+
+    data_id = req.args.get("data.id") or req.args.get("id") or ""
+    manifest = f"id:{data_id};request-id:{x_request_id};ts:{ts};"
+    expected_hash = hmac.new(
+        secret.encode(), manifest.encode(), hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected_hash, received_hash)
+
+
 @app.post("/webhook/mercadopago")
 def webhook_mercadopago():
     """Handle Mercado Pago payment notifications."""
     try:
+        if not verify_mp_webhook_signature(request):
+            print("Webhook rejected: invalid or missing x-signature")
+            return {"status": "invalid signature"}, 401
+
         data = request.get_json() or {}
         topic = data.get("type") or data.get("topic")
         resource_id = data.get("data", {}).get("id") or data.get("id")
