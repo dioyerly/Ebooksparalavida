@@ -244,6 +244,8 @@ def migrate_product_columns():
         "updated_at": "DATETIME",
         "file_name_epub": "VARCHAR(255)",
         "ebook_file_epub": "LONGBLOB",
+        "instructions_pdf_name": "VARCHAR(255)",
+        "instructions_pdf": "LONGBLOB",
     }.items():
         if column not in columns:
             db.session.execute(db.text(
@@ -604,7 +606,8 @@ def checkout():
                 order.personalized_html_blob = personalized_html.encode('utf-8')
                 db.session.commit()
                 email_service.send_interactive_ebook(
-                    buyer_email, interactive_product.name, access_code, None
+                    buyer_email, interactive_product.name, access_code, None,
+                    instructions_path=instructions_path(order, interactive_product),
                 )
             except (FileNotFoundError, OSError, ValueError, UnicodeDecodeError) as e:
                 order.status = "paid_demo_no_file"
@@ -643,9 +646,15 @@ def success(order_id):
         access.bonus_file_id: access
         for access in BonusFileAccess.query.filter_by(order_id=order.id).all()
     }
+    instruction_products = Product.query.filter(
+        Product.id.in_(purchased_product_ids),
+        Product.product_type == "html_interactive",
+        Product.instructions_pdf.isnot(None),
+    ).with_entities(Product.id, Product.name).all() if purchased_product_ids else []
     return render_template(
         "success.html", order=order, bonus_files=bonus_files,
         bonus_access_by_file_id=bonus_access_by_file_id,
+        instruction_products=instruction_products,
     )
 
 
@@ -728,6 +737,30 @@ def download_bonus(token, bonus_id):
     response = make_response(bonus.file_blob)
     response.headers["Content-Type"] = bonus.content_type
     response.headers["Content-Disposition"] = f'attachment; filename="{bonus.file_name}"'
+    return response
+
+
+@app.get("/download/<token>/instrucciones/<int:product_id>")
+@limiter.limit("30 per minute")
+def download_instructions(token, product_id):
+    """Download the "cómo usarlo" instructions PDF of an interactive-HTML
+    product the customer purchased (not the book itself)."""
+    from flask import make_response
+
+    order = Order.query.filter_by(download_token=token).first_or_404()
+    if order.status not in {"paid_demo", "paid"}:
+        abort(403, description="Esta descarga no está disponible para esta orden.")
+    if product_id not in {item.product_id for item in order.items}:
+        abort(403, description="Este producto no pertenece a tu compra.")
+
+    product = Product.query.get_or_404(product_id)
+    if product.product_type != "html_interactive" or not product.instructions_pdf:
+        abort(404, description="Este producto no tiene instrucciones en PDF.")
+
+    filename = product.instructions_pdf_name or f"{product.slug}-instrucciones.pdf"
+    response = make_response(product.instructions_pdf)
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 
 
@@ -861,7 +894,8 @@ def process_payment(order_id):
                 order.personalized_html_blob = personalized_html.encode('utf-8')
                 db.session.commit()
                 email_service.send_interactive_ebook(
-                    order.buyer_email, interactive_product.name, access_code, None
+                    order.buyer_email, interactive_product.name, access_code, None,
+                    instructions_path=instructions_path(order, interactive_product),
                 )
             except (FileNotFoundError, OSError) as e:
                 print(f"Error generando ebook: {str(e)}")
@@ -991,6 +1025,7 @@ def edit_product_form(product_id):
         "product_type": product.product_type,
         "has_pdf": bool(product.ebook_file),
         "has_epub": bool(product.ebook_file_epub),
+        "has_instructions": bool(product.instructions_pdf),
     }
 
 
@@ -1024,6 +1059,14 @@ def update_product(product_id):
     if epub_file and epub_file.filename:
         product.ebook_file_epub = epub_file.read()
         product.file_name_epub = secure_filename(f"{product.slug}.epub")
+    instructions_file = request.files.get("instructions_pdf")
+    if instructions_file and instructions_file.filename:
+        if product.product_type != "html_interactive":
+            return {"error": "Las instrucciones en PDF solo aplican a productos HTML interactivos."}, 400
+        if Path(instructions_file.filename).suffix.lower() != ".pdf":
+            return {"error": "Las instrucciones deben ser un archivo .pdf."}, 400
+        product.instructions_pdf = instructions_file.read()
+        product.instructions_pdf_name = secure_filename(f"{product.slug}-instrucciones.pdf")
     cover_file = request.files.get("cover_image")
     if cover_file and cover_file.filename:
         product.cover_image_blob = cover_file.read()
@@ -1109,6 +1152,8 @@ def create_kit_from_product(product_id):
         source_html_path=product.source_html_path,
         ebook_file=product.ebook_file,
         ebook_file_epub=product.ebook_file_epub,
+        instructions_pdf_name=product.instructions_pdf_name,
+        instructions_pdf=product.instructions_pdf,
         is_kit=True,
         kit_price_ars=kit_price,
         kit_description=kit_description,
@@ -1202,6 +1247,8 @@ def admin_create_product():
     source_html_path = None
     ebook_binary = None
     ebook_binary_epub = None
+    instructions_pdf_name = None
+    instructions_binary = None
 
     if product_type == "html_interactive":
         ebook_file = request.files.get("ebook_file")
@@ -1213,6 +1260,13 @@ def admin_create_product():
             return redirect(url_for("admin_dashboard"))
         file_name = secure_filename(f"{slug}.html")
         ebook_binary = ebook_file.read()
+        instructions_file = request.files.get("instructions_pdf")
+        if instructions_file and instructions_file.filename:
+            if Path(instructions_file.filename).suffix.lower() != ".pdf":
+                flash("Las instrucciones deben ser un archivo .pdf.", "error")
+                return redirect(url_for("admin_dashboard"))
+            instructions_pdf_name = secure_filename(f"{slug}-instrucciones.pdf")
+            instructions_binary = instructions_file.read()
     else:
         pdf_file = request.files.get("ebook_file_pdf")
         epub_file = request.files.get("ebook_file_epub")
@@ -1276,6 +1330,8 @@ def admin_create_product():
         source_html_path=source_html_path,
         ebook_file=ebook_binary,
         ebook_file_epub=ebook_binary_epub,
+        instructions_pdf_name=instructions_pdf_name,
+        instructions_pdf=instructions_binary,
     )
     db.session.add(product)
     db.session.commit()
@@ -1523,6 +1579,14 @@ def serve_ebook_file(product_id):
     )
 
 
+def instructions_path(order, product):
+    """Relative URL of the product's instructions PDF for this order, or None
+    when the product has none (used in the delivery email)."""
+    if product.product_type != "html_interactive" or not product.instructions_pdf:
+        return None
+    return f"/download/{order.download_token}/instrucciones/{product.id}"
+
+
 def provision_interactive_bonus_files(order):
     """Generate a per-order access code for any interactive-HTML bonus file
     ("ebook de ayuda") bundled into a KIT the order includes, separate from
@@ -1605,7 +1669,8 @@ def deliver_order_email(order):
                 order.personalized_html_blob = personalized_html.encode('utf-8')
                 db.session.commit()
                 email_service.send_interactive_ebook(
-                    order.buyer_email, interactive_product.name, access_code, None
+                    order.buyer_email, interactive_product.name, access_code, None,
+                    instructions_path=instructions_path(order, interactive_product),
                 )
             except (UnicodeDecodeError, ValueError) as e:
                 print(f"Error processing interactive product for order {order.id}: {str(e)}")

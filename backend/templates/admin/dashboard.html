@@ -239,6 +239,9 @@
           <label id="ebookFileLabel" style="font-weight:bold;">🌐 Archivo HTML interactivo</label>
           <input type="file" name="ebook_file" id="ebookFile" accept=".html">
           <small id="ebookFileHelp" style="color: var(--muted);">El HTML original se conserva intacto y se personaliza después del pago.</small>
+          <label style="font-weight:bold;margin-top:12px;">📘 PDF de instrucciones de uso (opcional)</label>
+          <input type="file" name="instructions_pdf" accept=".pdf">
+          <small style="color: var(--muted);">Solo para productos HTML: el comprador lo descarga junto con su acceso. No es el libro, es la guía de cómo usarlo.</small>
         </div>
 
         <div class="form-row full">
@@ -356,6 +359,11 @@ function showEditModal(product) {
           <label style="font-weight:bold;">🔄 Reemplazar archivo HTML</label>
           <small style="color:#666;">Déjalo vacío para mantener el archivo actual</small>
           <input type="file" name="ebook_file" accept=".html" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
+        </div>
+        <div style="margin-bottom:15px;">
+          <label style="font-weight:bold;">📘 PDF de instrucciones de uso ${product.has_instructions ? '(ya tiene uno cargado)' : '(no tiene todavía)'}</label>
+          <small style="color:#666;">Guía de cómo usar el HTML (no es el libro). Déjalo vacío para mantener el actual</small>
+          <input type="file" name="instructions_pdf" accept=".pdf" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
         </div>
         ` : `
         <div style="margin-bottom:15px;">

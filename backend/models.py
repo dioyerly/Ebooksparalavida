@@ -25,6 +25,10 @@ class Product(db.Model):
     ebook_file = db.Column(db.LargeBinary)
     file_name_epub = db.Column(db.String(255))
     ebook_file_epub = db.Column(db.LargeBinary(length=(2 ** 32) - 1))
+    # Instructions PDF ("cómo usarlo") for html_interactive products only.
+    # Kept apart from ebook_file/ebook_file_epub, which hold the book itself.
+    instructions_pdf_name = db.Column(db.String(255))
+    instructions_pdf = db.Column(db.LargeBinary(length=(2 ** 32) - 1))
     is_kit = db.Column(db.Boolean, default=False)
     kit_price_ars = db.Column(db.Integer)
     kit_description = db.Column(db.Text)

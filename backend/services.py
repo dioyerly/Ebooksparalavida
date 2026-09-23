@@ -474,16 +474,23 @@ class EmailService:
         )
         return self._send(buyer_email, subject, body)
 
-    def send_interactive_ebook(self, buyer_email, product_name, access_code, file_path):
-        """Send notification with access code and read-online link."""
+    def send_interactive_ebook(self, buyer_email, product_name, access_code, file_path,
+                               instructions_path=None):
+        """Send notification with access code and read-online link (plus the
+        instructions PDF link when the product has one)."""
         base_url = os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:5000")
         read_url = f"{base_url}/leer/{access_code}"
         subject = f"¡Tu compra de {product_name} está lista!"
+        instructions_line = (
+            f"Instrucciones de uso (PDF): {base_url}{instructions_path}\n\n"
+            if instructions_path else ""
+        )
         body = (
             f"Hola,\n\n"
             f"¡Gracias por tu compra de {product_name}!\n\n"
             f"Tu código de acceso es: {access_code}\n\n"
             f"Entrá acá cuando quieras leerlo: {read_url}\n\n"
+            f"{instructions_line}"
             f"Guardá este email: el enlace y el código son personales, no caducan, "
             f"y los vas a necesitar para volver a entrar.\n\n"
             f"Ebooks para la vida"
