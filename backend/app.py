@@ -940,7 +940,7 @@ def admin_login():
             session["is_admin"] = True
             return redirect(safe_redirect_target(
                 request.args.get("next"), url_for("admin_dashboard")))
-        flash("Credenciales incorrectas.", "error")
+        flash("Credenciales incorrectas.", "admin-error")
     return render_template("admin/login.html")
 
 
@@ -1253,17 +1253,17 @@ def admin_create_product():
     if product_type == "html_interactive":
         ebook_file = request.files.get("ebook_file")
         if not ebook_file or not ebook_file.filename:
-            flash("Debes subir el archivo HTML interactivo.", "error")
+            flash("Debes subir el archivo HTML interactivo.", "admin-error")
             return redirect(url_for("admin_dashboard"))
         if Path(ebook_file.filename).suffix.lower() != ".html":
-            flash("El archivo debe ser .html para un producto interactivo.", "error")
+            flash("El archivo debe ser .html para un producto interactivo.", "admin-error")
             return redirect(url_for("admin_dashboard"))
         file_name = secure_filename(f"{slug}.html")
         ebook_binary = ebook_file.read()
         instructions_file = request.files.get("instructions_pdf")
         if instructions_file and instructions_file.filename:
             if Path(instructions_file.filename).suffix.lower() != ".pdf":
-                flash("Las instrucciones deben ser un archivo .pdf.", "error")
+                flash("Las instrucciones deben ser un archivo .pdf.", "admin-error")
                 return redirect(url_for("admin_dashboard"))
             instructions_pdf_name = secure_filename(f"{slug}-instrucciones.pdf")
             instructions_binary = instructions_file.read()
@@ -1272,18 +1272,18 @@ def admin_create_product():
         epub_file = request.files.get("ebook_file_epub")
         if pdf_file and pdf_file.filename:
             if Path(pdf_file.filename).suffix.lower() != ".pdf":
-                flash("El archivo de PDF debe tener extensión .pdf.", "error")
+                flash("El archivo de PDF debe tener extensión .pdf.", "admin-error")
                 return redirect(url_for("admin_dashboard"))
             file_name = secure_filename(f"{slug}.pdf")
             ebook_binary = pdf_file.read()
         if epub_file and epub_file.filename:
             if Path(epub_file.filename).suffix.lower() != ".epub":
-                flash("El archivo de EPUB debe tener extensión .epub.", "error")
+                flash("El archivo de EPUB debe tener extensión .epub.", "admin-error")
                 return redirect(url_for("admin_dashboard"))
             file_name_epub = secure_filename(f"{slug}.epub")
             ebook_binary_epub = epub_file.read()
         if not ebook_binary and not ebook_binary_epub:
-            flash("Subí al menos un archivo: PDF o EPUB.", "error")
+            flash("Subí al menos un archivo: PDF o EPUB.", "admin-error")
             return redirect(url_for("admin_dashboard"))
 
     cover_file = request.files.get("cover_image")
@@ -1296,21 +1296,21 @@ def admin_create_product():
     try:
         price_ars = int(request.form["price_ars"])
     except (ValueError, KeyError):
-        flash("El precio debe ser un número válido.", "error")
+        flash("El precio debe ser un número válido.", "admin-error")
         return redirect(url_for("admin_dashboard"))
 
     if price_ars <= 0:
-        flash("El precio debe ser mayor a 0.", "error")
+        flash("El precio debe ser mayor a 0.", "admin-error")
         return redirect(url_for("admin_dashboard"))
 
     description = request.form.get("description", "").strip()
     if not description:
-        flash("La descripción es requerida.", "error")
+        flash("La descripción es requerida.", "admin-error")
         return redirect(url_for("admin_dashboard"))
 
     category = request.form.get("category", "").strip()
     if not category:
-        flash("La categoría es requerida.", "error")
+        flash("La categoría es requerida.", "admin-error")
         return redirect(url_for("admin_dashboard"))
 
     product = Product(
@@ -1335,7 +1335,7 @@ def admin_create_product():
     )
     db.session.add(product)
     db.session.commit()
-    flash(f"✅ Producto '{name}' creado exitosamente.", "success")
+    flash(f"✅ Producto '{name}' creado exitosamente.", "admin-success")
     return redirect(url_for("admin_dashboard"))
 
 

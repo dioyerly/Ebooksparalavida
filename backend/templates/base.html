@@ -23,8 +23,14 @@
     <a class="cart-link" href="{{ url_for('cart') }}" aria-label="Ver carrito">Carrito <span>{{ cart_count }}</span></a>
   </header>
   <main>
+    {# "admin-*" flashes (product created, login errors...) only show on admin pages, never on the public store. #}
+    {% set on_admin_page = (request.endpoint or '').startswith('admin') %}
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}<div class="flash-stack">{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+      {% set visible = [] %}
+      {% for category, message in messages %}
+        {% if on_admin_page or not category.startswith('admin-') %}{% set _ = visible.append((category.replace('admin-', ''), message)) %}{% endif %}
+      {% endfor %}
+      {% if visible %}<div class="flash-stack">{% for category, message in visible %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}
     {% endwith %}
     {% block content %}{% endblock %}
   </main>
