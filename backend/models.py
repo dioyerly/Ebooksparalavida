@@ -43,6 +43,7 @@ class ProductBonusFile(db.Model):
     file_name = db.Column(db.String(255), nullable=False)
     content_type = db.Column(db.String(100), nullable=False)
     file_blob = db.Column(db.LargeBinary(length=(2 ** 32) - 1), nullable=False)
+    is_interactive = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
@@ -88,9 +89,25 @@ class PageVisit(db.Model):
     referrer = db.Column(db.String(255))
 
 
+class BonusFileAccess(db.Model):
+    """Per-order access code for an interactive-HTML bonus file bundled in a
+    KIT (a companion ebook distinct from the kit's main product), mirroring
+    Order.access_code/personalized_html_blob but scoped to one purchase of
+    one bonus file so different buyers of the same product don't collide."""
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey("order.id"), nullable=False)
+    bonus_file_id = db.Column(db.Integer, db.ForeignKey("product_bonus_file.id"), nullable=False)
+    access_code = db.Column(db.String(8), unique=True, nullable=False)
+    personalized_html_blob = db.Column(db.LargeBinary(length=(2 ** 32) - 1), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    order = db.relationship("Order")
+    bonus_file = db.relationship("ProductBonusFile")
+
+
 class DeviceSession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey("order.id"), nullable=False)
+    bonus_access_id = db.Column(db.Integer, db.ForeignKey("bonus_file_access.id"), nullable=True)
     fingerprint = db.Column(db.String(255), nullable=False)
     user_agent = db.Column(db.String(500))
     accessed_at = db.Column(db.DateTime, default=datetime.utcnow)

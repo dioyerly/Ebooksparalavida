@@ -20,7 +20,8 @@ from werkzeug.utils import secure_filename
 
 from backend.config import Config
 from backend.models import (
-    db, Product, Order, OrderItem, ProductClick, PageVisit, ProductBonusFile
+    db, Product, Order, OrderItem, ProductClick, PageVisit, ProductBonusFile,
+    BonusFileAccess, DeviceSession,
 )
 from backend.services import (
     MercadoPagoService, PayPalService, EmailService,
@@ -318,6 +319,30 @@ def migrate_product_columns():
             db.session.commit()
             print(f"Conversion complete for {blob_column}!")
 
+    bonus_table = ProductBonusFile.__tablename__
+    query = db.text(f"""
+        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = '{bonus_table}' AND TABLE_SCHEMA = DATABASE()
+    """)
+    bonus_columns = {row[0] for row in db.session.execute(query)}
+    if "is_interactive" not in bonus_columns:
+        db.session.execute(db.text(
+            f"ALTER TABLE {bonus_table} ADD COLUMN is_interactive BOOLEAN DEFAULT FALSE"
+        ))
+        db.session.commit()
+
+    device_table = DeviceSession.__tablename__
+    query = db.text(f"""
+        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = '{device_table}' AND TABLE_SCHEMA = DATABASE()
+    """)
+    device_columns = {row[0] for row in db.session.execute(query)}
+    if "bonus_access_id" not in device_columns:
+        db.session.execute(db.text(
+            f"ALTER TABLE {device_table} ADD COLUMN bonus_access_id INT"
+        ))
+        db.session.commit()
+
 
 def is_valid_email(email):
     """Validate email format."""
@@ -429,6 +454,7 @@ def product_detail(slug):
                 "name": kit_product.name,
                 "price_ars": kit_product.price_ars,
                 "description": kit_product.short_description or kit_product.description[:100],
+                "bonus_names": [b.name for b in kit_product.bonus_files],
             }
 
     return render_template("product.html", product=product, kit=kit)
@@ -548,6 +574,7 @@ def checkout():
         order.status = "paid_demo"
         db.session.commit()
         session["cart"] = []
+        provision_interactive_bonus_files(order)
 
         email_service = EmailService(app.config["SENDGRID_API_KEY"])
         interactive_product = next(
@@ -612,7 +639,14 @@ def success(order_id):
     bonus_files = ProductBonusFile.query.filter(
         ProductBonusFile.product_id.in_(purchased_product_ids)
     ).all() if purchased_product_ids else []
-    return render_template("success.html", order=order, bonus_files=bonus_files)
+    bonus_access_by_file_id = {
+        access.bonus_file_id: access
+        for access in BonusFileAccess.query.filter_by(order_id=order.id).all()
+    }
+    return render_template(
+        "success.html", order=order, bonus_files=bonus_files,
+        bonus_access_by_file_id=bonus_access_by_file_id,
+    )
 
 
 @app.route("/download/<token>")
@@ -688,6 +722,8 @@ def download_bonus(token, bonus_id):
     purchased_product_ids = {item.product_id for item in order.items}
     if bonus.product_id not in purchased_product_ids:
         abort(403, description="Este bonus no pertenece a tu compra.")
+    if bonus.is_interactive:
+        abort(404, description="Este ebook interactivo se lee con su código de acceso, no se descarga.")
 
     response = make_response(bonus.file_blob)
     response.headers["Content-Type"] = bonus.content_type
@@ -698,29 +734,44 @@ def download_bonus(token, bonus_id):
 @app.get("/leer/<access_code>")
 @limiter.limit("30 per minute")
 def read_interactive_ebook(access_code):
-    """Read interactive ebook with device protection (max 2 devices)."""
-    order = Order.query.filter_by(access_code=access_code).first_or_404()
+    """Read interactive ebook with device protection (max 2 devices).
+
+    The access code can belong either to an order's main interactive
+    product, or to a KIT's interactive "ebook de ayuda" bonus file -
+    each has its own device-session scope."""
+    order = Order.query.filter_by(access_code=access_code).first()
+    bonus_access = None
+    if not order:
+        bonus_access = BonusFileAccess.query.filter_by(access_code=access_code).first_or_404()
+        order = bonus_access.order
+
     if order.status not in {"paid_demo", "paid"}:
         abort(403, description="Esta orden no está pagada.")
-    if not order.personalized_html_blob:
-        print(f"ERROR: Order {order.id} has no personalized_html_blob")
+
+    personalized_blob = bonus_access.personalized_html_blob if bonus_access else order.personalized_html_blob
+    if not personalized_blob:
+        print(f"ERROR: {'Bonus access ' + str(bonus_access.id) if bonus_access else 'Order ' + str(order.id)} has no personalized_html_blob")
         abort(404, description="El archivo personalizado no está disponible.")
 
-    from backend.models import DeviceSession
     user_agent = request.headers.get("User-Agent", "unknown")
     fingerprint = f"{user_agent}:{request.remote_addr}"
+    session_filter = (
+        {"bonus_access_id": bonus_access.id} if bonus_access
+        else {"order_id": order.id, "bonus_access_id": None}
+    )
 
     existing_session = DeviceSession.query.filter_by(
-        order_id=order.id, fingerprint=fingerprint
+        fingerprint=fingerprint, **session_filter
     ).first()
 
     if not existing_session:
-        device_count = DeviceSession.query.filter_by(order_id=order.id).count()
+        device_count = DeviceSession.query.filter_by(**session_filter).count()
         if device_count >= 2:
             abort(403, description="Has alcanzado el límite máximo de 2 dispositivos autorizados para este Ebook Interactivo.")
 
         new_session = DeviceSession(
             order_id=order.id,
+            bonus_access_id=bonus_access.id if bonus_access else None,
             fingerprint=fingerprint,
             user_agent=user_agent
         )
@@ -728,14 +779,14 @@ def read_interactive_ebook(access_code):
         db.session.commit()
 
     try:
-        html_content = order.personalized_html_blob.decode('utf-8')
+        html_content = personalized_blob.decode('utf-8')
         if not html_content or not html_content.strip():
-            print(f"ERROR: Order {order.id} has empty personalized_html_blob")
+            print("ERROR: personalized_html_blob is empty")
             abort(500, description="El contenido HTML está vacío")
         from flask import Response
         return Response(html_content, content_type='text/html; charset=utf-8')
     except UnicodeDecodeError as e:
-        print(f"ERROR: Failed to decode personalized_html_blob for order {order.id}: {str(e)}")
+        print(f"ERROR: Failed to decode personalized_html_blob: {str(e)}")
         abort(500, description="Error al leer el archivo")
 
 
@@ -783,6 +834,7 @@ def process_payment(order_id):
 
         order.status = "paid"
         db.session.commit()
+        provision_interactive_bonus_files(order)
 
         email_service = EmailService(app.config.get("SENDGRID_API_KEY", ""))
         interactive_product = None
@@ -1073,6 +1125,7 @@ def create_kit_from_product(product_id):
             file_name=secure_filename(bonus_file.filename),
             content_type=_guess_content_type(bonus_file.filename),
             file_blob=bonus_file.read(),
+            is_interactive=Path(bonus_file.filename).suffix.lower() == ".html",
         ))
     db.session.commit()
 
@@ -1091,6 +1144,7 @@ def list_bonus_files(product_id):
                 "name": b.name,
                 "file_name": b.file_name,
                 "size_kb": round(len(b.file_blob) / 1024, 1),
+                "is_interactive": b.is_interactive,
             }
             for b in product.bonus_files
         ]
@@ -1116,6 +1170,7 @@ def add_bonus_file(product_id):
         file_name=secure_filename(bonus_file.filename),
         content_type=_guess_content_type(bonus_file.filename),
         file_blob=bonus_file.read(),
+        is_interactive=Path(bonus_file.filename).suffix.lower() == ".html",
     )
     db.session.add(bonus)
     db.session.commit()
@@ -1468,6 +1523,50 @@ def serve_ebook_file(product_id):
     )
 
 
+def provision_interactive_bonus_files(order):
+    """Generate a per-order access code for any interactive-HTML bonus file
+    ("ebook de ayuda") bundled into a KIT the order includes, separate from
+    the order's main interactive product (if any). Safe to call more than
+    once for the same order - already-provisioned bonus files are skipped."""
+    purchased_product_ids = {item.product_id for item in order.items}
+    if not purchased_product_ids:
+        return
+    bonus_files = ProductBonusFile.query.filter(
+        ProductBonusFile.product_id.in_(purchased_product_ids),
+        ProductBonusFile.is_interactive.is_(True),
+    ).all()
+    for bonus in bonus_files:
+        already = BonusFileAccess.query.filter_by(
+            order_id=order.id, bonus_file_id=bonus.id
+        ).first()
+        if already:
+            continue
+        try:
+            html_content = bonus.file_blob.decode("utf-8")
+            if not html_content.strip():
+                raise ValueError("empty")
+        except (UnicodeDecodeError, ValueError):
+            print(f"ERROR: bonus file {bonus.id} has no valid HTML content, skipping")
+            continue
+
+        access_code = generate_access_code()
+        while (Order.query.filter_by(access_code=access_code).first()
+               or BonusFileAccess.query.filter_by(access_code=access_code).first()):
+            access_code = generate_access_code()
+
+        personalized_html = generate_personalized_html(
+            order.buyer_email, None, access_code, None, html_content=html_content,
+            product_name=bonus.name,
+        )
+        db.session.add(BonusFileAccess(
+            order_id=order.id,
+            bonus_file_id=bonus.id,
+            access_code=access_code,
+            personalized_html_blob=personalized_html.encode("utf-8"),
+        ))
+    db.session.commit()
+
+
 def deliver_order_email(order):
     """Send the delivery email for an already-paid order: generate access
     code + send the right email (interactive access code or plain download
@@ -1525,6 +1624,7 @@ def fulfill_paid_order(order):
     """Mark a pending order as paid and deliver it by email."""
     order.status = "paid"
     db.session.commit()
+    provision_interactive_bonus_files(order)
     deliver_order_email(order)
 
 

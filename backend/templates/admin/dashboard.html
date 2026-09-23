@@ -411,6 +411,9 @@ function createKitModal(id, name) {
       <h2>📦 Crear KIT para: ${name}</h2>
       <p style="color:#666;font-size:13px;margin:10px 0 20px;">
         Se crea un producto nuevo (KIT: ${name}) con la portada y el ebook original, más los archivos bonus que subas acá.
+        Para armar un kit "ebook interactivo + ebook de ayuda": subí acá el archivo que le falte al original
+        (si el original es .html interactivo, subí el PDF/EPUB de ayuda; si el original es PDF/EPUB, subí el HTML interactivo de ayuda).
+        Los bonus .html se leen con su propio código de acceso (no se descargan); los PDF/EPUB se descargan directo.
       </p>
       <form id="createKitForm">
         <div id="kitBonusRows"></div>
@@ -507,7 +510,7 @@ function manageBonusFiles(id, name) {
         list.innerHTML = files.length
           ? files.map(b => `
               <li style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">
-                <span>📄 ${b.name} <small style="color:#999;">(${b.size_kb} KB)</small></span>
+                <span>${b.is_interactive ? '📖' : '📄'} ${b.name} <small style="color:#999;">(${b.size_kb} KB)${b.is_interactive ? ' · interactivo, código propio' : ''}</small></span>
                 <button type="button" onclick="deleteBonusFile(${b.id}, ${id}, '${name}'); return false;" style="background:#c33;color:#fff;border:none;padding:4px 10px;border-radius:3px;cursor:pointer;">✕</button>
               </li>
             `).join('')

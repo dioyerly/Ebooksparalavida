@@ -58,7 +58,14 @@
         <section class="kit-offer">
           <p class="eyebrow">OFERTA ESPECIAL</p>
           <h2>{{ kit.name }}</h2>
-          <p>Incluye el ebook principal y los 3 bonus: Modo Supervivencia, Mi Casa Funciona Así y Tarjetas Antibloqueo.</p>
+          <p>
+            {% if kit.bonus_names %}
+              Incluye el ebook principal y {{ kit.bonus_names | length }}
+              bonus: {{ kit.bonus_names | join(', ') }}.
+            {% else %}
+              {{ kit.description }}
+            {% endif %}
+          </p>
           <div class="kit-price">
             ${{ '{:,.0f}'.format(kit.price_ars).replace(',', '.') }}
             <small>ARS</small>
