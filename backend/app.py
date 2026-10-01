@@ -1355,8 +1355,12 @@ def admin_create_product():
         cover_image = secure_filename(f"{slug}{Path(cover_file.filename).suffix}")
 
     try:
-        price_ars = int(request.form["price_ars"])
-    except (ValueError, KeyError):
+        price_ars_str = request.form.get("price_ars", "")
+        if not price_ars_str:
+            flash("El precio es requerido.", "admin-error")
+            return redirect(url_for("admin_dashboard"))
+        price_ars = int(price_ars_str)
+    except ValueError:
         flash("El precio debe ser un número válido.", "admin-error")
         return redirect(url_for("admin_dashboard"))
 
