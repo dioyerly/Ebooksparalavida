@@ -661,7 +661,7 @@ def success(order_id):
 @app.route("/download/<token>")
 @limiter.limit("30 per minute")
 def download(token):
-    """Show the customer a page to choose PDF or EPUB for their purchase."""
+    """Show the customer a page to choose PDF or EPUB for their purchase, or redirect to ZIP."""
     order = Order.query.filter_by(download_token=token).first_or_404()
     if order.status not in {"paid_demo", "paid"}:
         abort(403, description="Esta descarga no está disponible para esta orden.")
@@ -674,6 +674,9 @@ def download(token):
 
     if product.product_type == "html_interactive":
         abort(404)
+
+    if product.product_type == "downloadable_zip":
+        return redirect(url_for("download_zip", token=token))
 
     if not product.ebook_file and not product.ebook_file_epub:
         return render_template("download_placeholder.html", product=product, order=order)
@@ -760,6 +763,32 @@ def download_instructions(token, product_id):
     filename = product.instructions_pdf_name or f"{product.slug}-instrucciones.pdf"
     response = make_response(product.instructions_pdf)
     response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+@app.get("/download/<token>/zip")
+@limiter.limit("30 per minute")
+def download_zip(token):
+    """Download a ZIP file for a downloadable_zip product the customer purchased."""
+    from flask import make_response
+
+    order = Order.query.filter_by(download_token=token).first_or_404()
+    if order.status not in {"paid_demo", "paid"}:
+        abort(403, description="Esta descarga no está disponible para esta orden.")
+
+    if not order.items:
+        abort(400, description="Esta orden no tiene items.")
+
+    product = Product.query.filter_by(
+        id=order.items[0].product_id).first_or_404()
+
+    if product.product_type != "downloadable_zip" or not product.zip_file:
+        abort(404, description="Este producto no tiene un archivo ZIP disponible.")
+
+    filename = product.file_name_zip or f"{product.slug}.zip"
+    response = make_response(product.zip_file)
+    response.headers["Content-Type"] = "application/zip"
     response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 
@@ -1025,6 +1054,7 @@ def edit_product_form(product_id):
         "product_type": product.product_type,
         "has_pdf": bool(product.ebook_file),
         "has_epub": bool(product.ebook_file_epub),
+        "has_zip": bool(product.zip_file),
         "has_instructions": bool(product.instructions_pdf),
     }
 
@@ -1059,6 +1089,14 @@ def update_product(product_id):
     if epub_file and epub_file.filename:
         product.ebook_file_epub = epub_file.read()
         product.file_name_epub = secure_filename(f"{product.slug}.epub")
+    zip_file = request.files.get("zip_file")
+    if zip_file and zip_file.filename:
+        if product.product_type != "downloadable_zip":
+            return {"error": "Los archivos ZIP solo aplican a productos descargables."}, 400
+        if Path(zip_file.filename).suffix.lower() != ".zip":
+            return {"error": "El archivo debe ser .zip."}, 400
+        product.zip_file = zip_file.read()
+        product.file_name_zip = secure_filename(f"{product.slug}.zip")
     instructions_file = request.files.get("instructions_pdf")
     if instructions_file and instructions_file.filename:
         if product.product_type != "html_interactive":
@@ -1244,9 +1282,11 @@ def admin_create_product():
 
     file_name = None
     file_name_epub = None
+    file_name_zip = None
     source_html_path = None
     ebook_binary = None
     ebook_binary_epub = None
+    zip_binary = None
     instructions_pdf_name = None
     instructions_binary = None
 
@@ -1267,6 +1307,16 @@ def admin_create_product():
                 return redirect(url_for("admin_dashboard"))
             instructions_pdf_name = secure_filename(f"{slug}-instrucciones.pdf")
             instructions_binary = instructions_file.read()
+    elif product_type == "downloadable_zip":
+        zip_file = request.files.get("zip_file")
+        if not zip_file or not zip_file.filename:
+            flash("Debes subir el archivo ZIP descargable.", "admin-error")
+            return redirect(url_for("admin_dashboard"))
+        if Path(zip_file.filename).suffix.lower() != ".zip":
+            flash("El archivo debe ser .zip para un producto descargable.", "admin-error")
+            return redirect(url_for("admin_dashboard"))
+        file_name_zip = secure_filename(f"{slug}.zip")
+        zip_binary = zip_file.read()
     else:
         pdf_file = request.files.get("ebook_file_pdf")
         epub_file = request.files.get("ebook_file_epub")
@@ -1324,12 +1374,14 @@ def admin_create_product():
         featured=request.form.get("featured") == "on",
         file_name=file_name,
         file_name_epub=file_name_epub,
+        file_name_zip=file_name_zip,
         cover_image=cover_image,
         cover_image_blob=cover_image_blob,
         product_type=product_type,
         source_html_path=source_html_path,
         ebook_file=ebook_binary,
         ebook_file_epub=ebook_binary_epub,
+        zip_file=zip_binary,
         instructions_pdf_name=instructions_pdf_name,
         instructions_pdf=instructions_binary,
     )

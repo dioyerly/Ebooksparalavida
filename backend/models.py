@@ -29,6 +29,8 @@ class Product(db.Model):
     # Kept apart from ebook_file/ebook_file_epub, which hold the book itself.
     instructions_pdf_name = db.Column(db.String(255))
     instructions_pdf = db.Column(db.LargeBinary(length=(2 ** 32) - 1))
+    zip_file = db.Column(db.LargeBinary(length=(2 ** 32) - 1))
+    file_name_zip = db.Column(db.String(255))
     is_kit = db.Column(db.Boolean, default=False)
     kit_price_ars = db.Column(db.Integer)
     kit_description = db.Column(db.Text)
