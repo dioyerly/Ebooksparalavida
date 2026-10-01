@@ -19,9 +19,9 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_pre_ping": True,
-        "pool_recycle": 3600,
-        "pool_size": 10,
-        "max_overflow": 20,
+        "pool_recycle": 1800,  # Recycle connections every 30 min to avoid memory leak
+        "pool_size": 5,  # Reduced from 10 to save memory
+        "max_overflow": 10,  # Reduced from 20 to save memory
     }
     ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
     ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")

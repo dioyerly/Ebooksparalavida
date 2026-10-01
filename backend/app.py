@@ -10,6 +10,7 @@ import re
 from functools import wraps
 from pathlib import Path
 
+import os
 from flask import (
     Flask, abort, flash, redirect, render_template, request, session,
     url_for, send_from_directory
@@ -38,7 +39,19 @@ db.init_app(app)
 # VALIDAR QUE SOLO USA HOSTINGER
 validate_database_config()
 
-limiter = Limiter(get_remote_address, app=app, default_limits=[])
+# Rate limiter - solo en desarrollo (in-memory storage causa memory leak en producción)
+if os.getenv("FLASK_ENV") != "production":
+    limiter = Limiter(get_remote_address, app=app, default_limits=[])
+else:
+    # En producción: crear un stub que no hace nada
+    class NoOpLimiter:
+        def limit(self, *args, **kwargs):
+            def decorator(f):
+                return f
+            return decorator
+        def __getattr__(self, name):
+            return lambda *args, **kwargs: (lambda f: f if callable(f) else None)
+    limiter = NoOpLimiter()
 
 
 SEED_PRODUCTS = [
