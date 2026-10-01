@@ -66,5 +66,5 @@ def validate_database_config():
             f"URL: {db_url}"
         )
     
-    print("✓ BD Guard: Configuración validada - Usando Hostinger u748338755_ebooks_store_")
+    print("[OK] BD Guard: Configuracion validada - Usando Hostinger u748338755_ebooks_store_")
     return True
