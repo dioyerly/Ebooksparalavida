@@ -27,12 +27,16 @@ from backend.services import (
     MercadoPagoService, PayPalService, EmailService,
     generate_access_code, generate_personalized_html,
 )
+from backend.db_guard import validate_database_config
 
 
 app = Flask(__name__, template_folder="templates",
             static_folder="../frontend/assets")
 app.config.from_object(Config)
 db.init_app(app)
+
+# VALIDAR QUE SOLO USA HOSTINGER
+validate_database_config()
 
 limiter = Limiter(get_remote_address, app=app, default_limits=[])
 
