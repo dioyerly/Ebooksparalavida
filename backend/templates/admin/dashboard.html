@@ -181,6 +181,7 @@
             <select name="product_type" id="productType" required>
               <option value="pdf">PDF/EPUB</option>
               <option value="html_interactive">HTML Interactivo</option>
+              <option value="downloadable_zip">Descargable ZIP</option>
             </select>
           </div>
           <div>
@@ -244,6 +245,12 @@
           <small style="color: var(--muted);">Solo para productos HTML: el comprador lo descarga junto con su acceso. No es el libro, es la guía de cómo usarlo.</small>
         </div>
 
+        <div class="form-row full" id="zipSection" style="display:none;">
+          <label style="font-weight:bold;">📦 Archivo ZIP descargable</label>
+          <input type="file" name="zip_file" id="zipFile" accept=".zip">
+          <small style="color: var(--muted);">Sube un archivo ZIP (máximo 512 MB). El cliente lo descargará después de pagar.</small>
+        </div>
+
         <div class="form-row full">
           <label>🖼️ Imagen de Portada (opcional)</label>
           <input type="file" name="cover_image" accept=".jpg,.jpeg,.png,.gif" >
@@ -265,23 +272,29 @@
 const productType = document.getElementById('productType');
 const pdfEpubSection = document.getElementById('pdfEpubSection');
 const htmlSection = document.getElementById('htmlSection');
+const zipSection = document.getElementById('zipSection');
 const ebookFilePdf = document.getElementById('ebookFilePdf');
 const ebookFileEpub = document.getElementById('ebookFileEpub');
 const ebookFile = document.getElementById('ebookFile');
+const zipFile = document.getElementById('zipFile');
 
 // Manejar cambio de tipo de producto
 function updateProductFileField() {
   const interactive = productType.value === 'html_interactive';
-  pdfEpubSection.style.display = interactive ? 'none' : 'block';
+  const isZip = productType.value === 'downloadable_zip';
+  pdfEpubSection.style.display = (interactive || isZip) ? 'none' : 'block';
   htmlSection.style.display = interactive ? 'block' : 'none';
+  zipSection.style.display = isZip ? 'block' : 'none';
   ebookFilePdf.required = false;
   ebookFileEpub.required = false;
   ebookFile.required = interactive;
+  zipFile.required = isZip;
 }
 
 document.getElementById('createProductForm').addEventListener('submit', (e) => {
   const interactive = productType.value === 'html_interactive';
-  if (!interactive && !ebookFilePdf.files[0] && !ebookFileEpub.files[0]) {
+  const isZip = productType.value === 'downloadable_zip';
+  if (!interactive && !isZip && !ebookFilePdf.files[0] && !ebookFileEpub.files[0]) {
     e.preventDefault();
     alert('⚠️ Subí al menos un archivo: PDF o EPUB.');
   }
