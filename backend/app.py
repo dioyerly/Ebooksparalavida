@@ -1280,8 +1280,15 @@ def delete_bonus_file(bonus_id):
 @admin_required
 def admin_create_product():
     """Admin Create Product."""
-    slug = request.form["slug"].strip()
-    name = request.form["name"].strip()
+    # Validar campos requeridos
+    slug = request.form.get("slug", "").strip()
+    name = request.form.get("name", "").strip()
+
+    if not slug:
+        return {"error": "El slug es requerido"}, 400
+    if not name:
+        return {"error": "El nombre es requerido"}, 400
+
     product_type = request.form.get("product_type", "pdf")
 
     file_name = None
@@ -1367,32 +1374,39 @@ def admin_create_product():
         flash("La categoría es requerida.", "admin-error")
         return redirect(url_for("admin_dashboard"))
 
-    product = Product(
-        slug=slug,
-        name=name,
-        description=description,
-        category=category,
-        price_ars=price_ars,
-        cover_class=request.form.get("cover_class", "coral"),
-        accent=request.form.get("accent", "#C9756B"),
-        featured=request.form.get("featured") == "on",
-        file_name=file_name,
-        file_name_epub=file_name_epub,
-        file_name_zip=file_name_zip,
-        cover_image=cover_image,
-        cover_image_blob=cover_image_blob,
-        product_type=product_type,
-        source_html_path=source_html_path,
-        ebook_file=ebook_binary,
-        ebook_file_epub=ebook_binary_epub,
-        zip_file=zip_binary,
-        instructions_pdf_name=instructions_pdf_name,
-        instructions_pdf=instructions_binary,
-    )
-    db.session.add(product)
-    db.session.commit()
-    flash(f"✅ Producto '{name}' creado exitosamente.", "admin-success")
-    return redirect(url_for("admin_dashboard"))
+    try:
+        product = Product(
+            slug=slug,
+            name=name,
+            description=description,
+            category=category,
+            price_ars=price_ars,
+            cover_class=request.form.get("cover_class", "coral"),
+            accent=request.form.get("accent", "#C9756B"),
+            featured=request.form.get("featured") == "on",
+            file_name=file_name,
+            file_name_epub=file_name_epub,
+            file_name_zip=file_name_zip,
+            cover_image=cover_image,
+            cover_image_blob=cover_image_blob,
+            product_type=product_type,
+            source_html_path=source_html_path,
+            ebook_file=ebook_binary,
+            ebook_file_epub=ebook_binary_epub,
+            zip_file=zip_binary,
+            instructions_pdf_name=instructions_pdf_name,
+            instructions_pdf=instructions_binary,
+        )
+        db.session.add(product)
+        db.session.commit()
+        flash(f"Producto '{name}' creado exitosamente.", "admin-success")
+        return redirect(url_for("admin_dashboard"))
+    except Exception as e:
+        db.session.rollback()
+        error_msg = str(e)
+        print(f"ERROR creando producto: {error_msg}")
+        flash(f"Error: {error_msg}", "admin-error")
+        return redirect(url_for("admin_dashboard"))
 
 
 @app.post("/api/track-click")
