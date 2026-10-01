@@ -987,11 +987,13 @@ def admin_logout():
 @app.get("/admin")
 @admin_required
 def admin_dashboard():
-    """Admin Dashboard."""
-    orders = Order.query.order_by(Order.created_at.desc()).all()
-    revenue = sum(order.total_ars for order in orders if order.status in {
-                  "paid", "paid_demo"})
-    return render_template("admin/dashboard.html", orders=orders, revenue=revenue, products=Product.query.all(), categories=CATEGORIES)
+    """Admin Dashboard - limit orders to prevent memory issues."""
+    # Only load last 500 orders for display
+    orders = Order.query.order_by(Order.created_at.desc()).limit(500).all()
+    revenue = db.session.query(db.func.sum(Order.total_ars)).filter(
+        Order.status.in_(["paid", "paid_demo"])).scalar() or 0
+    products = Product.query.all()
+    return render_template("admin/dashboard.html", orders=orders, revenue=revenue, products=products, categories=CATEGORIES)
 
 
 @app.post("/admin/orders/<int:order_id>/regenerate-html")
@@ -1468,54 +1470,86 @@ def track_page_visit():
 def get_admin_stats():
     """Return analytics stats for admin dashboard."""
     try:
-        all_orders = Order.query.all()
-        paid_orders = [o for o in all_orders if o.status in {"paid", "paid_demo"}]
-        total_revenue = sum(o.total_ars for o in paid_orders)
-        unique_customers = len(set(o.buyer_email for o in paid_orders))
         thirty_days_ago = datetime.datetime.utcnow() - datetime.timedelta(days=30)
-        recent_orders = [o for o in paid_orders if o.created_at >= thirty_days_ago]
-        recent_revenue = sum(o.total_ars for o in recent_orders)
 
+        # Use COUNT instead of loading all records - prevents memory leak
+        total_orders = db.session.query(db.func.count(Order.id)).filter(
+            Order.status.in_(["paid", "paid_demo"])).scalar() or 0
+        total_revenue = db.session.query(db.func.sum(Order.total_ars)).filter(
+            Order.status.in_(["paid", "paid_demo"])).scalar() or 0
+
+        recent_orders_count = db.session.query(db.func.count(Order.id)).filter(
+            Order.status.in_(["paid", "paid_demo"]),
+            Order.created_at >= thirty_days_ago
+        ).scalar() or 0
+        recent_revenue = db.session.query(db.func.sum(Order.total_ars)).filter(
+            Order.status.in_(["paid", "paid_demo"]),
+            Order.created_at >= thirty_days_ago
+        ).scalar() or 0
+
+        # Only load recent orders for details (limit to 500 to avoid memory spike)
+        recent_orders = Order.query.filter(
+            Order.status.in_(["paid", "paid_demo"]),
+            Order.created_at >= thirty_days_ago
+        ).order_by(Order.created_at.desc()).limit(500).all()
+
+        unique_customers = len(set(o.buyer_email for o in recent_orders)) if recent_orders else 0
+
+        # Product sales - only from recent orders
         product_sales = {}
-        for order in paid_orders:
+        for order in recent_orders:
             for item in order.items:
                 product_sales[item.product_name] = product_sales.get(
                     item.product_name, 0) + 1
         top_products = sorted(product_sales.items(),
                               key=lambda x: x[1], reverse=True)[:5]
 
-        clicks = ProductClick.query.all()
-        product_clicks = {}
-        for click in clicks:
-            key = click.product_name
-            product_clicks[key] = product_clicks.get(key, 0) + 1
-        top_clicked = sorted(product_clicks.items(),
-                             key=lambda x: x[1], reverse=True)[:5]
+        # Clicks count - use COUNT
+        clicks_count = db.session.query(db.func.count(ProductClick.id)).scalar() or 0
 
-        recent_visits = PageVisit.query.filter(
-            PageVisit.visited_at >= thirty_days_ago).all()
-        total_visits = len(recent_visits)
-        unique_visits = len(set(v.user_session_id for v in recent_visits))
+        # Top clicked - use GROUP BY instead of loading all
+        top_clicks = db.session.execute(db.text("""
+            SELECT product_name, COUNT(*) as count
+            FROM product_click
+            GROUP BY product_name
+            ORDER BY count DESC
+            LIMIT 5
+        """)).fetchall()
+        top_clicked = [{"name": name, "count": count} for name, count in top_clicks]
 
-        revenue_by_day = {}
-        for order in recent_orders:
-            day = order.created_at.strftime("%Y-%m-%d")
-            revenue_by_day[day] = revenue_by_day.get(day, 0) + order.total_ars
-        revenue_by_day = sorted(revenue_by_day.items())
+        # Visits - use COUNT and COUNT DISTINCT
+        recent_visits_count = db.session.query(db.func.count(PageVisit.id)).filter(
+            PageVisit.visited_at >= thirty_days_ago).scalar() or 0
+        unique_visits = db.session.query(db.func.count(
+            db.distinct(PageVisit.user_session_id)
+        )).filter(PageVisit.visited_at >= thirty_days_ago).scalar() or 0
+
+        # Revenue by day - use GROUP BY
+        revenue_by_day_raw = db.session.execute(db.text("""
+            SELECT DATE(created_at) as day, SUM(total_ars) as revenue
+            FROM `order`
+            WHERE status IN ('paid', 'paid_demo')
+            AND created_at >= :thirty_days_ago
+            GROUP BY DATE(created_at)
+            ORDER BY day
+        """), {"thirty_days_ago": thirty_days_ago}).fetchall()
+        revenue_by_day = [{"date": str(day[0]) if hasattr(day[0], 'isoformat') else str(day[0]),
+                          "revenue": int(day[1]) if day[1] else 0}
+                         for day in revenue_by_day_raw]
 
         return {
-            "total_orders": len(paid_orders),
-            "total_revenue": total_revenue,
+            "total_orders": total_orders,
+            "total_revenue": int(total_revenue) if total_revenue else 0,
             "total_customers": unique_customers,
-            "recent_orders": len(recent_orders),
-            "recent_revenue": recent_revenue,
-            "total_products": len(Product.query.all()),
-            "total_clicks": len(clicks),
-            "total_visits": total_visits,
+            "recent_orders": recent_orders_count,
+            "recent_revenue": int(recent_revenue) if recent_revenue else 0,
+            "total_products": db.session.query(db.func.count(Product.id)).scalar() or 0,
+            "total_clicks": clicks_count,
+            "total_visits": recent_visits_count,
             "unique_visits": unique_visits,
             "top_products": [{"name": name, "count": count} for name, count in top_products],
-            "top_clicked": [{"name": name, "count": count} for name, count in top_clicked],
-            "revenue_by_day": [{"date": date, "revenue": revenue} for date, revenue in revenue_by_day],
+            "top_clicked": top_clicked,
+            "revenue_by_day": revenue_by_day,
         }
     except Exception as e:
         print(f"ERROR en get_admin_stats: {str(e)}")
@@ -1527,8 +1561,8 @@ def get_admin_stats():
 @app.get("/api/admin/orders")
 @admin_required
 def get_admin_orders():
-    """Get Admin Orders."""
-    orders = Order.query.order_by(Order.created_at.desc()).all()
+    """Get Admin Orders - limit to last 1000 to avoid memory leak."""
+    orders = Order.query.order_by(Order.created_at.desc()).limit(1000).all()
     return {
         "orders": [
             {
@@ -1551,34 +1585,40 @@ def get_admin_orders():
 @app.get("/api/admin/products-analytics")
 @admin_required
 def get_products_analytics():
-    """Get Products Analytics."""
+    """Get Products Analytics - use SQL aggregates instead of loading all data."""
     products = Product.query.all()
-    clicks = ProductClick.query.all()
 
-    product_data = {}
-    for product in products:
-        product_data[product.id] = {
-            "id": product.id,
-            "name": product.name,
-            "slug": product.slug,
-            "category": product.category,
-            "price_ars": product.price_ars,
-            "clicks": 0,
-            "sales": 0
+    # Get click counts per product using GROUP BY
+    click_counts = db.session.execute(db.text("""
+        SELECT product_id, COUNT(*) as count
+        FROM product_click
+        WHERE product_id IS NOT NULL
+        GROUP BY product_id
+    """)).fetchall()
+    click_dict = {row[0]: row[1] for row in click_counts}
+
+    # Get sales counts per product using GROUP BY
+    sales_counts = db.session.execute(db.text("""
+        SELECT product_id, COUNT(*) as count
+        FROM order_item
+        GROUP BY product_id
+    """)).fetchall()
+    sales_dict = {row[0]: row[1] for row in sales_counts}
+
+    product_data = [
+        {
+            "id": p.id,
+            "name": p.name,
+            "slug": p.slug,
+            "category": p.category,
+            "price_ars": p.price_ars,
+            "clicks": click_dict.get(p.id, 0),
+            "sales": sales_dict.get(p.id, 0)
         }
+        for p in products
+    ]
 
-    # Contar clics por producto
-    for click in clicks:
-        if click.product_id in product_data:
-            product_data[click.product_id]["clicks"] += 1
-
-    # Contar ventas por producto
-    items = OrderItem.query.all()
-    for item in items:
-        if item.product_id in product_data:
-            product_data[item.product_id]["sales"] += 1
-
-    return {"products": sorted(product_data.values(),
+    return {"products": sorted(product_data,
                                key=lambda x: x["clicks"],
                                reverse=True)}
 
