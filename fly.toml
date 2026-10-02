@@ -1,13 +1,9 @@
 # Configuración de Fly.io para Ebooksparalavida
 app = "ebooksparalavida"
-primary_region = "eze"  # Buenos Aires, Argentina (cercano a Hostinger)
+primary_region = "eze"
 
 [build]
 dockerfile = "Dockerfile"
-
-[env]
-# Variables de entorno que se setean en Fly.io dashboard
-# NO duplicar en el archivo - se setean en: flyctl secrets set VAR=value
 
 [http_service]
 internal_port = 8080
@@ -16,22 +12,15 @@ auto_stop_machines = true
 auto_start_machines = true
 min_machines_running = 1
 
-# Health check
-[http_service.checks.http_health]
-protocol = "http"
-path = "/"
-interval = 30000  # 30 segundos
-timeout = 5000    # 5 segundos
-grace_period = "5s"
+[[http_service.checks]]
+grace_period = "10s"
+interval = "30s"
 method = "GET"
+path = "/"
+protocol = "http"
+timeout = "5s"
 
 [[vm]]
-memory = "2048mb"  # 2GB de RAM (suficiente para 50+ productos)
+memory = "2048mb"
 cpu_kind = "shared"
 cpus = 2
-
-# Volumen opcional para logs (comentado por ahora)
-# [[mounts]]
-# source = "logs"
-# destination = "/app/logs"
-# initial_size = "1gb"
