@@ -191,6 +191,35 @@ KIT_SLUGS = {
     "kit-convivir-sin-apagar-incendios",
 }
 
+# Universos y categorías disponibles
+UNIVERSES = {
+    "estrategia": "EstrategIA",
+    "yoyir": "YOYI'R",
+    "ebooks": "Ebooks para la vida",
+}
+
+CATEGORIES_BY_UNIVERSE = {
+    "estrategia": [
+        "Microapps",
+        "Automatización",
+        "Procesos",
+        "Datos",
+    ],
+    "yoyir": [
+        "Agendas",
+        "Planners",
+        "Organización",
+        "Recursos",
+    ],
+    "ebooks": [
+        "VIDA & BIENESTAR",
+        "APRENDER & DOMINAR",
+        "DINERO INTELIGENTE",
+        "TRABAJO & CARRERA",
+        "CREATIVIDAD & PASIONES",
+    ],
+}
+
 CATEGORIES = [
     "VIDA & BIENESTAR",
     "APRENDER & DOMINAR",
@@ -278,6 +307,8 @@ def migrate_product_columns():
         "ebook_file_epub": "LONGBLOB",
         "instructions_pdf_name": "VARCHAR(255)",
         "instructions_pdf": "LONGBLOB",
+        "universe": "VARCHAR(50)",
+        "sort_order": "INT",
     }.items():
         if column not in columns:
             db.session.execute(db.text(
@@ -1112,6 +1143,8 @@ def edit_product_form(product_id):
         "description": product.description,
         "price_ars": product.price_ars,
         "category": product.category,
+        "universe": product.universe,
+        "sort_order": product.sort_order,
         "is_kit": product.is_kit,
         "product_type": product.product_type,
         "has_pdf": bool(product.ebook_file),
@@ -1139,6 +1172,9 @@ def update_product(product_id):
     product.description = request.form.get("description", product.description).strip()
     product.price_ars = price_ars
     product.category = request.form.get("category", product.category).strip()
+    product.universe = request.form.get("universe") or None
+    sort_order_val = request.form.get("sort_order", "").strip()
+    product.sort_order = int(sort_order_val) if sort_order_val else None
     ebook_file = request.files.get("ebook_file")
     if ebook_file and ebook_file.filename:
         product.ebook_file = ebook_file.read()
@@ -1436,6 +1472,10 @@ def admin_create_product():
         flash("La categoría es requerida.", "admin-error")
         return redirect(url_for("admin_dashboard"))
 
+    universe = request.form.get("universe") or None
+    sort_order_val = request.form.get("sort_order", "").strip()
+    sort_order = int(sort_order_val) if sort_order_val else None
+
     # Validar que el slug no exista ya
     existing_product = Product.query.filter_by(slug=slug).first()
     if existing_product:
@@ -1448,6 +1488,8 @@ def admin_create_product():
             name=name,
             description=description,
             category=category,
+            universe=universe,
+            sort_order=sort_order,
             price_ars=price_ars,
             cover_class=request.form.get("cover_class", "coral"),
             accent=request.form.get("accent", "#C9756B"),
@@ -1711,6 +1753,8 @@ def get_products_list():
                     "category": p.category,
                     "product_type": p.product_type,
                     "is_kit": p.is_kit,
+                    "universe": p.universe,
+                    "sort_order": p.sort_order,
                 }
                 for p in products
             ]
@@ -1718,6 +1762,14 @@ def get_products_list():
     except Exception as e:
         print(f"Error en get_products_list: {str(e)}")
         return {"error": str(e), "products": []}, 200
+
+
+@app.get("/api/admin/categories/<universe>")
+@admin_required
+def get_categories_for_universe(universe):
+    """Return categories for a specific universe."""
+    categories = CATEGORIES_BY_UNIVERSE.get(universe, [])
+    return {"categories": categories}
 
 
 @app.get("/image/<int:product_id>")

@@ -1,16 +1,21 @@
 {% extends "base.html" %}
 {% block title %}Panel Administrativo{% endblock %}
+{% block body_class %}admin-page-view{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
 {% block content %}
 <section class="admin-page wrap">
   <div class="admin-header">
     <div>
-      <p class="eyebrow">Área privada</p>
-      <h1>Tu tienda,<br><em>en movimiento.</em></h1>
+      <p class="eyebrow">productos digitales /</p>
+      <h1>Panel <em>de administración</em></h1>
     </div>
-    <a class="text-link" href="{{ url_for('admin_logout') }}">Cerrar sesión</a>
+    <div class="header-actions">
+      <button class="button" onclick="cleanupTestData()" title="Borrar todas las órdenes de prueba y reiniciar clics/visitas">⚠️ Borrar datos de prueba</button>
+      <a class="text-link" href="{{ url_for('admin_logout') }}">Cerrar sesión</a>
+    </div>
   </div>
-
-  <button type="button" onclick="cleanupTestData()" style="background:#B44E4E;color:#fff;border:0;border-radius:4px;padding:8px 14px;font-size:12px;cursor:pointer;margin-bottom:20px;">🧹 Borrar datos de prueba (dejar solo #22 y #23)</button>
 
   <!-- MÉTRICAS PRINCIPALES -->
   <div class="admin-metrics" id="metricsContainer">
@@ -102,19 +107,32 @@
         <h2>Mis Productos</h2>
         <p>Edita o elimina tus productos existentes</p>
       </div>
+
+      <!-- FILTROS POR UNIVERSO -->
+      <div class="filter-container">
+        <button class="universe-filter active" data-filter="all">Todos</button>
+        <button class="universe-filter" data-filter="estrategia">EstrategIA</button>
+        <button class="universe-filter" data-filter="yoyir">YOYI'R</button>
+        <button class="universe-filter" data-filter="ebooks">Ebooks para la vida</button>
+        <button class="universe-filter" data-filter="unclassified">Sin clasificar</button>
+      </div>
+
       <div style="overflow-x: auto;">
-        <table style="width:100%; border-collapse: collapse;">
+        <table>
           <thead>
-            <tr style="background: #f5f5f5; border-bottom: 2px solid #ddd;">
-              <th style="padding: 12px; text-align: left;">Nombre</th>
-              <th style="padding: 12px; text-align: left;">Categoría</th>
-              <th style="padding: 12px; text-align: left;">Precio (ARS)</th>
-              <th style="padding: 12px; text-align: left;">Tipo</th>
-              <th style="padding: 12px; text-align: left;">Acciones</th>
+            <tr>
+              <th>Nombre</th>
+              <th>Universo</th>
+              <th>Tipo</th>
+              <th>Categoría</th>
+              <th style="text-align: center;">Precio</th>
+              <th style="text-align: center;">Dest.</th>
+              <th style="text-align: center;">Orden</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody id="productsTableBody">
-            <tr><td colspan="5" style="padding: 20px; text-align: center;">Cargando productos...</td></tr>
+            <tr><td colspan="8" style="padding: 20px; text-align: center;">Cargando productos...</td></tr>
           </tbody>
         </table>
       </div>
@@ -164,102 +182,143 @@
         <h2>Crear Nuevo Producto</h2>
       </div>
       <form class="product-form" id="createProductForm" method="post" action="{{ url_for('admin_create_product') }}" enctype="multipart/form-data">
-        <div class="form-row">
-          <div>
-            <label>Nombre del ebook</label>
-            <input name="name" required placeholder="Ej: Mente en calma">
-          </div>
-          <div>
-            <label>Slug (URL)</label>
-            <input name="slug" required placeholder="ej-mente-en-calma">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div>
-            <label>Tipo de producto</label>
-            <select name="product_type" id="productType" required>
-              <option value="pdf">PDF/EPUB</option>
-              <option value="html_interactive">HTML Interactivo</option>
-              <option value="downloadable_zip">Descargable ZIP</option>
-            </select>
-          </div>
-          <div>
-            <label>Categoría</label>
-            <select name="category" required>
-              {% for cat in categories %}
-              <option value="{{ cat }}">{{ cat }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div>
-            <label>Precio (ARS)</label>
-            <input name="price_ars" type="number" required placeholder="6999">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div>
-            <label>Color de portada</label>
-            <select name="cover_class">
-              <option value="coral">Coral</option>
-              <option value="teal">Teal</option>
-              <option value="sun">Amarillo</option>
-              <option value="lavender">Verde suave</option>
-            </select>
-          </div>
-          <div>
-            <label>Mostrar en portada</label>
-            <label class="checkbox">
-              <input type="checkbox" name="featured"> Sí
-            </label>
-          </div>
-        </div>
-
-        <div class="form-row full">
-          <label>Descripción</label>
-          <textarea name="description" required placeholder="Descripción completa del ebook..."></textarea>
-        </div>
-
-        <div id="pdfEpubSection">
+        <!-- IDENTITY -->
+        <div class="form-group">
+          <p class="form-group-title">01 / Identidad</p>
           <div class="form-row">
             <div>
-              <label style="font-weight:bold;">📥 Archivo PDF</label>
-              <input type="file" name="ebook_file_pdf" id="ebookFilePdf" accept=".pdf">
-              <small style="color: var(--muted);">Subí el PDF si vas a ofrecerlo.</small>
+              <label>Nombre del ebook</label>
+              <input name="name" required placeholder="Ej: Mente en calma">
             </div>
             <div>
-              <label style="font-weight:bold;">📱 Archivo EPUB</label>
-              <input type="file" name="ebook_file_epub" id="ebookFileEpub" accept=".epub">
-              <small style="color: var(--muted);">Subí el EPUB si vas a ofrecerlo. Subí al menos uno de los dos formatos.</small>
+              <label>Slug (URL)</label>
+              <input name="slug" required placeholder="ej-mente-en-calma">
+            </div>
+          </div>
+          <div class="form-row full">
+            <label>Descripción</label>
+            <textarea name="description" required placeholder="Descripción completa del ebook..."></textarea>
+          </div>
+        </div>
+
+        <!-- CLASSIFICATION -->
+        <div class="form-group">
+          <p class="form-group-title">02 / Clasificación</p>
+          <div class="form-row">
+            <div>
+              <label>Universo *</label>
+              <select name="universe" id="universeSelect" required>
+                <option value="">-- Seleccionar --</option>
+                <option value="estrategia">EstrategIA</option>
+                <option value="yoyir">YOYI'R</option>
+                <option value="ebooks">Ebooks para la vida</option>
+              </select>
+              <div class="info">Define el universo del producto</div>
+            </div>
+            <div>
+              <label>Categoría *</label>
+              <select name="category" id="categorySelect" required>
+                <option value="">-- Selecciona primero un universo --</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label>Orden de visualización</label>
+              <input name="sort_order" type="number" placeholder="Ej: 1, 2, 3... (opcional)">
+              <small>Números menores aparecen primero en su universo.</small>
+            </div>
+            <div>
+              <label>Mostrar en portada</label>
+              <label class="checkbox">
+                <input type="checkbox" name="featured"> Sí
+              </label>
             </div>
           </div>
         </div>
 
-        <div class="form-row full" id="htmlSection" style="display:none;">
-          <label id="ebookFileLabel" style="font-weight:bold;">🌐 Archivo HTML interactivo</label>
-          <input type="file" name="ebook_file" id="ebookFile" accept=".html">
-          <small id="ebookFileHelp" style="color: var(--muted);">El HTML original se conserva intacto y se personaliza después del pago.</small>
-          <label style="font-weight:bold;margin-top:12px;">📘 PDF de instrucciones de uso (opcional)</label>
-          <input type="file" name="instructions_pdf" accept=".pdf">
-          <small style="color: var(--muted);">Solo para productos HTML: el comprador lo descarga junto con su acceso. No es el libro, es la guía de cómo usarlo.</small>
+        <!-- PRICING -->
+        <div class="form-group">
+          <p class="form-group-title">03 / Precio</p>
+          <div class="form-row">
+            <div>
+              <label>Precio (ARS) *</label>
+              <input name="price_ars" type="number" required placeholder="6999">
+            </div>
+          </div>
         </div>
 
-        <div class="form-row full" id="zipSection" style="display:none;">
-          <label style="font-weight:bold;">📦 Archivo ZIP descargable</label>
-          <input type="file" name="zip_file" id="zipFile" accept=".zip">
-          <small style="color: var(--muted);">Sube un archivo ZIP (máximo 512 MB). El cliente lo descargará después de pagar.</small>
+        <!-- FORMAT -->
+        <div class="form-group">
+          <p class="form-group-title">04 / Formato</p>
+          <div class="form-row">
+            <div>
+              <label>Tipo de producto *</label>
+              <select name="product_type" id="productType" required>
+                <option value="pdf">PDF/EPUB</option>
+                <option value="html_interactive">HTML Interactivo</option>
+                <option value="downloadable_zip">Descargable ZIP</option>
+              </select>
+            </div>
+            <div>
+              <label>Color de portada</label>
+              <select name="cover_class">
+                <option value="coral">Coral</option>
+                <option value="teal">Teal</option>
+                <option value="sun">Amarillo</option>
+                <option value="lavender">Verde suave</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div class="form-row full">
-          <label>🖼️ Imagen de Portada (opcional)</label>
-          <input type="file" name="cover_image" accept=".jpg,.jpeg,.png,.gif" >
-          <small style="color: var(--muted);">Sube una imagen JPG o PNG. Si no subis, se usa el diseño generado.</small>
+        <!-- FILES -->
+        <div class="form-group">
+          <p class="form-group-title">05 / Archivos</p>
+
+          <div id="pdfEpubSection">
+            <div class="form-row">
+              <div>
+                <label>📥 Archivo PDF</label>
+                <input type="file" name="ebook_file_pdf" id="ebookFilePdf" accept=".pdf">
+                <small>Subí el PDF si vas a ofrecerlo.</small>
+              </div>
+              <div>
+                <label>📱 Archivo EPUB</label>
+                <input type="file" name="ebook_file_epub" id="ebookFileEpub" accept=".epub">
+                <small>Subí el EPUB si vas a ofrecerlo. Subí al menos uno de los dos formatos.</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row full" id="htmlSection">
+            <div>
+              <label>🌐 Archivo HTML interactivo</label>
+              <input type="file" name="ebook_file" id="ebookFile" accept=".html">
+              <small>El HTML original se conserva intacto y se personaliza después del pago.</small>
+            </div>
+            <div>
+              <label>📘 PDF de instrucciones de uso (opcional)</label>
+              <input type="file" name="instructions_pdf" accept=".pdf">
+              <small>Solo para productos HTML: el comprador lo descarga junto con su acceso. No es el libro, es la guía de cómo usarlo.</small>
+            </div>
+          </div>
+
+          <div class="form-row full" id="zipSection">
+            <label>📦 Archivo ZIP descargable</label>
+            <input type="file" name="zip_file" id="zipFile" accept=".zip">
+            <small>Sube un archivo ZIP (máximo 512 MB). El cliente lo descargará después de pagar.</small>
+          </div>
+
+          <div class="form-row full">
+            <label>🖼️ Imagen de Portada (opcional)</label>
+            <input type="file" name="cover_image" accept=".jpg,.jpeg,.png,.gif">
+            <small>Sube una imagen JPG o PNG. Si no subis, se usa el diseño generado.</small>
+          </div>
         </div>
 
-        <p style="color: var(--muted); font-size: 13px;">
-          💡 ¿Querés vender este ebook como KIT con bonus? Primero creá el producto base acá,
-          y después usá el botón "📦 Crear KIT" en la tabla de "Mis Productos" para armar el combo.
+        <p style="font-size: 13px; color: var(--admin-text-muted); margin: 0;">
+          💡 ¿Querés vender este ebook como KIT con bonus? Primero creá el producto base acá, y después usá el botón "📦 Crear KIT" en la tabla de "Mis Productos" para armar el combo.
         </p>
 
         <button class="button button-primary">Crear Producto →</button>
@@ -303,35 +362,106 @@ document.getElementById('createProductForm').addEventListener('submit', (e) => {
 productType.addEventListener('change', updateProductFileField);
 updateProductFileField();
 
+// Configuración de universos y categorías
+const UNIVERSE_CONFIG = {
+  estrategia: { name: 'EstrategIA', color: '#E6E0F5', textColor: '#5D4A8C' },
+  yoyir: { name: 'YOYI\'R', color: '#F5E6F0', textColor: '#A94A7E' },
+  ebooks: { name: 'Ebooks para la vida', color: '#F5E8E0', textColor: '#9B6B5A' }
+};
+
+// Actualizar categorías cuando cambia universo
+const universeSelect = document.getElementById('universeSelect');
+const categorySelect = document.getElementById('categorySelect');
+
+universeSelect.addEventListener('change', (e) => {
+  const universe = e.target.value;
+  categorySelect.innerHTML = '<option value="">-- Seleccionar --</option>';
+  if (universe) {
+    fetch(`/api/admin/categories/${universe}`)
+      .then(r => r.json())
+      .then(data => {
+        const categories = data.categories || [];
+        categorySelect.innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+      });
+  }
+});
+
+// Filtro de universos
+let allProducts = [];
+let currentFilter = 'all';
+
+document.querySelectorAll('.universe-filter').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.querySelectorAll('.universe-filter').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    currentFilter = e.target.getAttribute('data-filter');
+    renderProductsTable();
+  });
+});
+
 // Cargar productos en tabla de "Mis Productos"
 function loadProductsTable() {
   fetch('/api/admin/products-list')
     .then(r => r.json())
     .then(data => {
-      const tbody = document.getElementById('productsTableBody');
-      const products = data.products || [];
-      if (products.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center;">Sin productos aún</td></tr>';
-        return;
-      }
-      tbody.innerHTML = products.map(p => `
-        <tr style="border-bottom: 1px solid #eee;">
-          <td style="padding: 12px;">${p.name}${p.is_kit ? ' <span style="background:#ff9800;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;">KIT</span>' : ''}</td>
-          <td style="padding: 12px;"><code>${p.category}</code></td>
-          <td style="padding: 12px;">$${p.price_ars.toLocaleString('es-AR')}</td>
-          <td style="padding: 12px;"><small>${p.product_type === 'html_interactive' ? 'html' : 'pdf/epub'}</small></td>
-          <td style="padding: 12px;">
-            <a href="#" onclick="editProduct(${p.id}); return false;" style="color: #3A5F5F; text-decoration: none; margin-right: 8px;">✏️ Editar</a>
-            ${p.is_kit
-              ? `<a href="#" onclick="manageBonusFiles(${p.id}, '${p.name}'); return false;" style="color: #ff9800; text-decoration: none; margin-right: 8px; font-weight:bold;">📁 Gestionar Bonus</a>`
-              : `<a href="#" onclick="createKitModal(${p.id}, '${p.name}'); return false;" style="color: #ff9800; text-decoration: none; margin-right: 8px; font-weight:bold;">📦 Crear KIT</a>`
-            }
-            <a href="#" onclick="deleteProduct(${p.id}); return false;" style="color: #c33; text-decoration: none;">🗑️ Eliminar</a>
-          </td>
-        </tr>
-      `).join('');
+      allProducts = data.products || [];
+      renderProductsTable();
     })
     .catch(e => console.error('Error cargando productos:', e));
+}
+
+function formatProductType(type) {
+  const map = { 'pdf': 'PDF/EPUB', 'html_interactive': 'Interactivo', 'downloadable_zip': 'ZIP descargable' };
+  return map[type] || type;
+}
+
+function getUniverseBadge(universe) {
+  if (!universe) return '<span class="badge badge-unclass">Sin clasificar</span>';
+  const badgeClass = universe === 'estrategia' ? 'badge-estrategia' : universe === 'yoyir' ? 'badge-yoyir' : 'badge-ebooks';
+  const config = UNIVERSE_CONFIG[universe];
+  if (config) {
+    return `<span class="badge ${badgeClass}">${config.name}</span>`;
+  }
+  return universe;
+}
+
+function renderProductsTable() {
+  const tbody = document.getElementById('productsTableBody');
+  let filtered = allProducts;
+
+  if (currentFilter !== 'all') {
+    if (currentFilter === 'unclassified') {
+      filtered = allProducts.filter(p => !p.universe);
+    } else {
+      filtered = allProducts.filter(p => p.universe === currentFilter);
+    }
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="padding: 20px; text-align: center;">Sin productos en esta categoría</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(p => `
+    <tr>
+      <td>${p.name}${p.is_kit ? ' <span class="badge-kit">KIT</span>' : ''}</td>
+      <td>${getUniverseBadge(p.universe)}</td>
+      <td><small>${formatProductType(p.product_type)}</small></td>
+      <td><small>${p.category}</small></td>
+      <td style="text-align: center;">$${p.price_ars.toLocaleString('es-AR')}</td>
+      <td style="text-align: center;"><small>${p.featured ? '✓' : '-'}</small></td>
+      <td style="text-align: center;"><small>${p.sort_order || '-'}</small></td>
+      <td>
+        <a href="#" onclick="editProduct(${p.id}); return false;" class="action-link">✏️</a>
+        ${p.is_kit
+          ? `<a href="#" onclick="manageBonusFiles(${p.id}, '${p.name}'); return false;" class="action-link action-kit">📁</a>`
+          : `<a href="#" onclick="createKitModal(${p.id}, '${p.name}'); return false;" class="action-link action-kit">📦</a>`
+        }
+        <a href="#" onclick="deleteProduct(${p.id}); return false;" class="action-link action-delete">🗑️</a>
+      </td>
+    </tr>
+  `).join('');
 }
 
 function editProduct(id) {
@@ -346,56 +476,73 @@ function editProduct(id) {
 function showEditModal(product) {
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
-  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+
+  const badgeClass = product.universe === 'estrategia' ? 'badge-estrategia' : product.universe === 'yoyir' ? 'badge-yoyir' : product.universe ? 'badge-ebooks' : 'badge-unclass';
+  const badgeText = product.universe ? UNIVERSE_CONFIG[product.universe]?.name : 'Sin clasificar';
+
   modal.innerHTML = `
-    <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:550px;max-height:90vh;overflow-y:auto;">
+    <div>
       <h2>Editar: ${product.name}</h2>
       <form id="editForm">
-        <div style="margin-bottom:15px;">
-          <label style="font-weight:bold;">Nombre</label>
-          <input type="text" name="name" value="${product.name}" required style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" name="name" value="${product.name}" required>
         </div>
-        <div style="margin-bottom:15px;">
-          <label style="font-weight:bold;">Descripción</label>
-          <textarea name="description" required style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;min-height:80px;">${product.description}</textarea>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea name="description" required>${product.description}</textarea>
         </div>
-        <div style="margin-bottom:15px;">
-          <label style="font-weight:bold;">Precio (ARS)</label>
-          <input type="number" name="price_ars" value="${product.price_ars}" required style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
+        <div class="form-group">
+          <label>Precio (ARS)</label>
+          <input type="number" name="price_ars" value="${product.price_ars}" required>
         </div>
-        <div style="margin-bottom:15px;">
-          <label style="font-weight:bold;">Categoría</label>
-          <input type="text" name="category" value="${product.category}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
+        <div class="form-group">
+          <label>Universo</label>
+          <select name="universe" id="editUniverseSelect">
+            <option value="">Sin clasificar</option>
+            <option value="estrategia" ${product.universe === 'estrategia' ? 'selected' : ''}>EstrategIA</option>
+            <option value="yoyir" ${product.universe === 'yoyir' ? 'selected' : ''}>YOYI'R</option>
+            <option value="ebooks" ${product.universe === 'ebooks' ? 'selected' : ''}>Ebooks para la vida</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Categoría</label>
+          <input type="text" name="category" value="${product.category}">
+        </div>
+        <div class="form-group">
+          <label>Orden de visualización</label>
+          <input type="number" name="sort_order" value="${product.sort_order || ''}" placeholder="Opcional">
+          <small>Números menores aparecen primero</small>
         </div>
         ${product.product_type === 'html_interactive' ? `
-        <div style="margin-bottom:15px;">
-          <label style="font-weight:bold;">🔄 Reemplazar archivo HTML</label>
-          <small style="color:#666;">Déjalo vacío para mantener el archivo actual</small>
-          <input type="file" name="ebook_file" accept=".html" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
+        <div class="form-group">
+          <label>🔄 Reemplazar archivo HTML</label>
+          <small>Déjalo vacío para mantener el archivo actual</small>
+          <input type="file" name="ebook_file" accept=".html">
         </div>
-        <div style="margin-bottom:15px;">
-          <label style="font-weight:bold;">📘 PDF de instrucciones de uso ${product.has_instructions ? '(ya tiene uno cargado)' : '(no tiene todavía)'}</label>
-          <small style="color:#666;">Guía de cómo usar el HTML (no es el libro). Déjalo vacío para mantener el actual</small>
-          <input type="file" name="instructions_pdf" accept=".pdf" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
+        <div class="form-group">
+          <label>📘 PDF de instrucciones de uso ${product.has_instructions ? '(ya tiene uno cargado)' : '(no tiene todavía)'}</label>
+          <small>Guía de cómo usar el HTML (no es el libro). Déjalo vacío para mantener el actual</small>
+          <input type="file" name="instructions_pdf" accept=".pdf">
         </div>
         ` : `
-        <div style="margin-bottom:15px;">
-          <label style="font-weight:bold;">🔄 Reemplazar PDF ${product.has_pdf ? '(ya tiene uno cargado)' : '(no tiene todavía)'}</label>
-          <input type="file" name="ebook_file_pdf" accept=".pdf" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
+        <div class="form-group">
+          <label>🔄 Reemplazar PDF ${product.has_pdf ? '(ya tiene uno cargado)' : '(no tiene todavía)'}</label>
+          <input type="file" name="ebook_file_pdf" accept=".pdf">
         </div>
-        <div style="margin-bottom:15px;">
-          <label style="font-weight:bold;">🔄 Reemplazar EPUB ${product.has_epub ? '(ya tiene uno cargado)' : '(no tiene todavía)'}</label>
-          <input type="file" name="ebook_file_epub" accept=".epub" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
+        <div class="form-group">
+          <label>🔄 Reemplazar EPUB ${product.has_epub ? '(ya tiene uno cargado)' : '(no tiene todavía)'}</label>
+          <input type="file" name="ebook_file_epub" accept=".epub">
         </div>
         `}
-        <div style="margin-bottom:15px;">
-          <label style="font-weight:bold;">🖼️ Reemplazar portada</label>
-          <small style="color:#666;">Déjalo vacío para mantener la portada actual</small>
-          <input type="file" name="cover_image" accept=".jpg,.jpeg,.png,.gif" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
+        <div class="form-group">
+          <label>🖼️ Reemplazar portada</label>
+          <small>Déjalo vacío para mantener la portada actual</small>
+          <input type="file" name="cover_image" accept=".jpg,.jpeg,.png,.gif">
         </div>
-        <div style="display:flex;gap:10px;">
-          <button type="submit" class="button button-primary" style="flex:1;padding:10px;">✅ Guardar Cambios</button>
-          <button type="button" onclick="closeModal(event); return false;" class="button" style="flex:1;padding:10px;">❌ Cancelar</button>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button type="submit" class="button button-primary" style="flex:1;">✅ Guardar Cambios</button>
+          <button type="button" onclick="closeModal(event); return false;" class="button" style="flex:1;">❌ Cancelar</button>
         </div>
       </form>
     </div>
@@ -426,11 +573,10 @@ function closeModal(event) {
 function createKitModal(id, name) {
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
-  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
   modal.innerHTML = `
-    <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:560px;max-height:90vh;overflow-y:auto;">
+    <div>
       <h2>📦 Crear KIT para: ${name}</h2>
-      <p style="color:#666;font-size:13px;margin:10px 0 20px;">
+      <p style="color: var(--admin-text-muted); font-size: 13px; margin: 16px 0 20px 0;">
         Se crea un producto nuevo (KIT: ${name}) con la portada y el ebook original, más los archivos bonus que subas acá.
         Para armar un kit "ebook interactivo + ebook de ayuda": subí acá el archivo que le falte al original
         (si el original es .html interactivo, subí el PDF/EPUB de ayuda; si el original es PDF/EPUB, subí el HTML interactivo de ayuda).
@@ -440,17 +586,17 @@ function createKitModal(id, name) {
         <div id="kitBonusRows"></div>
         <button type="button" id="addBonusRowBtn" class="button" style="width:100%;margin-bottom:15px;">➕ Agregar otro bonus</button>
 
-        <div style="margin-bottom:15px;">
-          <label style="font-weight:bold;">💰 Precio del KIT (ARS) — opcional</label>
-          <input type="number" name="kit_price_ars" placeholder="Si lo dejás vacío, +15% sobre el original" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-top:5px;">
+        <div class="form-group">
+          <label>💰 Precio del KIT (ARS) — opcional</label>
+          <input type="number" name="kit_price_ars" placeholder="Si lo dejás vacío, +15% sobre el original">
         </div>
-        <div style="margin-bottom:15px;">
-          <label style="font-weight:bold;">📝 Descripción del KIT — opcional</label>
-          <textarea name="kit_description" placeholder="Ej: Incluye el ebook + 3 bonus exclusivos" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;min-height:70px;margin-top:5px;"></textarea>
+        <div class="form-group">
+          <label>📝 Descripción del KIT — opcional</label>
+          <textarea name="kit_description" placeholder="Ej: Incluye el ebook + 3 bonus exclusivos"></textarea>
         </div>
-        <div style="display:flex;gap:10px;">
-          <button type="submit" class="button button-primary" style="flex:1;padding:10px;">✅ Crear KIT</button>
-          <button type="button" onclick="closeModal(event); return false;" class="button" style="flex:1;padding:10px;">❌ Cancelar</button>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button type="submit" class="button button-primary" style="flex:1;">✅ Crear KIT</button>
+          <button type="button" onclick="closeModal(event); return false;" class="button" style="flex:1;">❌ Cancelar</button>
         </div>
       </form>
     </div>
@@ -460,10 +606,10 @@ function createKitModal(id, name) {
   const rowsContainer = modal.querySelector('#kitBonusRows');
   function addBonusRow() {
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex;gap:8px;margin-bottom:10px;';
+    row.className = 'bonus-row';
     row.innerHTML = `
-      <input type="text" placeholder="Nombre del bonus (ej: Modo Supervivencia)" class="bonus-name" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:4px;">
-      <input type="file" accept=".html,.pdf,.epub" class="bonus-file" style="flex:1;">
+      <input type="text" placeholder="Nombre del bonus (ej: Modo Supervivencia)" class="bonus-name">
+      <input type="file" accept=".html,.pdf,.epub" class="bonus-file">
     `;
     rowsContainer.appendChild(row);
   }
@@ -504,18 +650,17 @@ function createKitModal(id, name) {
 function manageBonusFiles(id, name) {
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
-  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
   modal.innerHTML = `
-    <div style="background:white;padding:30px;border-radius:8px;width:90%;max-width:520px;max-height:90vh;overflow-y:auto;">
+    <div>
       <h2>📁 Bonus del KIT: ${name}</h2>
-      <ul id="bonusList" style="list-style:none;padding:0;margin:15px 0;">
-        <li style="color:#666;">Cargando...</li>
+      <ul id="bonusList" class="bonus-list">
+        <li style="color: var(--admin-text-muted);">Cargando...</li>
       </ul>
-      <div style="display:flex;gap:8px;margin:15px 0;padding-top:15px;border-top:1px solid #eee;">
-        <input type="text" id="newBonusName" placeholder="Nombre del bonus" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:4px;">
+      <div class="form-group" style="display:flex;gap:8px;margin:20px 0;border-top:1px solid var(--admin-border);padding-top:20px;">
+        <input type="text" id="newBonusName" placeholder="Nombre del bonus" style="flex:1;">
         <input type="file" id="newBonusFile" accept=".html,.pdf,.epub" style="flex:1;">
       </div>
-      <button type="button" id="addSingleBonusBtn" class="button button-primary" style="width:100%;margin-bottom:15px;">➕ Agregar bonus</button>
+      <button type="button" id="addSingleBonusBtn" class="button button-primary" style="width:100%;margin-bottom:10px;">➕ Agregar bonus</button>
       <button type="button" onclick="closeModal(event); return false;" class="button" style="width:100%;">Cerrar</button>
     </div>
   `;
@@ -530,12 +675,12 @@ function manageBonusFiles(id, name) {
         const files = data.bonus_files || [];
         list.innerHTML = files.length
           ? files.map(b => `
-              <li style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">
-                <span>${b.is_interactive ? '📖' : '📄'} ${b.name} <small style="color:#999;">(${b.size_kb} KB)${b.is_interactive ? ' · interactivo, código propio' : ''}</small></span>
-                <button type="button" onclick="deleteBonusFile(${b.id}, ${id}, '${name}'); return false;" style="background:#c33;color:#fff;border:none;padding:4px 10px;border-radius:3px;cursor:pointer;">✕</button>
+              <li>
+                <span>${b.is_interactive ? '📖' : '📄'} ${b.name} <small>(${b.size_kb} KB)${b.is_interactive ? ' · interactivo, código propio' : ''}</small></span>
+                <button type="button" onclick="deleteBonusFile(${b.id}, ${id}, '${name}'); return false;" class="bonus-delete-btn">✕</button>
               </li>
             `).join('')
-          : '<li style="color:#666;">Sin bonus todavía</li>';
+          : '<li style="color: var(--admin-text-muted);">Sin bonus todavía</li>';
       });
   }
   loadBonusList();
@@ -648,13 +793,13 @@ function renderRevenueChart(data) {
       datasets: [{
         label: 'Ingresos (ARS)',
         data: revenues,
-        borderColor: '#3A5F5F',
-        backgroundColor: 'rgba(58, 95, 95, 0.05)',
+        borderColor: '#AE93E4',
+        backgroundColor: 'rgba(174, 147, 228, 0.08)',
         borderWidth: 2,
         fill: true,
         tension: 0.4,
         pointRadius: 4,
-        pointBackgroundColor: '#3A5F5F',
+        pointBackgroundColor: '#AE93E4',
         pointBorderColor: '#fff',
         pointBorderWidth: 2
       }]
@@ -716,7 +861,7 @@ async function loadOrders() {
           <span class="status ${o.status}">${o.status}</span>
         </div>
         <div class="order-info">
-          <div>${escapeHtml(o.buyer_name)} <small>${escapeHtml(o.buyer_email)}</small></div>
+          <div><strong>${escapeHtml(o.buyer_name)}</strong> <small>${escapeHtml(o.buyer_email)}</small></div>
           <div class="order-price">$${o.total_ars.toLocaleString('es-AR')}</div>
         </div>
         <div class="order-date">${new Date(o.created_at).toLocaleDateString('es-AR')}</div>
@@ -738,31 +883,31 @@ async function loadOrders() {
               <th>Método</th>
               <th>Estado</th>
               <th>Fecha</th>
-              <th>Código de acceso</th>
-              <th>Ebook interactivo</th>
-              <th>Reparar pago</th>
+              <th>Código</th>
+              <th>HTML</th>
+              <th>Reparar</th>
             </tr>
           </thead>
           <tbody>
             ${orders.map(o => `
               <tr>
-                <td>#${o.id}</td>
+                <td><strong>#${o.id}</strong></td>
                 <td>${escapeHtml(o.buyer_name)}</td>
                 <td><small>${escapeHtml(o.buyer_email)}</small></td>
-                <td>$${o.total_ars.toLocaleString('es-AR')}</td>
+                <td><strong>$${o.total_ars.toLocaleString('es-AR')}</strong></td>
                 <td>${o.payment_method}</td>
                 <td><span class="status ${o.status}">${o.status}</span></td>
-                <td>${new Date(o.created_at).toLocaleDateString('es-AR')}</td>
+                <td><small>${new Date(o.created_at).toLocaleDateString('es-AR')}</small></td>
                 <td>${o.access_code
                   ? `<code class="access-code" onclick="copyAccessCode('${o.access_code}', this)" title="Click para copiar">${o.access_code}</code>`
                   : '-'}</td>
                 <td>${o.ebook_type === 'html_interactive'
-                  ? `<button class="btn-regenerate" onclick="regenerateOrderHtml(${o.id}, this)">Regenerar HTML</button>`
+                  ? `<button class="btn-regenerate" onclick="regenerateOrderHtml(${o.id}, this)">Regenerar</button>`
                   : '-'}</td>
                 <td>${o.status === 'pending'
-                  ? `<button class="btn-regenerate" onclick="markOrderPaid(${o.id}, this)">Marcar pagada y reenviar</button>`
+                  ? `<button class="btn-regenerate" onclick="markOrderPaid(${o.id}, this)">Marcar pagada</button>`
                   : (o.status === 'paid' || o.status === 'paid_demo')
-                    ? `<button class="btn-regenerate" onclick="resendOrderEmail(${o.id}, this)">Reenviar mail</button>`
+                    ? `<button class="btn-regenerate" onclick="resendOrderEmail(${o.id}, this)">Reenviar</button>`
                     : '-'}</td>
               </tr>
             `).join('')}
@@ -1007,406 +1152,4 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 // Cargar datos al abrir
 loadStats();
 </script>
-
-<style>
-.admin-page {
-  padding-top: 70px;
-  padding-bottom: 110px;
-}
-
-.admin-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 40px;
-}
-
-.admin-header h1 {
-  font: 800 55px/.98 Manrope;
-  color: var(--teal);
-  margin: 0;
-}
-
-.admin-header .eyebrow {
-  color: var(--muted);
-  font-size: 12px;
-  margin: 0 0 10px 0;
-}
-
-/* MÉTRICAS */
-.admin-metrics {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 15px;
-  margin-bottom: 50px;
-}
-
-.metric-card {
-  background: var(--beige);
-  padding: 22px;
-  border-radius: 8px;
-}
-
-.metric-card .label {
-  display: block;
-  color: var(--muted);
-  font-size: 12px;
-  margin-bottom: 8px;
-}
-
-.metric-card .value {
-  display: block;
-  color: var(--teal);
-  font: 700 28px Manrope;
-  margin-bottom: 4px;
-}
-
-.metric-card small {
-  display: block;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-/* TABS */
-.admin-tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 40px;
-  border-bottom: 2px solid var(--line);
-  overflow-x: auto;
-}
-
-.tab-btn {
-  padding: 12px 20px;
-  background: none;
-  border: none;
-  color: var(--muted);
-  font: 600 14px 'DM Sans';
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  transition: all 0.2s;
-}
-
-.tab-btn:hover {
-  color: var(--teal);
-}
-
-.tab-btn.active {
-  color: var(--teal);
-  border-bottom-color: var(--teal);
-}
-
-/* TAB CONTENT */
-.tab-content {
-  display: none;
-}
-
-.tab-content.active {
-  display: block;
-}
-
-/* GRID LAYOUT */
-.admin-grid {
-  display: grid;
-  gap: 40px;
-  margin-bottom: 40px;
-}
-
-.admin-grid.two-col {
-  grid-template-columns: 1fr 1fr;
-}
-
-.admin-section {
-  background: #fff;
-  padding: 25px;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-}
-
-.section-title {
-  border-bottom: 2px solid var(--teal);
-  padding-bottom: 15px;
-  margin-bottom: 20px;
-}
-
-.section-title h2 {
-  color: var(--teal);
-  font: 700 20px Manrope;
-  margin: 0;
-}
-
-/* RANKING LIST */
-.ranking-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.ranking-item {
-  display: grid;
-  grid-template-columns: 30px 1fr auto;
-  gap: 15px;
-  align-items: center;
-  padding: 12px;
-  background: #f9f9f9;
-  border-radius: 6px;
-  font-size: 13px;
-}
-
-.ranking-item .rank {
-  font: 700 14px Manrope;
-  color: var(--teal);
-  text-align: center;
-}
-
-.ranking-item .name {
-  color: var(--text);
-}
-
-.ranking-item .count {
-  color: var(--muted);
-  font-size: 12px;
-  text-align: right;
-}
-
-/* ORDERS PREVIEW */
-.orders-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.order-item {
-  display: grid;
-  gap: 8px;
-  padding: 12px;
-  background: #f9f9f9;
-  border-radius: 6px;
-  font-size: 13px;
-  border-left: 3px solid var(--teal);
-}
-
-.order-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.order-header strong {
-  color: var(--teal);
-}
-
-.order-info {
-  display: flex;
-  justify-content: space-between;
-  color: var(--text);
-}
-
-.order-info small {
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.order-price {
-  font: 700 14px Manrope;
-  color: var(--teal);
-}
-
-.order-date {
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.status {
-  display: inline-block;
-  padding: 3px 8px;
-  border-radius: 3px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.status.paid,
-.status.paid_demo {
-  background: #d4f4dd;
-  color: #2d5c35;
-}
-
-.status.pending {
-  background: #fae7df;
-  color: #8b4a3e;
-}
-
-/* TABLES */
-.table-responsive {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-table thead {
-  background: #f9f9f9;
-  border-bottom: 1px solid var(--line);
-}
-
-table th {
-  padding: 12px;
-  text-align: left;
-  font: 600 12px 'DM Sans';
-  color: var(--teal);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-table td {
-  padding: 12px;
-  border-bottom: 1px solid var(--line);
-  color: var(--text);
-}
-
-table tr:hover {
-  background: #f9f9f9;
-}
-
-.btn-regenerate {
-  padding: 6px 12px;
-  border: 1px solid var(--teal);
-  border-radius: 6px;
-  background: #fff;
-  color: var(--teal);
-  font: 600 12px 'DM Sans';
-  cursor: pointer;
-}
-
-.btn-regenerate:hover {
-  background: var(--teal);
-  color: #fff;
-}
-
-.btn-regenerate:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.access-code {
-  background: var(--beige, #f1e8da);
-  border: 1px solid var(--line, #d6cabb);
-  border-radius: 4px;
-  padding: 3px 8px;
-  font-size: 12px;
-  letter-spacing: 0.05em;
-  cursor: pointer;
-}
-
-.access-code:hover {
-  background: var(--teal, #31595a);
-  color: #fff;
-}
-
-/* FORM */
-.product-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.form-row.full {
-  grid-template-columns: 1fr;
-}
-
-.form-row > div {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.product-form label {
-  font: 600 13px 'DM Sans';
-  color: var(--teal);
-}
-
-.product-form input,
-.product-form textarea,
-.product-form select {
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  font: 13px 'DM Sans';
-  background: #fff;
-}
-
-.product-form textarea {
-  min-height: 120px;
-  resize: vertical;
-}
-
-.checkbox {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.checkbox input {
-  width: auto;
-  cursor: pointer;
-}
-
-/* EMPTY STATE */
-.empty {
-  text-align: center;
-  color: var(--muted);
-  padding: 40px 20px;
-  font-size: 13px;
-}
-
-/* RESPONSIVE */
-@media (max-width: 1200px) {
-  .admin-metrics {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .admin-grid.two-col {
-    grid-template-columns: 1fr;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .admin-header h1 {
-    font-size: 38px;
-  }
-
-  .admin-metrics {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .admin-tabs {
-    overflow-x: auto;
-  }
-
-  table {
-    font-size: 12px;
-  }
-
-  table th,
-  table td {
-    padding: 8px;
-  }
-}
-</style>
 {% endblock %}

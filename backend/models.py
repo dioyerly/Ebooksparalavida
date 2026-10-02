@@ -36,6 +36,8 @@ class Product(db.Model):
     kit_description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    universe = db.Column(db.String(50), nullable=True)
+    sort_order = db.Column(db.Integer, nullable=True)
     bonus_files = db.relationship(
         "ProductBonusFile", backref="product", lazy=True,
         cascade="all, delete-orphan", order_by="ProductBonusFile.id"

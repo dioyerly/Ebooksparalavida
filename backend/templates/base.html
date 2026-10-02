@@ -16,6 +16,7 @@
 </head>
 <body class="theme-{% if brand %}{{ brand }}{% else %}ebooks{% endif %} {% block body_class %}{% endblock %}">
   <div class="topline">Envío inmediato a tu email · Lectura en cualquier dispositivo</div>
+  {% block site_header %}
   <header class="site-header">
     <a class="brand" href="{{ url_for('home') }}"><img class="brand-logo" src="{{ url_for('static', filename='images/logo-ebooks-para-la-vida.jpeg') }}" alt=""><span>Ebooks <em>para la vida</em></span></a>
     <nav class="main-nav" aria-label="Navegación principal">
@@ -29,6 +30,7 @@
     </nav>
     <a class="cart-link" href="{{ url_for('cart') }}" aria-label="Ver carrito">Carrito <span>{{ cart_count }}</span></a>
   </header>
+  {% endblock %}
   <main>
     {# "admin-*" flashes (product created, login errors...) only show on admin pages, never on the public store. #}
     {% set on_admin_page = (request.endpoint or '').startswith('admin') %}

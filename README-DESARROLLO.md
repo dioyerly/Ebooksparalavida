@@ -1,8 +1,10 @@
-# Ebooksparalavida — Rama de Desarrollo: Plataforma Unificada
+# Ebooksparalavida — Rama de Desarrollo: Plataforma Unificada Multi-Marca
 
 🚀 **Rama Activa:** `develop/multi-brand-platform`
 
-Esta rama contiene el desarrollo visual y funcional de la **plataforma unificada de tres universos**: EstrategIA (herramientas), YOYI'R (organización) y Ebooks para la vida (contenidos educativos).
+Esta rama contiene el desarrollo de la **plataforma unificada de tres universos**: EstrategIA (herramientas), YOYI'R (organización) y Ebooks para la vida (contenidos educativos).
+
+**FASE 1 COMPLETA:** Sistema de gestión multi-marca en admin + Rediseño visual coherente.
 
 ---
 
@@ -74,18 +76,73 @@ pip install -r requirements.txt
 ### 3. Levantar el servidor
 
 ```bash
-flask run
-# Abre http://localhost:5000/universos
+python backend/app.py
+# O: flask run
+# Abre http://localhost:5000
 ```
 
-### 4. Verificar la plataforma unificada
+### 4. Verificar la plataforma
 
-- **`/universos`** — Landing unificada con tres universos (NUEVA, IMPLEMENTADA)
+- **`/admin`** — Panel administrativo rediseñado (NUEVA, FASE 1 COMPLETA)
+  - Login: admin@estrategia.site / Admin123456
+  - Gestión de productos multi-marca
+  - Filtros por universo (estrategia, yoyir, ebooks)
+  - Crear/editar/eliminar productos
+  - Crear KITs con bonus
+  - Resumen con métricas y gráficos
+  - Órdenes y análisis
+- **`/universos`** — Landing unificada con tres universos (IMPLEMENTADA)
   - EstrategIA: herramientas interactivas, microapps
   - YOYI'R: planners, agendas, recursos de organización
   - Ebooks para la vida: ebooks, guías, contenidos educativos
 - **`/`** — Página comercial original (intacta, sin cambios)
-- **`/ebooks`, `/yoyir`, `/estrategia`** — Catálogos por marca (funcionales)
+- **`/ebooks`, `/yoyir`, `/estrategia`** — Catálogos públicos (existen pero no conectados aún a Product)
+
+---
+
+## 🎯 FASE 1: SISTEMA MULTI-MARCA Y ADMIN REDISEÑADO ✅
+
+### Arquitectura Actualizada
+
+**Modelo Product** ahora incluye:
+- `universe` (VARCHAR 50, nullable): estrategia | yoyir | ebooks
+- `sort_order` (INT, nullable): Orden de visualización por universo
+- `category` (existente): Categorías dinámicas por universo
+- `product_type` (existente): pdf | html_interactive | downloadable_zip
+
+### Panel Administrativo Completo
+
+✅ **Header:** Logo eliminado, diseño limpio con gradiente lavanda/rosa/peach  
+✅ **Métricas:** 5 KPIs principales con bordes de colores por universo  
+✅ **Tabs:** Resumen, Mis Productos, Órdenes, Análisis, Crear Producto  
+✅ **Mis Productos:** Tabla filtrable por universo con acciones (editar, KIT, eliminar)  
+✅ **Crear Producto:** Formulario con 5 grupos (Identidad, Clasificación, Precio, Formato, Archivos)  
+✅ **Editar Producto:** Modal con cambio de universo, sort_order, categoría dinámica  
+✅ **KIT:** Crear paquetes bonus con archivos adicionales  
+✅ **Bonus:** Gestionar archivos adicionales en KITs  
+✅ **Órdenes:** Tabla de transacciones con estados (pagado, pendiente, cancelado)  
+✅ **Análisis:** Comparativa clics vs ventas por producto  
+✅ **Resumen:** Gráfico de ingresos (Chart.js con lavanda), rankings, últimas órdenes  
+
+### Diseño Visual
+
+- **Colores:** Lavanda (#AE93E4), Rosa (#DC76C2), Peach (#C97768)
+- **CSS:** Completamente refactorizado en `admin.css` sin styles inline
+- **JavaScript:** Refactorizado para generar HTML con clases en lugar de estilos inline
+- **Modales:** Editores, KIT, bonus con diseño coherente
+- **Responsive:** Optimizado para 1440px, 1200px, 768px, 480px
+
+### Funcionalidades Comerciales Conservadas
+
+✅ Checkout sin cambios  
+✅ Mercado Pago intacto  
+✅ PayPal intacto  
+✅ Order / OrderItem tabla sin cambios  
+✅ ZIP descargable sin cambios  
+✅ PDF/EPUB sin cambios  
+✅ HTML interactivo con código de acceso  
+✅ Sistema de entrega  
+✅ Email de confirmación  
 
 ---
 
@@ -372,8 +429,24 @@ Si tienes dudas:
 
 ---
 
+## 📅 FASE 2: Pendiente
+
+**Descripción:** Conectar productos clasificados del admin con catálogos públicos de EstrategIA, YOYI'R y Ebooks para la vida.
+
+**Acciones:**
+1. Conectar `/estrategia` con productos `universe='estrategia'`
+2. Conectar `/yoyir` con productos `universe='yoyir'`
+3. Conectar `/ebooks` con productos `universe='ebooks'`
+4. Aplicar filtros y orden de visualización
+5. Implementar búsqueda por categoría dinámica
+6. Pruebas de integración end-to-end
+
+**NO IMPLEMENTADA TODAVÍA. Esperar autorización.**
+
+---
+
 ¡Bienvenido al desarrollo multi-marca de Ebooksparalavida! 🚀
 
-**Rama activa:** `feature/multi-brand-evolution`  
-**Estado:** Arquitectura conceptual ✅  
-**Próximo paso:** Crear blueprints vacíos y templates base
+**Rama activa:** `develop/multi-brand-platform`  
+**Estado:** FASE 1 Completa ✅  
+**Próximo paso:** FASE 2 (Conexión de catálogos públicos)
