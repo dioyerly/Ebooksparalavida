@@ -1,8 +1,8 @@
 # ✅ EBOOKSPARALAVIDA - LISTA PARA VENDER
 
-## 🎉 Estado: 95% LISTO PARA COMPARTIR
+## 🎉 Estado: 99% LISTO PARA VENDER EN PRODUCCIÓN
 
-Tu tienda de ebooks está **completamente funcional** y lista para empezar a vender. Aquí está el resumen de qué está hecho y qué necesitas para ir en vivo.
+Tu tienda de ebooks está **completamente funcional** y lista para empezar a vender. Incluye productos ZIP descargables, deployment optimizado para Fly.io, y documentación completa. Aquí está el resumen de qué está hecho y qué necesitas para ir en vivo.
 
 ---
 
@@ -27,10 +27,14 @@ Tu tienda de ebooks está **completamente funcional** y lista para empezar a ven
 ### 📚 Gestión de Productos
 - [x] Crear nuevos ebooks desde admin
 - [x] Subir PDF del ebook
+- [x] Subir EPUB del ebook
 - [x] Subir imagen de portada
 - [x] Descripción, precio, categoría
 - [x] Color de portada personalizable
 - [x] Productos destacados en home
+- [x] Soporte para archivos ZIP descargables (NEW)
+- [x] Productos HTML interactivos personalizados
+- [x] Kits de productos con bonus files
 
 ### 📊 Panel Administrativo
 - [x] Resumen con gráficos (Chart.js)
@@ -53,8 +57,18 @@ Tu tienda de ebooks está **completamente funcional** y lista para empezar a ven
 ### 🔒 Seguridad & Descargas
 - [x] Token único de descarga por cliente
 - [x] PDFs privados (no expuestos en web)
+- [x] EPUBs privados (no expuestos en web)
+- [x] ZIPs privados (no expuestos en web)
 - [x] Acceso seguro a descargas
 - [x] Validación de orden antes de descargar
+- [x] Rate limiting en descargas (30/min)
+
+### 🚀 Deployment & Infrastructure
+- [x] Dockerfile optimizado
+- [x] Fly.io configuration (fly.toml)
+- [x] Deploy script automatizado
+- [x] Database guard para proteger
+- [x] Dependencias optimizadas (requirements.txt actualizado)
 
 ### 📱 Responsivo & UX
 - [x] Diseño responsive (mobile, tablet, desktop)
@@ -279,9 +293,12 @@ Comparte URL con amigos/clientes:
 | Pagos (Demo) | ✅ Funcional | Nada |
 | Pagos (Real) | ⏳ Integrado | Credenciales |
 | Admin Panel | ✅ Completo | Mejoras futuras |
-| Descargas | ✅ Funcional | Nada |
+| Descargas PDF/EPUB | ✅ Funcional | Nada |
+| Descargas ZIP | ✅ Nuevo - Funcional | Nada |
+| Productos Interactivos | ✅ Funcional | Nada |
 | Tracking | ✅ Funcional | Nada |
 | Email | ⏳ Integrado | SendGrid API |
+| Deployment (Fly.io) | ✅ Listo | Solo deploy |
 | Documentación | ✅ Completa | Nada |
 | Seguridad | ✅ Buena | HTTPS (producción) |
 | Responsivo | ✅ Sí | Nada |
