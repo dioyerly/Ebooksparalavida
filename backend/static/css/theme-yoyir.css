@@ -1,0 +1,64 @@
+/*
+  Tema: YOYI'R
+  Paleta: Lavanda, Morado Pastel
+  Estética: Minimalismo, creatividad, sofisticación
+*/
+
+:root.theme-yoyir {
+  --primary: #7B4D8F;
+  --secondary: #D4A5D9;
+  --background: #E5D9F0;
+  --text: #2D2D2D;
+  --light: #FFFFFF;
+  --accent: #D4A5D9;
+  --border: #D4BFE0;
+}
+
+body.theme-yoyir {
+  background-color: var(--background);
+  color: var(--text);
+}
+
+.theme-yoyir h1,
+.theme-yoyir h2,
+.theme-yoyir h3,
+.theme-yoyir h4,
+.theme-yoyir h5,
+.theme-yoyir h6 {
+  color: var(--primary);
+  font-family: 'Montserrat', 'Arial', sans-serif;
+  font-weight: 700;
+}
+
+.theme-yoyir button,
+.theme-yoyir .btn {
+  background-color: var(--primary);
+  color: var(--light);
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  font-family: 'Poppins', sans-serif;
+}
+
+.theme-yoyir button:hover,
+.theme-yoyir .btn:hover {
+  background-color: var(--secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(123, 77, 143, 0.2);
+}
+
+.theme-yoyir .card,
+.theme-yoyir .product-card {
+  background-color: var(--light);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(123, 77, 143, 0.08);
+  border-radius: 8px;
+}
+
+.theme-yoyir .placeholder {
+  padding: 20px;
+  background-color: var(--light);
+  border-left: 4px solid var(--primary);
+  color: var(--text);
+  font-style: italic;
+  border-radius: 4px;
+}

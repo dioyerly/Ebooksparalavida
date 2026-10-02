@@ -1,0 +1,59 @@
+/*
+  Tema: Ebooks para la vida
+  Paleta: Beige, Teal, Coral
+  Estética: Calidez, bienestar, naturalidad
+*/
+
+:root.theme-ebooks {
+  --primary: #2A7F7E;
+  --secondary: #E8A89F;
+  --background: #F5E6D3;
+  --text: #3A3A3A;
+  --light: #FFFFFF;
+  --accent: #E8A89F;
+  --border: #D4C4B0;
+}
+
+body.theme-ebooks {
+  background-color: var(--background);
+  color: var(--text);
+}
+
+.theme-ebooks h1,
+.theme-ebooks h2,
+.theme-ebooks h3,
+.theme-ebooks h4,
+.theme-ebooks h5,
+.theme-ebooks h6 {
+  color: var(--primary);
+  font-family: 'Georgia', serif;
+}
+
+.theme-ebooks button,
+.theme-ebooks .btn {
+  background-color: var(--primary);
+  color: var(--light);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.theme-ebooks button:hover,
+.theme-ebooks .btn:hover {
+  background-color: var(--secondary);
+  transform: translateY(-2px);
+}
+
+.theme-ebooks .card,
+.theme-ebooks .product-card {
+  background-color: var(--light);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(42, 127, 126, 0.1);
+}
+
+.theme-ebooks .placeholder {
+  padding: 20px;
+  background-color: var(--light);
+  border-left: 4px solid var(--primary);
+  color: var(--text);
+  font-style: italic;
+}

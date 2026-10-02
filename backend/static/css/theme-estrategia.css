@@ -1,0 +1,81 @@
+/*
+  Tema: EstrategIA
+  Paleta: Oscuro, Azul Neón, Magenta Neón
+  Estética: Tecnológica, futurista, edgy
+*/
+
+:root.theme-estrategia {
+  --primary: #00D9FF;
+  --secondary: #FF00FF;
+  --background: #0A0E27;
+  --text: #E0E0E0;
+  --light: #1A1A2E;
+  --accent: #00D9FF;
+  --glow: #FF00FF;
+  --border: #1F1F3F;
+}
+
+body.theme-estrategia {
+  background-color: var(--background);
+  color: var(--text);
+}
+
+.theme-estrategia h1,
+.theme-estrategia h2,
+.theme-estrategia h3,
+.theme-estrategia h4,
+.theme-estrategia h5,
+.theme-estrategia h6 {
+  color: var(--primary);
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+}
+
+.theme-estrategia button,
+.theme-estrategia .btn {
+  background-color: var(--primary);
+  color: var(--background);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  font-family: 'Courier New', monospace;
+  border: 2px solid var(--primary);
+  box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+}
+
+.theme-estrategia button:hover,
+.theme-estrategia .btn:hover {
+  background-color: transparent;
+  color: var(--primary);
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.6);
+  transform: translateY(-2px);
+}
+
+.theme-estrategia .card,
+.theme-estrategia .product-card {
+  background-color: var(--light);
+  border: 2px solid var(--primary);
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.2);
+  border-radius: 0;
+}
+
+.theme-estrategia .placeholder {
+  padding: 20px;
+  background-color: var(--light);
+  border-left: 4px solid var(--primary);
+  color: var(--text);
+  font-style: italic;
+  font-family: 'Courier New', monospace;
+  box-shadow: inset 0 0 10px rgba(0, 217, 255, 0.1);
+}
+
+.theme-estrategia a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.theme-estrategia a:hover {
+  color: var(--glow);
+  text-shadow: 0 0 8px rgba(255, 0, 255, 0.5);
+}
