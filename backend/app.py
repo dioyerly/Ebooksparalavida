@@ -287,7 +287,8 @@ def migrate_product_columns():
     order_table = Order.__tablename__
     if db_dialect == 'sqlite':
         try:
-            result = db.session.execute(db.text(f"PRAGMA table_info({order_table})"))
+            sqlite_order_table = f'"{order_table}"'
+            result = db.session.execute(db.text(f"PRAGMA table_info({sqlite_order_table})"))
             order_columns = {row[1] for row in result}
         except:
             order_columns = set()
@@ -303,10 +304,16 @@ def migrate_product_columns():
         "personalized_file_path": "VARCHAR(255)",
     }.items():
         if column not in order_columns:
+            order_table_sql = f'"{order_table}"' if db_dialect == 'sqlite' else order_table
             db.session.execute(db.text(
-                f"ALTER TABLE {order_table} ADD COLUMN {column} {definition}"
+                f"ALTER TABLE {order_table_sql} ADD COLUMN {column} {definition}"
             ))
             db.session.commit()
+
+    # The remaining BLOB migrations query MySQL's INFORMATION_SCHEMA.
+    # SQLite creates these model columns through db.create_all().
+    if db_dialect == 'sqlite':
+        return
 
     # Fix BLOB size limit - convert to LONGBLOB for large HTML files
     column_type_query = db.text(f"""

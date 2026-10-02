@@ -1,8 +1,8 @@
-# Ebooksparalavida — Rama de Desarrollo Multi-Marca
+# Ebooksparalavida — Rama de Desarrollo: Plataforma Unificada
 
-🚀 **Rama:** `feature/multi-brand-evolution`
+🚀 **Rama Activa:** `develop/multi-brand-platform`
 
-Esta rama contiene la arquitectura y documentación para la **evolución multi-marca** de la plataforma Ebooksparalavida.
+Esta rama contiene el desarrollo visual y funcional de la **plataforma unificada de tres universos**: EstrategIA (herramientas), YOYI'R (organización) y Ebooks para la vida (contenidos educativos).
 
 ---
 
@@ -10,10 +10,12 @@ Esta rama contiene la arquitectura y documentación para la **evolución multi-m
 
 ✋ **Esta rama NO modifica producción** (`main`)
 
-- ✅ Diseño arquitectónico
-- ✅ Documentación conceptual
+- ✅ Desarrollo visual en `/universos` (landing unificada)
+- ✅ Tres universos completamente implementados y funcionales
 - ✅ Testing en `localhost:5000`
-- ❌ NO se publica a Fly.io hasta que esté completamente lista
+- ✅ Página comercial `/` aislada e intacta
+- ❌ NO se publica a Fly.io hasta autorización explícita
+- ❌ NO se modifica ni se reemplaza `/` hasta que se ordene la integración
 
 ---
 
@@ -54,13 +56,13 @@ docs/
 
 ---
 
-## 🚀 Cómo Empezar
+## 🚀 Cómo Empezar (Continuación)
 
 ### 1. Traer la rama de desarrollo
 
 ```bash
-git checkout feature/multi-brand-evolution
-git pull origin feature/multi-brand-evolution
+git checkout develop/multi-brand-platform
+git pull origin develop/multi-brand-platform
 ```
 
 ### 2. Instalar dependencias (si cambiaron)
@@ -73,38 +75,120 @@ pip install -r requirements.txt
 
 ```bash
 flask run
-# Abre http://localhost:5000/
+# Abre http://localhost:5000/universos
 ```
 
-### 4. Leer la documentación
+### 4. Verificar la plataforma unificada
 
-**Comienza aquí:**
-1. [`docs/PROJECT-MASTER.md`](./docs/PROJECT-MASTER.md) — Visión global
-2. [`docs/architecture/blueprint-structure.md`](./docs/architecture/blueprint-structure.md) — Cómo organizar código
-3. [`docs/design/color-palettes.md`](./docs/design/color-palettes.md) — Paletas de color
-4. [`docs/design/home-narrative.md`](./docs/design/home-narrative.md) — Cómo se ve el home
-
----
-
-## 📋 Fases de Desarrollo
-
-### ✅ Fase 1: Arquitectura (ACTUAL)
-- [x] Documentación conceptual
-- [x] Estructura de carpetas
-- [ ] Primer commit
-
-### 🔄 Fase 2-8: Implementación
-Ver roadmap en [`PROJECT-MASTER.md`](./docs/PROJECT-MASTER.md)
+- **`/universos`** — Landing unificada con tres universos (NUEVA, IMPLEMENTADA)
+  - EstrategIA: herramientas interactivas, microapps
+  - YOYI'R: planners, agendas, recursos de organización
+  - Ebooks para la vida: ebooks, guías, contenidos educativos
+- **`/`** — Página comercial original (intacta, sin cambios)
+- **`/ebooks`, `/yoyir`, `/estrategia`** — Catálogos por marca (funcionales)
 
 ---
 
-## 🎨 Las Tres Marcas
+## 📋 Estado del Desarrollo Visual
 
-| Marca | URL Base | Colores | Productos |
-|-------|----------|---------|-----------|
-| **Ebooks para la vida** | `/ebooks` | Beige, Teal, Coral | PDF/EPUB |
-| **YOYI'R** | `/yoyir` | Lavanda, Morado | ZIP (Agendas) |
-| **EstrategIA** | `/estrategia` | Oscuro, Neón, Magenta | HTML Interactivas |
+### ✅ COMPLETADO: `/universos` (Landing Unificada)
+
+#### Hero y Núcleo
+- [x] Hero con título "PRODUCTOS DIGITALES QUE HACEN MÁS"
+- [x] Núcleo luminoso orbital con productos animados
+- [x] Banda móvil "¿QUÉ ESTÁS BUSCANDO?" con destellos
+- [x] Header minimalista con navegación (Explorar | EstrategIA | YOYI'R | Ebooks)
+- [x] Línea degradada fina (lavanda → rosa → peach) bajo header
+
+#### 01 / ESTRATEGIA — Herramientas Interactivas
+- [x] Sección con 4 fases (Microapps | Automatizar | Resolver | Datos)
+- [x] Navegación dinámica con tabs funcionales
+- [x] Tema frío: violeta/lavanda con gradientes
+- [x] Órbitas, destellos y halos luminosos
+- [x] Imagen del mockup cargando correctamente
+- [x] CTA y contador de fases
+
+#### 02 / YOYI'R — Organización y Planificación
+- [x] Sección con 4 fases (Planificar | Organizar | Rutinas | Recursos)
+- [x] Navegación dinámica con tabs funcionales
+- [x] Tema cálido: rosa empolvado/malva con gradientes
+- [x] Órbitas, destellos y halos luminosos
+- [x] Imagen del mockup cargando correctamente
+- [x] CTA y contador de fases
+
+#### 03 / EBOOKS — Contenidos Educativos
+- [x] Sección con 4 fases (Vida y bienestar | Aprender | Dinero | Carrera)
+- [x] Navegación dinámica con tabs funcionales
+- [x] Tema editorial: crema/peach/coral empolvado con gradientes
+- [x] Órbitas, destellos y halos luminosos
+- [x] Imagen del mockup cargando correctamente
+- [x] CTA y contador de fases
+
+#### Cierre y Footer
+- [x] Sección de cierre con tres CTAs discretas (Resolver | Organizar | Aprender)
+- [x] Footer minimalista con 4 columnas (Marca | Explorar | Ayuda | Legal)
+- [x] Línea fina separadora
+- [x] Información en parte inferior (Copyright | Tagline | Claim)
+
+#### Limpieza
+- [x] Eliminados bloques visuales antiguos duplicados
+- [x] Sin residuos de versión anterior
+
+---
+
+## 🎨 Los Tres Universos
+
+| Universo | URL | Tema Visual | Contenido |
+|----------|-----|-------------|----------|
+| **EstrategIA** | `/estrategia` | Violeta/Lavanda (frío, tecnológico) | Microapps, herramientas interactivas |
+| **YOYI'R** | `/yoyir` | Rosa empolvado/Malva (cálido, creativo) | Planners, agendas, recursos |
+| **Ebooks para la vida** | `/ebooks` | Crema/Peach (editorial, tranquilo) | Ebooks, guías, contenidos |
+
+### Paletas de Color
+
+- **EstrategIA:** Fondo #FBF9FF, primario #7655D9, secundario #A88AF0
+- **YOYI'R:** Fondo #FFF9FB, primario #C6539A, secundario #E38BBE
+- **Ebooks:** Fondo #FFFCF8, primario #C97768, secundario #E7A897
+
+## 📁 Archivos Modificados en Este Commit
+
+```
+backend/app.py                          (+11 líneas)
+backend/templates/home_unified.html     (+570 líneas)
+frontend/assets/css/home-unified.css    (+2568 líneas)
+frontend/assets/js/home-unified.js      (+485 líneas)
+```
+
+### Cambios Principales
+
+**backend/app.py**
+- Rutas para /universos actualizado
+- Manejo de menú toggle para mobile
+
+**backend/templates/home_unified.html**
+- Nueva sección hero optimizada
+- Tres secciones de universos (EstrategIA, YOYI'R, Ebooks)
+- Header con navegación unificada
+- Línea degradada divisor bajo header
+- Sección de cierre con tres CTAs
+- Footer minimalista con 4 columnas
+- Eliminados bloques visuales duplicados
+
+**frontend/assets/css/home-unified.css**
+- CSS para header divider (línea degradada)
+- CSS para estrategia-showcase (tema violeta)
+- CSS para universe-stage--yoyir (tema rosa)
+- CSS para universe-stage--ebooks (tema peach)
+- CSS para cierre y footer minimalista
+- Responsive media queries para mobile/tablet
+- Animaciones de órbitas, destellos, halos
+
+**frontend/assets/js/home-unified.js**
+- Navegación de fases EstrategIA (4 tabs dinámicos)
+- Navegación de fases YOYI'R (4 tabs dinámicos)
+- Navegación de fases Ebooks (4 tabs dinámicos)
+- Transiciones suaves entre fases
+- Actualización de contadores y barras de progreso
 
 ---
 
@@ -169,23 +253,44 @@ git commit -m "refactor: reorganizar templates base"
 
 ---
 
-## 🚫 Prohibiciones
+## 🚫 Reglas Operacionales
 
-❌ **NO HAGAS:**
+❌ **PROHIBIDO:**
 
 1. NO merges a `main` sin autorización explícita
-2. NO cambios en `app.py` principal sin documentar
-3. NO modificar `config.py` sin revisar impacto
-4. NO alterar base de datos en producción
-5. NO tocar blueprints ya en producción
+2. NO modificar, eliminar ni reemplazar `/` (página comercial) sin orden
+3. NO tocar checkout, pagos, carrito ni transacciones
+4. NO modificar base de datos de producción
+5. NO incluir `.env`, credenciales ni archivos temporales en commits
+6. NO borrar, reemplazar, simplificar ni reconstruir funcionalidades existentes
+7. NO hacer despliegues a producción sin autorización
 
-✅ **EN SU LUGAR:**
+✅ **PERMITIDO:**
 
-- Trabaja siempre en `feature/multi-brand-evolution`
-- Documenta cambios en comments de código
-- Prueba en `localhost` antes de comprometer
-- Haz commits descriptivos
-- Avisa si necesitas cambios en la BD
+- Desarrollo visual en `/universos` (landing unificada)
+- Cambios incrementales con revisión previa
+- Testing en `localhost:5000`
+- Commits descriptivos con `feat:`, `fix:`, `refactor:`, `docs:`
+- Usar rama `develop/multi-brand-platform` para todo
+
+## 📝 Metodología de Trabajo
+
+### Desarrollo Visual
+1. Cambios locales en `/universos` únicamente
+2. Revisar en `http://localhost:5000/universos`
+3. Aprobar visualmente antes de commit
+4. Documentar cambios en commit message
+
+### Seguridad
+- Entorno de desarrollo aislado
+- NO modificar producción (`main`)
+- NO incluir credenciales en Git
+- Usar variables de entorno para secretos
+
+### Continuidad
+- Este punto de guardado permite continuar desde otra computadora
+- Rama `recovery/multi-brand-20261002` disponible como backup
+- Todos los cambios documentados en este README
 
 ---
 

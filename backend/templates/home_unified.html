@@ -21,19 +21,534 @@
 <header class="platform-header">
 <a class="platform-wordmark" href="{{ url_for('universos') }}" aria-label="Productos digitales, inicio">productos<br><span>digitales /</span></a>
 <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="platform-nav">Menú <span>+</span></button>
-<nav id="platform-nav" aria-label="Navegación principal"><a href="{{ url_for('universos') }}" aria-current="page">Inicio</a><a href="{{ url_for('ebooks.catalog') }}">Ebooks</a><a href="{{ url_for('yoyir.catalog') }}">YOYI'R</a><a href="{{ url_for('estrategia.catalog') }}">EstrategIA</a></nav>
+<nav id="platform-nav" aria-label="Navegación principal"><a href="#universos">Explorar</a><a href="{{ url_for('estrategia.catalog') }}">EstrategIA</a><a href="{{ url_for('yoyir.catalog') }}">YOYI'R</a><a href="{{ url_for('ebooks.catalog') }}">Ebooks</a></nav>
 <a class="platform-cart" href="{{ url_for('cart') }}">Carrito <span>{{ cart_count|default(0) }}</span></a>
 </header>
+<div class="header-divider"></div>
 <main id="contenido">
 {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="home-flashes" role="status">{% for category, message in messages %}{% if not category.startswith('admin-') %}<p class="flash {{ category }}">{{ message }}</p>{% endif %}{% endfor %}</div>{% endif %}{% endwith %}
 <section class="universe-hero" aria-labelledby="hero-title">
 <div class="hero-meta"><span>UN MISMO LUGAR. MÁS POSIBILIDADES.</span><span>01 — 03 / UNIVERSOS DIGITALES</span></div>
 <div class="hero-type"><p class="small-label">DISEÑADOS PARA TU VIDA REAL</p><h1 id="hero-title">PRODUCTOS<br><span>DIGITALES</span><br>QUE HACEN <em>MÁS.</em></h1></div>
 <div class="hero-objects" aria-hidden="true"><div class="hero-object hero-book">{{ publication() }}</div><div class="hero-object hero-planner">{{ planner() }}</div><div class="hero-object hero-software">{{ dashboard() }}</div><div class="format-ticket"><span>IDEAS QUE SE CONVIERTEN EN</span><b>PDF / EPUB / HTML</b><span>ABRIR. EXPLORAR. HACER.</span></div></div>
-<div class="hero-bottom"><p>Ebooks, planners, recursos y herramientas interactivas creadas para resolver necesidades reales.</p><a class="round-link" href="#universos">Explorar los universos <span>↘</span></a><span class="hero-scroll">DESLIZA PARA DESCUBRIR <i></i></span></div>
+<div class="hero-bottom"><p>Herramientas para resolver tareas, recursos para organizar tu tiempo, contenidos para aprender y crecer.</p><a class="round-link" href="#universos">Explorar los universos <span>↘</span></a><span class="hero-scroll">DESLIZA PARA DESCUBRIR <i></i></span></div>
 </section>
 <div class="format-strip"><span>PUBLICACIONES DIGITALES</span><i></i><span>RECURSOS CON INTENCIÓN</span><i></i><span>HERRAMIENTAS INTERACTIVAS</span><i></i><span>TRES UNIVERSOS. UNA PLATAFORMA.</span></div>
-<div class="universe-journey" id="universos">
+<div class="universe-journey compact-journey" id="universos">
+<div class="needs-kinetic" aria-label="&iquest;Qu&eacute; est&aacute;s buscando?"><span class="energy-spark spark-a" aria-hidden="true">✦</span><span class="energy-spark spark-b" aria-hidden="true">✧</span><span class="energy-spark spark-c" aria-hidden="true">✦</span><span class="energy-spark spark-d" aria-hidden="true">·</span><span class="energy-spark spark-e" aria-hidden="true">✧</span><span class="energy-spark spark-f" aria-hidden="true">·</span><div class="needs-kinetic-track"><div class="needs-kinetic-group"><span>&iquest;QU&Eacute; EST&Aacute;S BUSCANDO? &nbsp; / &nbsp;</span><span>&iquest;QU&Eacute; EST&Aacute;S BUSCANDO? &nbsp; / &nbsp;</span><span>&iquest;QU&Eacute; EST&Aacute;S BUSCANDO? &nbsp; / &nbsp;</span><span>&iquest;QU&Eacute; EST&Aacute;S BUSCANDO? &nbsp; / &nbsp;</span></div><div class="needs-kinetic-group" aria-hidden="true"><span>&iquest;QU&Eacute; EST&Aacute;S BUSCANDO? &nbsp; / &nbsp;</span><span>&iquest;QU&Eacute; EST&Aacute;S BUSCANDO? &nbsp; / &nbsp;</span><span>&iquest;QU&Eacute; EST&Aacute;S BUSCANDO? &nbsp; / &nbsp;</span><span>&iquest;QU&Eacute; EST&Aacute;S BUSCANDO? &nbsp; / &nbsp;</span></div></div></div>
+<section class="needs-guide" aria-labelledby="needs-title">
+<div class="needs-intro"><p id="needs-title">Tres universos. Distintas necesidades. Un mismo lugar.</p></div>
+<div class="needs-list">
+<section class="estrategia-showcase" id="estrategia-showcase">
+
+    <div class="estrategia-universe-line">
+        <span>TRES UNIVERSOS. DISTINTAS NECESIDADES. UN MISMO LUGAR.</span>
+        <i></i>
+    </div>
+
+    <div class="estrategia-stage">
+
+        <div class="estrategia-copy"><div class="estrategia-eyebrow">
+                01 / RESOLVER · ESTRATEGIA
+            </div>
+
+            <h2 class="estrategia-main-title">
+                Necesito una herramienta<br>
+                que me ayude a resolver algo.
+            </h2>
+
+            <p class="estrategia-intro">Microapps, herramientas interactivas y soluciones digitales creadas para simplificar tareas concretas.</p><div class="estrategia-tabs">
+                <button class="estrategia-tab active" data-slide="0">
+                    <span class="tab-icon">▦</span>
+                    <span>Microapps</span>
+                </button>
+                <button class="estrategia-tab" data-slide="1">
+                    <span class="tab-icon">ϟ</span>
+                    <span>Automatizar tareas</span>
+                </button>
+                <button class="estrategia-tab" data-slide="2">
+                    <span class="tab-icon">⚙</span>
+                    <span>Resolver procesos</span>
+                </button>
+                <button class="estrategia-tab" data-slide="3">
+                    <span class="tab-icon">▥</span>
+                    <span>Trabajar con datos</span>
+                </button>
+            </div><div class="estrategia-slide-copy" id="estrategiaSlideCopy">
+                <h3 id="estrategiaSlideTitle">Microapps</h3>
+                <p id="estrategiaSlideDescription">Aplicaciones web especializadas y ligeras creadas para resolver una función concreta de forma rápida, sin instalaciones complejas.</p>
+                <a href="{{ url_for('estrategia.catalog') }}" class="estrategia-cta" id="estrategiaSlideCta">
+                    <span id="estrategiaCtaText">Ver microapps</span>
+                    <span class="cta-arrow">→</span>
+                </a>
+            </div><div class="estrategia-controls">
+                <button class="estrategia-arrow" id="estrategiaPrev" aria-label="Anterior">‹</button>
+                <div class="estrategia-progress">
+                    <span id="estrategiaCurrent">01</span>
+                    <span class="progress-separator">/</span>
+                    <span>04</span>
+                    <div class="progress-track">
+                        <span id="estrategiaProgressBar"></span>
+                    </div>
+                </div>
+                <button class="estrategia-arrow" id="estrategiaNext" aria-label="Siguiente">›</button>
+            </div>
+
+            <div class="estrategia-small-note">
+                Microapps · Solucionadores · Suscripciones próximamente
+            </div>
+
+        </div>
+
+        <div class="estrategia-visual">
+
+            <div class="estrategia-light-cloud cloud-a"></div>
+            <div class="estrategia-light-cloud cloud-b"></div>
+            <div class="estrategia-light-cloud cloud-c"></div>
+
+            <div class="estrategia-ghost ghost-1"></div>
+            <div class="estrategia-ghost ghost-2"></div>
+            <div class="estrategia-ghost ghost-3"></div>
+
+            <svg class="estrategia-orbits" viewBox="0 0 1000 720" preserveAspectRatio="none" aria-hidden="true">
+                <defs>
+                    <linearGradient id="estrategiaOrbitA" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+                        <stop offset="22%" stop-color="#ffffff" stop-opacity=".85"/>
+                        <stop offset="48%" stop-color="#d5b5ff" stop-opacity=".95"/>
+                        <stop offset="72%" stop-color="#ffd4ef" stop-opacity=".8"/>
+                        <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+                    </linearGradient>
+                    <linearGradient id="estrategiaOrbitB" x1="1" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+                        <stop offset="30%" stop-color="#c8d9ff" stop-opacity=".85"/>
+                        <stop offset="58%" stop-color="#ffffff" stop-opacity=".9"/>
+                        <stop offset="82%" stop-color="#e6c3ff" stop-opacity=".65"/>
+                        <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+                    </linearGradient>
+                    <filter id="estrategiaOrbitGlow">
+                        <feGaussianBlur stdDeviation="2.4" result="blur"/>
+                        <feMerge>
+                            <feMergeNode in="blur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+                <path d="M15 310 C190 70 760 20 980 280" stroke="url(#estrategiaOrbitA)" stroke-width="1.6" fill="none" filter="url(#estrategiaOrbitGlow)"/>
+                <path d="M20 475 C245 675 785 640 985 355" stroke="url(#estrategiaOrbitB)" stroke-width="1.5" fill="none" filter="url(#estrategiaOrbitGlow)"/>
+                <path d="M145 685 C190 300 690 150 900 45" stroke="url(#estrategiaOrbitA)" stroke-width="1.15" fill="none" filter="url(#estrategiaOrbitGlow)"/>
+                <path d="M45 180 C390 330 600 610 955 500" stroke="url(#estrategiaOrbitB)" stroke-width=".9" fill="none" opacity=".7"/>
+            </svg>
+
+            <span class="orbit-node node-1"></span>
+            <span class="orbit-node node-2"></span>
+            <span class="orbit-node node-3"></span>
+            <span class="orbit-node node-4"></span>
+            <span class="orbit-node node-5"></span>
+            <span class="orbit-node node-6"></span>
+            <span class="orbit-node node-7"></span>
+            <span class="orbit-node node-8"></span>
+            <span class="orbit-node node-9"></span>
+            <span class="orbit-node node-10"></span>
+            <span class="orbit-node node-11"></span>
+            <span class="orbit-node node-12"></span>
+
+            <span class="estrategia-spark spark-1"></span>
+            <span class="estrategia-spark spark-2"></span>
+            <span class="estrategia-spark spark-3"></span>
+            <span class="estrategia-spark spark-4"></span>
+            <span class="estrategia-spark spark-5"></span>
+
+            <div class="estrategia-product-shell">
+                <div class="estrategia-product-window">
+                    <div class="fake-window-bar">
+                        <div>
+                            <i></i>
+                            <i></i>
+                            <i></i>
+                        </div>
+                        <span>ESTRATEGIA / WORKSPACE</span>
+                    </div>
+                    <img id="estrategiaProductImage" src="/assets/images/home-products/estrategia-planificador-finanzas.jpeg" alt="Ejemplo de microapp EstrategIA">
+                </div>
+            </div>
+
+            <div class="estrategia-floating-icon" id="estrategiaFloatingIcon">▦</div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<section class="universe-stage universe-stage--yoyir" id="universo-yoyir">
+
+    <div class="universe-stage__inner">
+
+        <!-- COLUMNA IZQUIERDA -->
+        <div class="universe-stage__content">
+
+            <div class="universe-stage__eyebrow">
+                02 / ORGANIZAR · YOYI'R
+            </div>
+
+            <h2 class="universe-stage__title">
+                Quiero organizar mejor<br>
+                mi tiempo, mis ideas o mis proyectos.
+            </h2>
+
+            <p class="universe-stage__intro">
+                Agendas, planners y recursos digitales creados para ayudarte
+                a ordenar lo importante sin complicarte de más.
+            </p>
+
+
+            <!-- SELECTOR DE FASES -->
+            <div class="universe-tabs" role="tablist" aria-label="Explorar YOYI'R">
+
+                <button
+                    class="universe-tab is-active"
+                    type="button"
+                    data-yoyir-slide="0"
+                    role="tab"
+                    aria-selected="true"
+                >
+                    <span class="universe-tab__icon">▦</span>
+                    <span>Planificar</span>
+                </button>
+
+                <button
+                    class="universe-tab"
+                    type="button"
+                    data-yoyir-slide="1"
+                    role="tab"
+                    aria-selected="false"
+                >
+                    <span class="universe-tab__icon">☷</span>
+                    <span>Organizar</span>
+                </button>
+
+                <button
+                    class="universe-tab"
+                    type="button"
+                    data-yoyir-slide="2"
+                    role="tab"
+                    aria-selected="false"
+                >
+                    <span class="universe-tab__icon">↻</span>
+                    <span>Crear rutinas</span>
+                </button>
+
+                <button
+                    class="universe-tab"
+                    type="button"
+                    data-yoyir-slide="3"
+                    role="tab"
+                    aria-selected="false"
+                >
+                    <span class="universe-tab__icon">□</span>
+                    <span>Recursos a mano</span>
+                </button>
+
+            </div>
+
+
+            <!-- CONTENIDO DINÁMICO -->
+            <div class="universe-slide-copy">
+
+                <h3 id="yoyir-slide-title">
+                    Planificar
+                </h3>
+
+                <p id="yoyir-slide-description">
+                    Herramientas visuales para convertir pendientes,
+                    fechas y objetivos en un plan claro que puedas
+                    seguir a tu ritmo.
+                </p>
+
+                <a
+                    id="yoyir-slide-link"
+                    class="universe-slide-link"
+                    href="/yoyir/"
+                >
+                    <span id="yoyir-slide-link-text">Ver planners</span>
+                    <span aria-hidden="true">→</span>
+                </a>
+
+            </div>
+
+
+            <!-- NAVEGACIÓN -->
+            <div class="universe-slide-navigation">
+
+                <button
+                    id="yoyir-prev"
+                    class="universe-arrow"
+                    type="button"
+                    aria-label="Anterior"
+                >
+                    ‹
+                </button>
+
+                <div class="universe-progress">
+
+                    <span id="yoyir-current">
+                        01
+                    </span>
+
+                    <span>/ 04</span>
+
+                    <div class="universe-progress__track">
+                        <span
+                            id="yoyir-progress-bar"
+                            class="universe-progress__bar"
+                        ></span>
+                    </div>
+
+                </div>
+
+                <button
+                    id="yoyir-next"
+                    class="universe-arrow"
+                    type="button"
+                    aria-label="Siguiente"
+                >
+                    ›
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- ESCENA VISUAL DERECHA -->
+        <div class="universe-stage__visual universe-stage__visual--yoyir">
+
+            <!-- halos -->
+            <div class="yoyir-glow yoyir-glow--one"></div>
+            <div class="yoyir-glow yoyir-glow--two"></div>
+
+            <!-- órbitas -->
+            <div class="yoyir-orbit yoyir-orbit--one"></div>
+            <div class="yoyir-orbit yoyir-orbit--two"></div>
+            <div class="yoyir-orbit yoyir-orbit--three"></div>
+
+            <!-- destellos -->
+            <span class="yoyir-spark yoyir-spark--1">✦</span>
+            <span class="yoyir-spark yoyir-spark--2">✦</span>
+            <span class="yoyir-spark yoyir-spark--3">✦</span>
+            <span class="yoyir-spark yoyir-spark--4">✦</span>
+            <span class="yoyir-spark yoyir-spark--5">✦</span>
+
+            <!-- capas posteriores -->
+            <div class="yoyir-paper yoyir-paper--back"></div>
+            <div class="yoyir-paper yoyir-paper--middle"></div>
+
+            <!-- IMAGEN PRINCIPAL -->
+            <div class="yoyir-product-frame">
+                <img
+                    id="yoyir-product-image"
+                    src="/assets/images/home-products/yoyir-planificador.jpeg"
+                    alt="Ejemplo de planner digital YOYI'R"
+                >
+            </div>
+
+            <!-- icono flotante -->
+            <div class="yoyir-floating-icon" aria-hidden="true">
+                ▦
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<section class="universe-stage universe-stage--ebooks" id="universo-ebooks">
+
+    <div class="universe-stage__inner">
+
+        <!-- COLUMNA IZQUIERDA -->
+        <div class="universe-stage__content">
+
+            <div class="universe-stage__eyebrow">
+                03 / APRENDER · EBOOKS PARA LA VIDA
+            </div>
+
+            <h2 class="universe-stage__title">
+                Quiero aprender, inspirarme<br>
+                y construir una vida con más sentido.
+            </h2>
+
+            <p class="universe-stage__intro">
+                Ebooks, guías y recursos prácticos creados para acompañarte en tu
+                crecimiento personal, profesional y financiero.
+            </p>
+
+
+            <!-- SELECTOR DE FASES -->
+            <div class="universe-tabs" role="tablist" aria-label="Explorar EBOOKS PARA LA VIDA">
+
+                <button
+                    class="universe-tab is-active"
+                    type="button"
+                    data-ebooks-slide="0"
+                    role="tab"
+                    aria-selected="true"
+                >
+                    <span class="universe-tab__icon">♡</span>
+                    <span>Vida y bienestar</span>
+                </button>
+
+                <button
+                    class="universe-tab"
+                    type="button"
+                    data-ebooks-slide="1"
+                    role="tab"
+                    aria-selected="false"
+                >
+                    <span class="universe-tab__icon">⬆</span>
+                    <span>Aprender y dominar</span>
+                </button>
+
+                <button
+                    class="universe-tab"
+                    type="button"
+                    data-ebooks-slide="2"
+                    role="tab"
+                    aria-selected="false"
+                >
+                    <span class="universe-tab__icon">$</span>
+                    <span>Dinero inteligente</span>
+                </button>
+
+                <button
+                    class="universe-tab"
+                    type="button"
+                    data-ebooks-slide="3"
+                    role="tab"
+                    aria-selected="false"
+                >
+                    <span class="universe-tab__icon">→</span>
+                    <span>Trabajo y carrera</span>
+                </button>
+
+            </div>
+
+
+            <!-- CONTENIDO DINÁMICO -->
+            <div class="universe-slide-copy">
+
+                <h3 id="ebooks-slide-title">
+                    Vida y bienestar
+                </h3>
+
+                <p id="ebooks-slide-description">
+                    Guías prácticas para comprenderte mejor, crear hábitos más sostenibles
+                    y llevar herramientas útiles a tu vida cotidiana.
+                </p>
+
+                <a
+                    id="ebooks-slide-link"
+                    class="universe-slide-link"
+                    href="/ebooks/"
+                >
+                    <span id="ebooks-slide-link-text">Ver ebooks</span>
+                    <span aria-hidden="true">→</span>
+                </a>
+
+            </div>
+
+
+            <!-- NAVEGACIÓN -->
+            <div class="universe-slide-navigation">
+
+                <button
+                    id="ebooks-prev"
+                    class="universe-arrow"
+                    type="button"
+                    aria-label="Anterior"
+                >
+                    ‹
+                </button>
+
+                <div class="universe-progress">
+
+                    <span id="ebooks-current">
+                        01
+                    </span>
+
+                    <span>/ 04</span>
+
+                    <div class="universe-progress__track">
+                        <span
+                            id="ebooks-progress-bar"
+                            class="universe-progress__bar"
+                        ></span>
+                    </div>
+
+                </div>
+
+                <button
+                    id="ebooks-next"
+                    class="universe-arrow"
+                    type="button"
+                    aria-label="Siguiente"
+                >
+                    ›
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- ESCENA VISUAL DERECHA -->
+        <div class="universe-stage__visual universe-stage__visual--ebooks">
+
+            <!-- halos -->
+            <div class="ebooks-glow ebooks-glow--one"></div>
+            <div class="ebooks-glow ebooks-glow--two"></div>
+
+            <!-- órbitas -->
+            <div class="ebooks-orbit ebooks-orbit--one"></div>
+            <div class="ebooks-orbit ebooks-orbit--two"></div>
+            <div class="ebooks-orbit ebooks-orbit--three"></div>
+
+            <!-- destellos -->
+            <span class="ebooks-spark ebooks-spark--1">✦</span>
+            <span class="ebooks-spark ebooks-spark--2">✦</span>
+            <span class="ebooks-spark ebooks-spark--3">✦</span>
+            <span class="ebooks-spark ebooks-spark--4">✦</span>
+            <span class="ebooks-spark ebooks-spark--5">✦</span>
+
+            <!-- capas posteriores -->
+            <div class="ebooks-paper ebooks-paper--back"></div>
+            <div class="ebooks-paper ebooks-paper--middle"></div>
+
+            <!-- IMAGEN PRINCIPAL -->
+            <div class="ebooks-product-frame">
+                <img
+                    id="ebooks-product-image"
+                    src="/assets/images/home-products/ebook-no-te-pierdas-por-amor.jpeg"
+                    alt="Ejemplo de ebook EBOOKS PARA LA VIDA"
+                >
+            </div>
+
+            <!-- icono flotante -->
+            <div class="ebooks-floating-icon" aria-hidden="true">
+                ♡
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+</div>
+</section>
+<!-- Legacy editorial chapters are retained below for rollback but hidden from this prototype flow. -->
+<div class="legacy-universe-sections">
 <section class="editorial-section chapter" aria-labelledby="ebooks-title">
 <div class="chapter-meta"><span>01 / EBOOKS PARA LA VIDA</span><span>LEER · DESCUBRIR · APLICAR</span></div>
 <div class="editorial-layout"><div class="chapter-copy reveal"><p class="small-label">EL UNIVERSO EDITORIAL</p><h2 id="ebooks-title">Ideas que<br>se quedan<br><em>con vos.</em></h2><p>Lecturas para abrir perspectivas. Guías para llevarlas a tu día. Conocimiento que no termina en la última página.</p><a class="text-cta" href="{{ url_for('ebooks.catalog') }}">Explorar ebooks <span>↗</span></a><small class="format-caption">PDF / EPUB — A TU RITMO</small></div><div class="editorial-stage reveal"><div class="editorial-word" aria-hidden="true">LEER</div><div class="open-page" aria-hidden="true"><small>NOTAS AL MARGEN / 028</small><h4>Todo empieza<br>con una idea.</h4><p>Hay lecturas que abren una puerta.<br>Y otras que te acompañan a cruzarla.</p><div class="page-lines"></div><span>UN ESPACIO PARA LO QUE IMPORTA.</span></div><div class="stack-book back">{{ publication('coral', 'Otra mirada.', 'Un nuevo punto de partida', '02') }}</div><div class="stack-book front">{{ publication() }}</div><span class="stage-caption">PUBLICACIONES DE DEMOSTRACIÓN / DISEÑO EDITORIAL</span></div></div>
@@ -49,14 +564,59 @@
 <div class="software-stage reveal"><div class="software-grid" aria-hidden="true"></div><div class="main-software">{{ dashboard() }}</div><div class="mini-console" aria-hidden="true"><span>IDEA → SISTEMA</span><p><i></i> Una necesidad real.</p><p><i></i> Una solución simple.</p><div>Listo para hacer más.<span>↗</span></div></div><span class="stage-caption">INTERFAZ DE DEMOSTRACIÓN / DATOS SIMULADOS</span></div>
 </section>
 </div>
+</div>
 <section class="creation-section" aria-labelledby="creation-title"><div class="creation-top"><p class="small-label">DEL CONCEPTO AL PRODUCTO</p><h2 id="creation-title">No solo ideas.<br><em>Las hacemos realidad.</em></h2><p>Creamos productos digitales.<br>Diseñamos su forma. Pensamos su utilidad.<br>Para que puedas hacer más con ellos.</p></div><div class="kinetic-words" aria-hidden="true"><div><span>LEER / PLANIFICAR / ORGANIZAR /&nbsp;</span><span>LEER / PLANIFICAR / ORGANIZAR /&nbsp;</span></div><div><span>INTERACTUAR / RESOLVER / CREAR /&nbsp;</span><span>INTERACTUAR / RESOLVER / CREAR /&nbsp;</span></div></div><div class="creation-bottom"><span>CONTENIDO + DISEÑO + TECNOLOGÍA</span><span>UNA MISMA FORMA DE CREAR.</span></div></section>
 <section class="showcase-section" aria-labelledby="showcase-title"><div class="showcase-heading"><div><p class="small-label">UNA VISTA AL INTERIOR</p><h2 id="showcase-title">Distintas formas.<br><em>La misma intención.</em></h2></div><p>Explorá cómo se siente cada universo.<br>Estas piezas son demostraciones visuales,<br>no productos disponibles para comprar.</p></div><div class="showcase-grid">
 <article class="showcase-item showcase-book reveal"><div class="showcase-visual">{{ publication('coral', 'Otra mirada.', 'Un nuevo punto de partida', '02') }}<span>01 / LEER</span></div><div class="showcase-info"><small>EBOOKS PARA LA VIDA · PDF / EPUB</small><h3>Publicación editorial</h3><p>Demostración · Precio no disponible</p><a href="{{ url_for('ebooks.catalog') }}">Explorar ebooks <span>↗</span></a></div></article>
 <article class="showcase-item showcase-planner reveal"><div class="showcase-visual">{{ planner() }}<span>02 / PLANIFICAR</span></div><div class="showcase-info"><small>YOYI'R · PLANNER / RECURSOS DESCARGABLES</small><h3>Tu semana, en perspectiva</h3><p>Demostración · Precio no disponible</p><a href="{{ url_for('yoyir.catalog') }}">Explorar YOYI'R <span>↗</span></a></div></article>
 <article class="showcase-item showcase-software reveal"><div class="showcase-visual">{{ dashboard() }}<span>03 / INTERACTUAR</span></div><div class="showcase-info"><div><small>ESTRATEGIA · MICRO-APP HTML</small><h3>Un espacio para resolver</h3><p>Demostración · Precio no disponible</p></div><a href="{{ url_for('estrategia.catalog') }}">Explorar EstrategIA <span>↗</span></a></div></article>
 </div></section>
-<section class="closing-section"><p class="small-label">ELEGÍ POR DÓNDE EMPEZAR</p><h2>Tu próximo paso<br>puede ser <em>digital.</em></h2><div><a href="{{ url_for('ebooks.catalog') }}">Ebooks <span>↗</span></a><a href="{{ url_for('yoyir.catalog') }}">YOYI'R <span>↗</span></a><a href="{{ url_for('estrategia.catalog') }}">EstrategIA <span>↗</span></a></div></section>
+<section class="closing-section">
+<p class="small-label">TRES UNIVERSOS. UNA PLATAFORMA.</p>
+<h2>Encontrá el producto<br>que necesitás <em>hoy.</em></h2>
+<div class="closing-ctas">
+<a href="{{ url_for('estrategia.catalog') }}" class="closing-link closing-link--estrategia">Resolver con EstrategIA <span>↗</span></a>
+<a href="{{ url_for('yoyir.catalog') }}" class="closing-link closing-link--yoyir">Organizar con YOYI'R <span>↗</span></a>
+<a href="{{ url_for('ebooks.catalog') }}" class="closing-link closing-link--ebooks">Aprender con Ebooks <span>↗</span></a>
+</div>
+</section>
 </main>
-<footer class="platform-footer"><a class="platform-wordmark" href="{{ url_for('universos') }}">productos<br><span>digitales /</span></a><p>Tres universos. Una misma idea:<br>crear algo que te sirva.</p><nav aria-label="Información legal"><a href="{{ url_for('terms') }}">Términos</a><a href="{{ url_for('refund_policy') }}">Reembolsos</a><a href="mailto:hola@ebooksparalavida.com">Contacto</a></nav><small>© {{ current_year|default(2026) }} / PRODUCTOS DIGITALES</small></footer>
+<footer class="platform-footer">
+<div class="footer-main">
+<div class="footer-col footer-brand">
+<a class="footer-wordmark" href="{{ url_for('universos') }}">productos<br>digitales /</a>
+<p>Tres universos. Una plataforma.</p>
+<p>Herramientas para resolver,<br>recursos para organizar<br>y contenidos para aprender.</p>
+</div>
+
+<div class="footer-col">
+<h4>EXPLORAR</h4>
+<a href="{{ url_for('estrategia.catalog') }}">EstrategIA</a>
+<a href="{{ url_for('yoyir.catalog') }}">YOYI'R</a>
+<a href="{{ url_for('ebooks.catalog') }}">Ebooks para la vida</a>
+</div>
+
+<div class="footer-col">
+<h4>AYUDA</h4>
+<a href="#how">Cómo funciona</a>
+<a href="#access">Acceso a productos</a>
+<a href="#faq">Preguntas frecuentes</a>
+<a href="mailto:hola@ebooksparalavida.com">Contacto</a>
+</div>
+
+<div class="footer-col">
+<h4>LEGAL</h4>
+<a href="{{ url_for('terms') }}">Términos y condiciones</a>
+<a href="#privacy">Política de privacidad</a>
+<a href="{{ url_for('refund_policy') }}">Reembolsos</a>
+</div>
+</div>
+
+<div class="footer-bottom">
+<span class="footer-copyright">© {{ current_year|default(2026) }} / PRODUCTOS DIGITALES</span>
+<span class="footer-tagline">Resolver · Organizar · Aprender</span>
+<span class="footer-claim">Productos digitales creados para la vida real.</span>
+</div>
+</footer>
 </body>
 </html>
