@@ -1393,6 +1393,12 @@ def admin_create_product():
         flash("La categoría es requerida.", "admin-error")
         return redirect(url_for("admin_dashboard"))
 
+    # Validar que el slug no exista ya
+    existing_product = Product.query.filter_by(slug=slug).first()
+    if existing_product:
+        flash(f"Ya existe un producto con el slug '{slug}'. Cambia el nombre para que sea único.", "admin-error")
+        return redirect(url_for("admin_dashboard"))
+
     try:
         product = Product(
             slug=slug,
@@ -1422,9 +1428,19 @@ def admin_create_product():
         return redirect(url_for("admin_dashboard"))
     except Exception as e:
         db.session.rollback()
-        error_msg = str(e)
-        print(f"ERROR creando producto: {error_msg}")
-        flash(f"Error: {error_msg}", "admin-error")
+        error_str = str(e).lower()
+
+        # Detectar errores comunes y mostrar mensajes profesionales
+        if "duplicate entry" in error_str and "slug" in error_str:
+            flash(f"Ya existe un producto con el nombre '{name}'. Cambia el nombre para que sea único.", "admin-error")
+        elif "duplicate entry" in error_str:
+            flash("Este producto ya existe. Intenta con datos diferentes.", "admin-error")
+        elif "truncated" in error_str or "data too long" in error_str:
+            flash("Uno de los campos es demasiado largo. Acorta el texto.", "admin-error")
+        else:
+            print(f"ERROR creando producto: {str(e)}")
+            flash("Ocurrió un error al crear el producto. Verifica los datos e intenta de nuevo.", "admin-error")
+
         return redirect(url_for("admin_dashboard"))
 
 
