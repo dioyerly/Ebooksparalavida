@@ -12,8 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copiar requirements
 COPY requirements.txt .
 
-# Crear wheels para todas las dependencias
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
+# Crear wheels para todas las dependencias (ignorar paquetes de Windows)
+RUN pip install --no-cache-dir wheel && \
+    pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels \
+    -r requirements.txt 2>&1 | grep -v "pywin32\|pypiwin32" || true
 
 # Runtime stage
 FROM python:3.12-slim
@@ -29,8 +31,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /app/wheels /wheels
 COPY --from=builder /app/requirements.txt .
 
-# Instalar wheels (mucho más rápido)
-RUN pip install --no-cache /wheels/*
+# Instalar wheels (ignorar paquetes de Windows que no se construyeron)
+RUN pip install --no-cache /wheels/* 2>&1 | grep -v "pywin32\|pypiwin32" || true
 
 # Copiar código de la aplicación
 COPY . .
