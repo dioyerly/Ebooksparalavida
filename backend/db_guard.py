@@ -11,25 +11,32 @@ HOSTINGER_USER = "u748338755_ebooksadmin"
 
 def validate_database_config():
     """
-    Valida que DATABASE_URL apunte SOLO a Hostinger.
-    Falla ruidosamente si se intenta usar otra BD.
+    Valida que DATABASE_URL apunte SOLO a Hostinger (producción).
+    En desarrollo (FLASK_ENV != production) permite SQLite.
     """
     db_url = os.getenv("DATABASE_URL")
-    
+    flask_env = os.getenv("FLASK_ENV", "development")
+
+    # En desarrollo: permite SQLite
+    if flask_env != "production":
+        if not db_url or db_url.startswith("sqlite"):
+            print("[OK] BD Guard: Modo desarrollo - SQLite permitido")
+            return True
+
     if not db_url:
         raise ValueError(
             "ERROR CRÍTICO: DATABASE_URL no configurada.\n"
             "Debes configurar DATABASE_URL en tu .env o Render env vars.\n"
             "DEBE ser: mysql+pymysql://u748338755_ebooksadmin:Chiara0712.@srv801.hstgr.io:3306/u748338755_ebooks_store_"
         )
-    
+
     # Parsing URL
     try:
         parsed = urlparse(db_url)
     except:
         raise ValueError(f"ERROR: DATABASE_URL inválida: {db_url}")
-    
-    # Verificar que es MySQL
+
+    # Verificar que es MySQL (en producción)
     if not parsed.scheme.startswith("mysql"):
         raise ValueError(
             f"ERROR CRÍTICO: BD no es MySQL.\n"
