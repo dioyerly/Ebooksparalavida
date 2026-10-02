@@ -242,11 +242,23 @@ def seed_products():
 
 def migrate_product_columns():
     """Migrate Product Columns."""
-    query = db.text("""
-        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_NAME = 'product' AND TABLE_SCHEMA = DATABASE()
-    """)
-    columns = {row[0] for row in db.session.execute(query)}
+    # Detectar tipo de BD y usar query apropiada
+    db_dialect = db.engine.dialect.name
+
+    if db_dialect == 'sqlite':
+        # SQLite: PRAGMA table_info
+        try:
+            result = db.session.execute(db.text("PRAGMA table_info(product)"))
+            columns = {row[1] for row in result}  # row[1] es el nombre en PRAGMA
+        except:
+            return  # Tabla no existe en desarrollo
+    else:
+        # MySQL: INFORMATION_SCHEMA
+        query = db.text("""
+            SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_NAME = 'product' AND TABLE_SCHEMA = DATABASE()
+        """)
+        columns = {row[0] for row in db.session.execute(query)}
     if "short_description" not in columns:
         db.session.execute(
             db.text("ALTER TABLE product ADD COLUMN short_description VARCHAR(280)"))
@@ -273,11 +285,18 @@ def migrate_product_columns():
             ))
             db.session.commit()
     order_table = Order.__tablename__
-    query = db.text(f"""
-        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_NAME = '{order_table}' AND TABLE_SCHEMA = DATABASE()
-    """)
-    order_columns = {row[0] for row in db.session.execute(query)}
+    if db_dialect == 'sqlite':
+        try:
+            result = db.session.execute(db.text(f"PRAGMA table_info({order_table})"))
+            order_columns = {row[1] for row in result}
+        except:
+            order_columns = set()
+    else:
+        query = db.text(f"""
+            SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_NAME = '{order_table}' AND TABLE_SCHEMA = DATABASE()
+        """)
+        order_columns = {row[0] for row in db.session.execute(query)}
     for column, definition in {
         "access_code": "VARCHAR(8)",
         "ebook_type": "VARCHAR(30) NOT NULL DEFAULT 'pdf'",
