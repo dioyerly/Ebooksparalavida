@@ -1,512 +1,62 @@
-<!DOCTYPE html>
+{% macro publication(tone='teal', title='Hacer espacio.', subtitle='Ideas para una vida más simple', number='01', image='') -%}
+<div class="publication {{ tone }}{% if image %} has-real-cover{% endif %}" aria-hidden="true"><div class="cover-top">EBOOKS PARA LA VIDA <span>{{ number }} / EDICIÓN DIGITAL</span></div>{% if image %}<img class="real-product-image" src="{{ url_for('static', filename=image) }}" alt="">{% else %}<strong>{{ title }}</strong><div class="cover-art"><i></i><i></i><i></i></div>{% endif %}<div class="cover-bottom">{{ subtitle }}<span>PDF / EPUB</span></div></div>
+{%- endmacro %}
+{% macro planner(image='') -%}
+<div class="planner-ui{% if image %} has-real-planner{% endif %}" aria-hidden="true">{% if image %}<img class="real-product-image" src="{{ url_for('static', filename=image) }}" alt=""><div class="planner-overlay-label">YOYI'R / VISTA PREVIA REAL</div>{% else %}<div class="planner-heading"><span>YOYI'R / PERSONAL PLANNER</span><span>VISTA SEMANAL</span></div><div class="planner-title">Tu tiempo.<br><em>Tu ritmo.</em><span>SEMANA<br>01 — 07</span></div><div class="planner-days">{% for day in ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE'] %}<div><small>{{ day }}</small><b>{{ '%02d'|format(loop.index) }}</b><i class="task t{{ loop.index }}"></i><i class="task secondary"></i></div>{% endfor %}</div><div class="planner-notes"><div><small>LO QUE IMPORTA</small><p>Un paso a la vez.</p><i></i><i></i></div><div class="planner-focus"><small>ESPACIO PARA MÍ</small><span>menos ruido,<br>más intención.</span></div></div><div class="planner-bottom">PLANIFICAR ES HACER ESPACIO <span>01 / 52</span></div>{% endif %}</div>
+{%- endmacro %}
+{% macro dashboard(image='') -%}
+<div class="software-ui{% if image %} has-real-dashboard{% endif %}" aria-hidden="true">{% if image %}<img class="real-product-image" src="{{ url_for('static', filename=image) }}" alt=""><div class="dashboard-overlay-label">ESTRATEGIA / PREVIEW REAL</div>{% else %}<div class="window-bar"><span class="window-dots"><i></i><i></i><i></i></span><span>ESTRATEGIA / WORKSPACE</span><span>DEMO</span></div><div class="software-body"><aside><b>E /</b><span class="selected">Vista general</span><span>Proyectos</span><span>Recursos</span><span>Actividad</span><small>LOCAL WORKSPACE</small></aside><div class="dashboard-main"><div class="dashboard-heading"><div><small>DE LA IDEA A LA ACCIÓN</small><h4>Todo, en perspectiva.</h4></div><span class="status-dot">Activo</span></div><div class="metrics"><div><small>Progreso</small><b>78<span>%</span></b><div class="progress"><i></i></div></div><div><small>En foco</small><b>03</b><span>proyectos de ejemplo</span></div><div><small>Próximo paso</small><b class="metric-word">Crear.</b><span>claridad para avanzar</span></div></div><div class="chart-panel"><div><span>Tu evolución</span><small>VISTA DE DEMOSTRACIÓN</small></div><svg viewBox="0 0 600 160" fill="none"><path class="chart-grid" d="M0 30H600 M0 75H600 M0 120H600"/><path d="M0 140 C60 140 60 85 120 100 S210 130 260 70 S350 90 400 45 S480 75 540 25 L600 10 V160 H0Z" fill="#00d9ff" opacity=".06"/><path class="chart-line" d="M0 140 C60 140 60 85 120 100 S210 130 260 70 S350 90 400 45 S480 75 540 25 L600 10"/><path class="chart-secondary" d="M0 150 Q80 100 160 130 T300 100 T450 85 T600 60"/></svg><div class="chart-labels"><small>IDEA</small><small>PROCESO</small><small>RESULTADO</small></div></div><div class="software-row"><span><i></i> Organizar prioridades</span><span>En curso <b>→</b></span></div><div class="software-row"><span><i></i> Convertir datos en decisiones</span><span>Por explorar <b>→</b></span></div></div></div>{% endif %}</div>
+{%- endmacro %}
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Productos Digitales para tu Vida</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-ebooks.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-yoyir.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-estrategia.css') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Courier+New&family=Georgia:wght@400;600&family=Inter:wght@300;400;600;700&family=Montserrat:wght@600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            height: 100%;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #fafafa;
-            color: #333;
-            line-height: 1.6;
-        }
-
-        /* Navbar */
-        .navbar-custom {
-            background: white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .navbar-custom .container-fluid {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.5rem;
-            color: #333 !important;
-            text-decoration: none;
-        }
-
-        .navbar-nav {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-
-        .navbar-nav a {
-            color: #555 !important;
-            font-weight: 500;
-            text-decoration: none;
-            transition: color 0.3s ease;
-            padding: 0.5rem 0;
-        }
-
-        .navbar-nav a:hover {
-            color: #31595a !important;
-        }
-
-        .navbar-nav .brand-link {
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .navbar-nav .brand-link.ebooks:hover {
-            color: #31595a !important;
-        }
-
-        .navbar-nav .brand-link.yoyir:hover {
-            color: #8b5a8e !important;
-        }
-
-        .navbar-nav .brand-link.estrategia:hover {
-            color: #00d9ff !important;
-        }
-
-        .cart-link {
-            background: #31595a;
-            color: white !important;
-            padding: 0.5rem 1.2rem !important;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-        }
-
-        .cart-link:hover {
-            background: #c9756b;
-            transform: translateY(-2px);
-        }
-
-        /* Hero Section */
-        .hero {
-            background: linear-gradient(135deg, #f1e8da 0%, #e5d9f0 50%, #0a0e27 100%);
-            min-height: 70vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 4rem 2rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -10%;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(49, 89, 90, 0.1) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        .hero::after {
-            content: '';
-            position: absolute;
-            bottom: -20%;
-            left: -5%;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(139, 90, 142, 0.1) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: float 8s ease-in-out infinite reverse;
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 2;
-            max-width: 900px;
-        }
-
-        .hero h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            color: #2c2c2c;
-            line-height: 1.1;
-        }
-
-        .hero p {
-            font-size: 1.3rem;
-            color: #555;
-            margin-bottom: 2rem;
-            font-weight: 300;
-        }
-
-        .hero-cta {
-            display: inline-block;
-            background: #31595a;
-            color: white;
-            padding: 1rem 2.5rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: 2px solid #31595a;
-        }
-
-        .hero-cta:hover {
-            background: transparent;
-            color: #31595a;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(49, 89, 90, 0.2);
-        }
-
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0px);
-            }
-            50% {
-                transform: translateY(30px);
-            }
-        }
-
-        /* Universos Section */
-        .universos {
-            padding: 6rem 2rem;
-            background: white;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-        }
-
-        .universos-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .section-title {
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-
-        .section-title h2 {
-            font-size: 2.8rem;
-            font-weight: 700;
-            color: #2c2c2c;
-            margin-bottom: 1rem;
-        }
-
-        .section-title p {
-            font-size: 1.1rem;
-            color: #666;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .universos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 3rem;
-            margin-top: 2rem;
-        }
-
-        /* Universo Card Base */
-        .universo-card {
-            position: relative;
-            border-radius: 16px;
-            overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        .universo-card:hover {
-            transform: translateY(-12px);
-            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
-        }
-
-        .universo-header {
-            padding: 3rem 2rem 2rem;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            text-align: center;
-        }
-
-        .universo-icon {
-            font-size: 4rem;
-            margin-bottom: 1.5rem;
-            display: block;
-        }
-
-        .universo-card h3 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        .universo-card p {
-            font-size: 0.95rem;
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
-        }
-
-        .universo-footer {
-            padding: 2rem;
-            text-align: center;
-            border-top: 2px solid rgba(0, 0, 0, 0.08);
-        }
-
-        .universo-btn {
-            display: inline-block;
-            padding: 0.75rem 1.5rem;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: 2px solid;
-            font-size: 0.95rem;
-        }
-
-        /* Ebooks Universo */
-        .universo-ebooks {
-            background: linear-gradient(135deg, #f1e8da 0%, #faf3eb 100%);
-            color: #2c2c2c;
-        }
-
-        .universo-ebooks .universo-footer {
-            border-top-color: #31595a;
-        }
-
-        .universo-ebooks .universo-btn {
-            background: #31595a;
-            color: white;
-            border-color: #31595a;
-        }
-
-        .universo-ebooks .universo-btn:hover {
-            background: #c9756b;
-            border-color: #c9756b;
-            transform: translateY(-2px);
-        }
-
-        .universo-ebooks h3 {
-            color: #31595a;
-        }
-
-        /* YOYI'R Universo */
-        .universo-yoyir {
-            background: linear-gradient(135deg, #e5d9f0 0%, #f1e8f5 100%);
-            color: #2c2c2c;
-        }
-
-        .universo-yoyir .universo-footer {
-            border-top-color: #8b5a8e;
-        }
-
-        .universo-yoyir .universo-btn {
-            background: #8b5a8e;
-            color: white;
-            border-color: #8b5a8e;
-        }
-
-        .universo-yoyir .universo-btn:hover {
-            background: #d9a5c4;
-            border-color: #d9a5c4;
-            transform: translateY(-2px);
-        }
-
-        .universo-yoyir h3 {
-            color: #8b5a8e;
-        }
-
-        /* EstrategIA Universo */
-        .universo-estrategia {
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1a2e 100%);
-            color: #e0e0e0;
-        }
-
-        .universo-estrategia .universo-footer {
-            border-top-color: #00d9ff;
-        }
-
-        .universo-estrategia .universo-btn {
-            background: transparent;
-            color: #00d9ff;
-            border-color: #00d9ff;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
-        }
-
-        .universo-estrategia .universo-btn:hover {
-            background: rgba(0, 217, 255, 0.1);
-            border-color: #ff00ff;
-            color: #ff00ff;
-            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
-            transform: translateY(-2px);
-        }
-
-        .universo-estrategia h3 {
-            color: #00d9ff;
-            text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
-        }
-
-        /* Footer */
-        .footer {
-            background: #2c2c2c;
-            color: #999;
-            text-align: center;
-            padding: 3rem 2rem;
-            margin-top: 4rem;
-        }
-
-        .footer p {
-            margin: 0;
-            font-size: 0.95rem;
-        }
-
-        .footer a {
-            color: #31595a;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .footer a:hover {
-            color: #8b5a8e;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2.2rem;
-            }
-
-            .hero p {
-                font-size: 1rem;
-            }
-
-            .section-title h2 {
-                font-size: 2rem;
-            }
-
-            .universos-grid {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-
-            .navbar-nav {
-                gap: 1rem;
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .cart-link {
-                width: 100%;
-                text-align: center;
-            }
-        }
-    </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Tres universos, una misma idea: crear ebooks, planners y herramientas digitales para hacer más con tu día.">
+<title>Productos digitales que hacen más · Tres universos</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home-unified.css') }}">
+<script src="{{ url_for('static', filename='js/home-unified.js') }}" defer></script>
 </head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar-custom">
-        <div class="container-fluid">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <a href="/" class="navbar-brand">Productos Digitales</a>
-                <div class="navbar-nav">
-                    <a href="/ebooks/" class="brand-link ebooks">📚 Ebooks</a>
-                    <a href="/yoyir/" class="brand-link yoyir">📔 YOYI'R</a>
-                    <a href="/estrategia/" class="brand-link estrategia">⚡ EstrategIA</a>
-                    <a href="/cart" class="cart-link">🛒 Carrito</a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-content">
-            <h1>Productos Digitales para tu Vida</h1>
-            <p>Explora tres universos únicos diseñados para inspirar, organizar y potenciar tu crecimiento personal</p>
-            <a href="#universos" class="hero-cta">Descubre Más</a>
-        </div>
-    </section>
-
-    <!-- Universos Section -->
-    <section class="universos" id="universos">
-        <div class="universos-container">
-            <div class="section-title">
-                <h2>Tres Universos, Infinitas Posibilidades</h2>
-                <p>Cada universo representa una filosofía diferente, diseñada para satisfacer distintas necesidades de tu vida</p>
-            </div>
-
-            <div class="universos-grid">
-                <!-- Ebooks para la Vida -->
-                <div class="universo-card universo-ebooks">
-                    <div class="universo-header">
-                        <span class="universo-icon">📚</span>
-                        <h3>Ebooks para la Vida</h3>
-                        <p>Historias y conocimiento que transforman. Libros digitales sobre bienestar, desarrollo personal y crecimiento espiritual para enriquecer tu existencia.</p>
-                    </div>
-                    <div class="universo-footer">
-                        <a href="/ebooks/" class="universo-btn">Explorar Catálogo</a>
-                    </div>
-                </div>
-
-                <!-- YOYI'R -->
-                <div class="universo-card universo-yoyir">
-                    <div class="universo-header">
-                        <span class="universo-icon">📔</span>
-                        <h3>YOYI'R</h3>
-                        <p>Tu compañera de organización. Agendas y planners digitales diseñados para que tomes el control de tu tiempo, metas y sueños con estilo.</p>
-                    </div>
-                    <div class="universo-footer">
-                        <a href="/yoyir/" class="universo-btn">Ver Planners</a>
-                    </div>
-                </div>
-
-                <!-- EstrategIA -->
-                <div class="universo-card universo-estrategia">
-                    <div class="universo-header">
-                        <span class="universo-icon">⚡</span>
-                        <h3>EstrategIA</h3>
-                        <p>Herramientas para el futuro. Micro-aplicaciones interactivas y soluciones tecnológicas que te permiten automatizar, analizar y optimizar tu vida.</p>
-                    </div>
-                    <div class="universo-footer">
-                        <a href="/estrategia/" class="universo-btn">Descubrir Tools</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <p>&copy; 2026 Productos Digitales para la Vida. Todos los derechos reservados. | <a href="#">Privacidad</a> | <a href="#">Términos</a></p>
-    </footer>
-
-    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+<body class="unified-home">
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+<header class="platform-header">
+<a class="platform-wordmark" href="{{ url_for('universos') }}" aria-label="Productos digitales, inicio">productos<br><span>digitales /</span></a>
+<button class="menu-toggle" type="button" aria-expanded="false" aria-controls="platform-nav">Menú <span>+</span></button>
+<nav id="platform-nav" aria-label="Navegación principal"><a href="{{ url_for('universos') }}" aria-current="page">Inicio</a><a href="{{ url_for('ebooks.catalog') }}">Ebooks</a><a href="{{ url_for('yoyir.catalog') }}">YOYI'R</a><a href="{{ url_for('estrategia.catalog') }}">EstrategIA</a></nav>
+<a class="platform-cart" href="{{ url_for('cart') }}">Carrito <span>{{ cart_count|default(0) }}</span></a>
+</header>
+<main id="contenido">
+{% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="home-flashes" role="status">{% for category, message in messages %}{% if not category.startswith('admin-') %}<p class="flash {{ category }}">{{ message }}</p>{% endif %}{% endfor %}</div>{% endif %}{% endwith %}
+<section class="universe-hero" aria-labelledby="hero-title">
+<div class="hero-meta"><span>UN MISMO LUGAR. MÁS POSIBILIDADES.</span><span>01 — 03 / UNIVERSOS DIGITALES</span></div>
+<div class="hero-type"><p class="small-label">DISEÑADOS PARA TU VIDA REAL</p><h1 id="hero-title">PRODUCTOS<br><span>DIGITALES</span><br>QUE HACEN <em>MÁS.</em></h1></div>
+<div class="hero-objects" aria-hidden="true"><div class="hero-object hero-book">{{ publication() }}</div><div class="hero-object hero-planner">{{ planner() }}</div><div class="hero-object hero-software">{{ dashboard() }}</div><div class="format-ticket"><span>IDEAS QUE SE CONVIERTEN EN</span><b>PDF / EPUB / HTML</b><span>ABRIR. EXPLORAR. HACER.</span></div></div>
+<div class="hero-bottom"><p>Ebooks, planners, recursos y herramientas interactivas creadas para resolver necesidades reales.</p><a class="round-link" href="#universos">Explorar los universos <span>↘</span></a><span class="hero-scroll">DESLIZA PARA DESCUBRIR <i></i></span></div>
+</section>
+<div class="format-strip"><span>PUBLICACIONES DIGITALES</span><i></i><span>RECURSOS CON INTENCIÓN</span><i></i><span>HERRAMIENTAS INTERACTIVAS</span><i></i><span>TRES UNIVERSOS. UNA PLATAFORMA.</span></div>
+<div class="universe-journey" id="universos">
+<section class="editorial-section chapter" aria-labelledby="ebooks-title">
+<div class="chapter-meta"><span>01 / EBOOKS PARA LA VIDA</span><span>LEER · DESCUBRIR · APLICAR</span></div>
+<div class="editorial-layout"><div class="chapter-copy reveal"><p class="small-label">EL UNIVERSO EDITORIAL</p><h2 id="ebooks-title">Ideas que<br>se quedan<br><em>con vos.</em></h2><p>Lecturas para abrir perspectivas. Guías para llevarlas a tu día. Conocimiento que no termina en la última página.</p><a class="text-cta" href="{{ url_for('ebooks.catalog') }}">Explorar ebooks <span>↗</span></a><small class="format-caption">PDF / EPUB — A TU RITMO</small></div><div class="editorial-stage reveal"><div class="editorial-word" aria-hidden="true">LEER</div><div class="open-page" aria-hidden="true"><small>NOTAS AL MARGEN / 028</small><h4>Todo empieza<br>con una idea.</h4><p>Hay lecturas que abren una puerta.<br>Y otras que te acompañan a cruzarla.</p><div class="page-lines"></div><span>UN ESPACIO PARA LO QUE IMPORTA.</span></div><div class="stack-book back">{{ publication('coral', 'Otra mirada.', 'Un nuevo punto de partida', '02') }}</div><div class="stack-book front">{{ publication() }}</div><span class="stage-caption">PUBLICACIONES DE DEMOSTRACIÓN / DISEÑO EDITORIAL</span></div></div>
+</section>
+<section class="planner-section chapter" aria-labelledby="yoyir-title">
+<div class="chapter-meta"><span>02 / YOYI'R</span><span>PLANIFICAR · ORGANIZAR · RESPIRAR</span></div>
+<div class="planner-intro reveal"><h2 id="yoyir-title">Hacé lugar<br>a <em>tu ritmo.</em></h2><div><p>Tu tiempo merece un sistema que se sienta tuyo. Planners, agendas y recursos para ordenar lo importante, sin llenar cada espacio.</p><a class="text-cta" href="{{ url_for('yoyir.catalog') }}">Explorar YOYI'R <span>↗</span></a></div></div>
+<div class="planner-stage reveal"><div class="planner-orbit" aria-hidden="true"></div><div class="planner-sheet">{{ planner() }}</div><div class="note-sheet" aria-hidden="true"><span>YOYI'R / NOTAS</span><h4>Hoy,<br>lo esencial.</h4><div class="note-line"><i></i> Un objetivo claro</div><div class="note-line"><i></i> Tiempo para crear</div><div class="note-line"><i></i> Espacio para parar</div><strong>Sin prisa.<br>Con dirección.</strong></div><div class="planner-tab" aria-hidden="true">UN DÍA A LA VEZ /</div><span class="stage-caption">PLANNER DE DEMOSTRACIÓN / ORGANIZACIÓN VISUAL</span></div>
+</section>
+<section class="software-section chapter" aria-labelledby="estrategia-title">
+<div class="chapter-meta"><span>03 / ESTRATEGIA</span><span>INTERACTUAR · CONECTAR · RESOLVER</span></div>
+<div class="software-intro reveal"><p class="small-label">EL UNIVERSO INTERACTIVO</p><h2 id="estrategia-title">Menos fricción.<br><em>Más posibilidades.</em></h2><div class="software-description"><p>Herramientas que convierten una intención en acción. Micro-apps e interfaces pensadas para simplificar lo que hacés todos los días.</p><a class="text-cta" href="{{ url_for('estrategia.catalog') }}">Explorar EstrategIA <span>↗</span></a></div></div>
+<div class="software-stage reveal"><div class="software-grid" aria-hidden="true"></div><div class="main-software">{{ dashboard() }}</div><div class="mini-console" aria-hidden="true"><span>IDEA → SISTEMA</span><p><i></i> Una necesidad real.</p><p><i></i> Una solución simple.</p><div>Listo para hacer más.<span>↗</span></div></div><span class="stage-caption">INTERFAZ DE DEMOSTRACIÓN / DATOS SIMULADOS</span></div>
+</section>
+</div>
+<section class="creation-section" aria-labelledby="creation-title"><div class="creation-top"><p class="small-label">DEL CONCEPTO AL PRODUCTO</p><h2 id="creation-title">No solo ideas.<br><em>Las hacemos realidad.</em></h2><p>Creamos productos digitales.<br>Diseñamos su forma. Pensamos su utilidad.<br>Para que puedas hacer más con ellos.</p></div><div class="kinetic-words" aria-hidden="true"><div><span>LEER / PLANIFICAR / ORGANIZAR /&nbsp;</span><span>LEER / PLANIFICAR / ORGANIZAR /&nbsp;</span></div><div><span>INTERACTUAR / RESOLVER / CREAR /&nbsp;</span><span>INTERACTUAR / RESOLVER / CREAR /&nbsp;</span></div></div><div class="creation-bottom"><span>CONTENIDO + DISEÑO + TECNOLOGÍA</span><span>UNA MISMA FORMA DE CREAR.</span></div></section>
+<section class="showcase-section" aria-labelledby="showcase-title"><div class="showcase-heading"><div><p class="small-label">UNA VISTA AL INTERIOR</p><h2 id="showcase-title">Distintas formas.<br><em>La misma intención.</em></h2></div><p>Explorá cómo se siente cada universo.<br>Estas piezas son demostraciones visuales,<br>no productos disponibles para comprar.</p></div><div class="showcase-grid">
+<article class="showcase-item showcase-book reveal"><div class="showcase-visual">{{ publication('coral', 'Otra mirada.', 'Un nuevo punto de partida', '02') }}<span>01 / LEER</span></div><div class="showcase-info"><small>EBOOKS PARA LA VIDA · PDF / EPUB</small><h3>Publicación editorial</h3><p>Demostración · Precio no disponible</p><a href="{{ url_for('ebooks.catalog') }}">Explorar ebooks <span>↗</span></a></div></article>
+<article class="showcase-item showcase-planner reveal"><div class="showcase-visual">{{ planner() }}<span>02 / PLANIFICAR</span></div><div class="showcase-info"><small>YOYI'R · PLANNER / RECURSOS DESCARGABLES</small><h3>Tu semana, en perspectiva</h3><p>Demostración · Precio no disponible</p><a href="{{ url_for('yoyir.catalog') }}">Explorar YOYI'R <span>↗</span></a></div></article>
+<article class="showcase-item showcase-software reveal"><div class="showcase-visual">{{ dashboard() }}<span>03 / INTERACTUAR</span></div><div class="showcase-info"><div><small>ESTRATEGIA · MICRO-APP HTML</small><h3>Un espacio para resolver</h3><p>Demostración · Precio no disponible</p></div><a href="{{ url_for('estrategia.catalog') }}">Explorar EstrategIA <span>↗</span></a></div></article>
+</div></section>
+<section class="closing-section"><p class="small-label">ELEGÍ POR DÓNDE EMPEZAR</p><h2>Tu próximo paso<br>puede ser <em>digital.</em></h2><div><a href="{{ url_for('ebooks.catalog') }}">Ebooks <span>↗</span></a><a href="{{ url_for('yoyir.catalog') }}">YOYI'R <span>↗</span></a><a href="{{ url_for('estrategia.catalog') }}">EstrategIA <span>↗</span></a></div></section>
+</main>
+<footer class="platform-footer"><a class="platform-wordmark" href="{{ url_for('universos') }}">productos<br><span>digitales /</span></a><p>Tres universos. Una misma idea:<br>crear algo que te sirva.</p><nav aria-label="Información legal"><a href="{{ url_for('terms') }}">Términos</a><a href="{{ url_for('refund_policy') }}">Reembolsos</a><a href="mailto:hola@ebooksparalavida.com">Contacto</a></nav><small>© {{ current_year|default(2026) }} / PRODUCTOS DIGITALES</small></footer>
 </body>
 </html>
