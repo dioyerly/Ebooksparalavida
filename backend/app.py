@@ -29,6 +29,9 @@ from backend.services import (
     generate_access_code, generate_personalized_html,
 )
 from backend.db_guard import validate_database_config
+from backend.blueprints.ebooks import ebooks_bp
+from backend.blueprints.yoyir import yoyir_bp
+from backend.blueprints.estrategia import estrategia_bp
 
 
 app = Flask(__name__, template_folder="templates",
@@ -404,6 +407,13 @@ def admin_required(view):
     return wrapped
 
 
+# Registrar blueprints para multi-marca (Feature: multi-brand-evolution)
+# Estos blueprints permiten navegación por marca manteniendo carrito unificado
+app.register_blueprint(ebooks_bp)
+app.register_blueprint(yoyir_bp)
+app.register_blueprint(estrategia_bp)
+
+
 @app.context_processor
 def inject_globals():
     """Inject Globals."""
@@ -416,6 +426,7 @@ def inject_globals():
         "current_year": datetime.datetime.now().year,
         "price_usd": lambda price: converted_price(price, app.config["ARS_PER_USD"]),
         "price_eur": lambda price: converted_price(price, app.config["ARS_PER_EUR"]),
+        "brand": session.get("current_brand", None),  # Variable de marca para temas CSS
     }
 
 

@@ -2,7 +2,7 @@
 Blueprint para la marca: EstrategIA
 Rutas: /estrategia/*
 """
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, session
 
 estrategia_bp = Blueprint(
     'estrategia',
@@ -10,6 +10,12 @@ estrategia_bp = Blueprint(
     url_prefix='/estrategia',
     template_folder='../templates/estrategia'
 )
+
+
+@estrategia_bp.before_request
+def set_brand():
+    """Establecer marca en sesión antes de cada request."""
+    session['current_brand'] = 'estrategia'
 
 
 @estrategia_bp.route('/')

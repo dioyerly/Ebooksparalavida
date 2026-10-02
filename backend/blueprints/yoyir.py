@@ -2,7 +2,7 @@
 Blueprint para la marca: YOYI'R
 Rutas: /yoyir/*
 """
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, session
 
 yoyir_bp = Blueprint(
     'yoyir',
@@ -10,6 +10,12 @@ yoyir_bp = Blueprint(
     url_prefix='/yoyir',
     template_folder='../templates/yoyir'
 )
+
+
+@yoyir_bp.before_request
+def set_brand():
+    """Establecer marca en sesión antes de cada request."""
+    session['current_brand'] = 'yoyir'
 
 
 @yoyir_bp.route('/')

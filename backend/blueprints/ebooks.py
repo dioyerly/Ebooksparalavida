@@ -2,7 +2,7 @@
 Blueprint para la marca: Ebooks para la vida
 Rutas: /ebooks/*
 """
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, session
 
 ebooks_bp = Blueprint(
     'ebooks',
@@ -10,6 +10,12 @@ ebooks_bp = Blueprint(
     url_prefix='/ebooks',
     template_folder='../templates/ebooks'
 )
+
+
+@ebooks_bp.before_request
+def set_brand():
+    """Establecer marca en sesión antes de cada request."""
+    session['current_brand'] = 'ebooks'
 
 
 @ebooks_bp.route('/')

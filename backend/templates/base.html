@@ -9,15 +9,22 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% if brand == 'ebooks' %}<link rel="stylesheet" href="{{ url_for('static', filename='css/theme-ebooks.css') }}">{% endif %}
+  {% if brand == 'yoyir' %}<link rel="stylesheet" href="{{ url_for('static', filename='css/theme-yoyir.css') }}">{% endif %}
+  {% if brand == 'estrategia' %}<link rel="stylesheet" href="{{ url_for('static', filename='css/theme-estrategia.css') }}">{% endif %}
   {% block head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   <div class="topline">Envío inmediato a tu email · Lectura en cualquier dispositivo</div>
   <header class="site-header">
     <a class="brand" href="{{ url_for('home') }}"><img class="brand-logo" src="{{ url_for('static', filename='images/logo-ebooks-para-la-vida.jpeg') }}" alt=""><span>Ebooks <em>para la vida</em></span></a>
     <nav class="main-nav" aria-label="Navegación principal">
-      <a href="{{ url_for('shop') }}">Tienda</a>
-      <a href="{{ url_for('home') }}#como-funciona">Cómo funciona</a>
+      <a href="{{ url_for('home') }}">Inicio</a>
+      <div class="brands-nav" aria-label="Navegar por marca">
+        <a href="{{ url_for('ebooks.catalog') }}" class="{% if brand == 'ebooks' %}active{% endif %}">Ebooks</a>
+        <a href="{{ url_for('yoyir.catalog') }}" class="{% if brand == 'yoyir' %}active{% endif %}">YOYI'R</a>
+        <a href="{{ url_for('estrategia.catalog') }}" class="{% if brand == 'estrategia' %}active{% endif %}">EstrategIA</a>
+      </div>
       <a href="{{ url_for('home') }}#faq">Preguntas</a>
     </nav>
     <a class="cart-link" href="{{ url_for('cart') }}" aria-label="Ver carrito">Carrito <span>{{ cart_count }}</span></a>
