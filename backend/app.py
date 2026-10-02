@@ -458,6 +458,12 @@ def home():
     return render_template("home.html", featured=featured, products=products)
 
 
+@app.route("/universos")
+def universos():
+    """Render unified home narrativa with three brand universes."""
+    return render_template("home_unified.html")
+
+
 @app.route("/shop")
 def shop():
     """Render shop page with filterable products."""

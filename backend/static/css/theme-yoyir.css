@@ -1,22 +1,24 @@
 /*
   Tema: YOYI'R
-  Paleta: Lavanda, Morado Pastel
-  Estética: Minimalismo, creatividad, sofisticación
+  Paleta Oficial: Lavanda (#e5d9f0), Morado Pastel (#b8a0d9), Rosa Empolvado (#d9a5c4), Amarillo Claro (#fef5e7)
+  Estética: Minimalismo, creatividad, sofisticación, estética de planner digital
 */
 
 :root.theme-yoyir {
-  --primary: #7B4D8F;
-  --secondary: #D4A5D9;
-  --background: #E5D9F0;
-  --text: #2D2D2D;
-  --light: #FFFFFF;
-  --accent: #D4A5D9;
-  --border: #D4BFE0;
+  --primary: #8b5a8e;
+  --secondary: #d9a5c4;
+  --background: #e5d9f0;
+  --text: #2d2d2d;
+  --light: #ffffff;
+  --accent: #fef5e7;
+  --border: #d4bfe0;
+  --shadow-light: rgba(139, 90, 142, 0.08);
 }
 
 body.theme-yoyir {
   background-color: var(--background);
   color: var(--text);
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
 
 .theme-yoyir h1,
@@ -28,37 +30,77 @@ body.theme-yoyir {
   color: var(--primary);
   font-family: 'Montserrat', 'Arial', sans-serif;
   font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.theme-yoyir h1 {
+  font-size: 3rem;
+  line-height: 1.2;
 }
 
 .theme-yoyir button,
 .theme-yoyir .btn {
   background-color: var(--primary);
   color: var(--light);
-  border-radius: 6px;
-  transition: all 0.3s ease;
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  padding: 12px 28px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   font-family: 'Poppins', sans-serif;
+  font-weight: 600;
 }
 
 .theme-yoyir button:hover,
 .theme-yoyir .btn:hover {
   background-color: var(--secondary);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(123, 77, 143, 0.2);
+  border-color: var(--secondary);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px var(--shadow-light);
 }
 
 .theme-yoyir .card,
 .theme-yoyir .product-card {
   background-color: var(--light);
   border: 1px solid var(--border);
-  box-shadow: 0 2px 8px rgba(123, 77, 143, 0.08);
-  border-radius: 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px var(--shadow-light);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.theme-yoyir .card:hover,
+.theme-yoyir .product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 32px var(--shadow-light);
+  border-color: var(--secondary);
 }
 
 .theme-yoyir .placeholder {
-  padding: 20px;
-  background-color: var(--light);
+  padding: 24px;
+  background: linear-gradient(135deg, var(--light), var(--accent));
   border-left: 4px solid var(--primary);
   color: var(--text);
   font-style: italic;
-  border-radius: 4px;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.theme-yoyir a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.theme-yoyir a:hover {
+  color: var(--secondary);
+  text-decoration: underline;
+}
+
+.theme-yoyir .accent-bg {
+  background-color: var(--accent);
+  border-radius: 8px;
+  padding: 16px;
 }

@@ -1,23 +1,25 @@
 /*
   Tema: EstrategIA
-  Paleta: Oscuro, Azul Neón, Magenta Neón
-  Estética: Tecnológica, futurista, edgy
+  Paleta Oficial: Oscuro/Nocturno (#0a0e27), Azul Neón (#00d9ff), Magenta Neón (#ff00ff), Gris (#1a1a2e)
+  Estética: Tecnológica, futurista, edgy, datos, glow effects
 */
 
 :root.theme-estrategia {
-  --primary: #00D9FF;
-  --secondary: #FF00FF;
-  --background: #0A0E27;
-  --text: #E0E0E0;
-  --light: #1A1A2E;
-  --accent: #00D9FF;
-  --glow: #FF00FF;
-  --border: #1F1F3F;
+  --primary: #00d9ff;
+  --secondary: #ff00ff;
+  --background: #0a0e27;
+  --text: #e0e0e0;
+  --light: #1a1a2e;
+  --accent: #ff00ff;
+  --border: #1f1f3f;
+  --glow: #00d9ff;
+  --shadow-dark: rgba(0, 217, 255, 0.15);
 }
 
 body.theme-estrategia {
   background-color: var(--background);
   color: var(--text);
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
 
 .theme-estrategia h1,
@@ -27,55 +29,113 @@ body.theme-estrategia {
 .theme-estrategia h5,
 .theme-estrategia h6 {
   color: var(--primary);
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'IBM Plex Mono', monospace;
   font-weight: 700;
-  text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+  text-shadow: 0 0 15px rgba(0, 217, 255, 0.4);
+  letter-spacing: 1px;
+}
+
+.theme-estrategia h1 {
+  font-size: 3rem;
+  line-height: 1.2;
+  text-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
 }
 
 .theme-estrategia button,
 .theme-estrategia .btn {
-  background-color: var(--primary);
-  color: var(--background);
-  border-radius: 4px;
+  background-color: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  border-radius: 2px;
+  padding: 12px 28px;
+  font-size: 1rem;
+  cursor: pointer;
   transition: all 0.3s ease;
   font-family: 'Courier New', monospace;
-  border: 2px solid var(--primary);
+  font-weight: 700;
   box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .theme-estrategia button:hover,
 .theme-estrategia .btn:hover {
-  background-color: transparent;
-  color: var(--primary);
-  box-shadow: 0 0 20px rgba(0, 217, 255, 0.6);
-  transform: translateY(-2px);
+  background-color: rgba(0, 217, 255, 0.1);
+  border-color: var(--secondary);
+  color: var(--secondary);
+  transform: translateY(-3px);
+  box-shadow: 0 0 30px rgba(255, 0, 255, 0.5);
+  text-shadow: 0 0 10px rgba(255, 0, 255, 0.6);
 }
 
 .theme-estrategia .card,
 .theme-estrategia .product-card {
   background-color: var(--light);
   border: 2px solid var(--primary);
-  box-shadow: 0 0 15px rgba(0, 217, 255, 0.2);
   border-radius: 0;
+  box-shadow: 0 0 20px var(--shadow-dark);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-estrategia .card::before,
+.theme-estrategia .product-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+  pointer-events: none;
+}
+
+.theme-estrategia .card:hover,
+.theme-estrategia .product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 0 40px rgba(0, 217, 255, 0.4), inset 0 0 20px rgba(255, 0, 255, 0.1);
+  border-color: var(--secondary);
+}
+
+.theme-estrategia .card:hover::before,
+.theme-estrategia .product-card:hover::before {
+  left: 100%;
 }
 
 .theme-estrategia .placeholder {
-  padding: 20px;
+  padding: 24px;
   background-color: var(--light);
   border-left: 4px solid var(--primary);
   color: var(--text);
-  font-style: italic;
   font-family: 'Courier New', monospace;
-  box-shadow: inset 0 0 10px rgba(0, 217, 255, 0.1);
+  font-size: 0.95rem;
+  box-shadow: inset 0 0 15px rgba(0, 217, 255, 0.1);
+  border-radius: 2px;
 }
 
 .theme-estrategia a {
   color: var(--primary);
   text-decoration: none;
   transition: all 0.3s ease;
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(0, 217, 255, 0.3);
 }
 
 .theme-estrategia a:hover {
-  color: var(--glow);
-  text-shadow: 0 0 8px rgba(255, 0, 255, 0.5);
+  color: var(--secondary);
+  text-shadow: 0 0 15px rgba(255, 0, 255, 0.6);
+  text-decoration: underline;
+}
+
+.theme-estrategia .neon-box {
+  border: 2px solid var(--primary);
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.4);
+  padding: 16px;
+  border-radius: 2px;
+}
+
+.theme-estrategia .neon-box:hover {
+  box-shadow: 0 0 30px rgba(0, 217, 255, 0.6), 0 0 20px rgba(255, 0, 255, 0.3);
 }

@@ -14,7 +14,7 @@
   {% if brand == 'estrategia' %}<link rel="stylesheet" href="{{ url_for('static', filename='css/theme-estrategia.css') }}">{% endif %}
   {% block head %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body class="theme-{% if brand %}{{ brand }}{% else %}ebooks{% endif %} {% block body_class %}{% endblock %}">
   <div class="topline">Envío inmediato a tu email · Lectura en cualquier dispositivo</div>
   <header class="site-header">
     <a class="brand" href="{{ url_for('home') }}"><img class="brand-logo" src="{{ url_for('static', filename='images/logo-ebooks-para-la-vida.jpeg') }}" alt=""><span>Ebooks <em>para la vida</em></span></a>

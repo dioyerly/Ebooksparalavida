@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos Digitales para tu Vida</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-ebooks.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-yoyir.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-estrategia.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+New&family=Georgia:wght@400;600&family=Inter:wght@300;400;600;700&family=Montserrat:wght@600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #fafafa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Navbar */
+        .navbar-custom {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-custom .container-fluid {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #333 !important;
+            text-decoration: none;
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .navbar-nav a {
+            color: #555 !important;
+            font-weight: 500;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            padding: 0.5rem 0;
+        }
+
+        .navbar-nav a:hover {
+            color: #31595a !important;
+        }
+
+        .navbar-nav .brand-link {
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav .brand-link.ebooks:hover {
+            color: #31595a !important;
+        }
+
+        .navbar-nav .brand-link.yoyir:hover {
+            color: #8b5a8e !important;
+        }
+
+        .navbar-nav .brand-link.estrategia:hover {
+            color: #00d9ff !important;
+        }
+
+        .cart-link {
+            background: #31595a;
+            color: white !important;
+            padding: 0.5rem 1.2rem !important;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .cart-link:hover {
+            background: #c9756b;
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #f1e8da 0%, #e5d9f0 50%, #0a0e27 100%);
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(49, 89, 90, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -20%;
+            left: -5%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(139, 90, 142, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #2c2c2c;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: #555;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .hero-cta {
+            display: inline-block;
+            background: #31595a;
+            color: white;
+            padding: 1rem 2.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid #31595a;
+        }
+
+        .hero-cta:hover {
+            background: transparent;
+            color: #31595a;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(49, 89, 90, 0.2);
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(30px);
+            }
+        }
+
+        /* Universos Section */
+        .universos {
+            padding: 6rem 2rem;
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .universos-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-title h2 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #2c2c2c;
+            margin-bottom: 1rem;
+        }
+
+        .section-title p {
+            font-size: 1.1rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .universos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 3rem;
+            margin-top: 2rem;
+        }
+
+        /* Universo Card Base */
+        .universo-card {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .universo-card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+        }
+
+        .universo-header {
+            padding: 3rem 2rem 2rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .universo-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .universo-card h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .universo-card p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .universo-footer {
+            padding: 2rem;
+            text-align: center;
+            border-top: 2px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .universo-btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid;
+            font-size: 0.95rem;
+        }
+
+        /* Ebooks Universo */
+        .universo-ebooks {
+            background: linear-gradient(135deg, #f1e8da 0%, #faf3eb 100%);
+            color: #2c2c2c;
+        }
+
+        .universo-ebooks .universo-footer {
+            border-top-color: #31595a;
+        }
+
+        .universo-ebooks .universo-btn {
+            background: #31595a;
+            color: white;
+            border-color: #31595a;
+        }
+
+        .universo-ebooks .universo-btn:hover {
+            background: #c9756b;
+            border-color: #c9756b;
+            transform: translateY(-2px);
+        }
+
+        .universo-ebooks h3 {
+            color: #31595a;
+        }
+
+        /* YOYI'R Universo */
+        .universo-yoyir {
+            background: linear-gradient(135deg, #e5d9f0 0%, #f1e8f5 100%);
+            color: #2c2c2c;
+        }
+
+        .universo-yoyir .universo-footer {
+            border-top-color: #8b5a8e;
+        }
+
+        .universo-yoyir .universo-btn {
+            background: #8b5a8e;
+            color: white;
+            border-color: #8b5a8e;
+        }
+
+        .universo-yoyir .universo-btn:hover {
+            background: #d9a5c4;
+            border-color: #d9a5c4;
+            transform: translateY(-2px);
+        }
+
+        .universo-yoyir h3 {
+            color: #8b5a8e;
+        }
+
+        /* EstrategIA Universo */
+        .universo-estrategia {
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+        }
+
+        .universo-estrategia .universo-footer {
+            border-top-color: #00d9ff;
+        }
+
+        .universo-estrategia .universo-btn {
+            background: transparent;
+            color: #00d9ff;
+            border-color: #00d9ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+        }
+
+        .universo-estrategia .universo-btn:hover {
+            background: rgba(0, 217, 255, 0.1);
+            border-color: #ff00ff;
+            color: #ff00ff;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .universo-estrategia h3 {
+            color: #00d9ff;
+            text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+        }
+
+        /* Footer */
+        .footer {
+            background: #2c2c2c;
+            color: #999;
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+        }
+
+        .footer p {
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        .footer a {
+            color: #31595a;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: #8b5a8e;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .section-title h2 {
+                font-size: 2rem;
+            }
+
+            .universos-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .navbar-nav {
+                gap: 1rem;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .cart-link {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar-custom">
+        <div class="container-fluid">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <a href="/" class="navbar-brand">Productos Digitales</a>
+                <div class="navbar-nav">
+                    <a href="/ebooks/" class="brand-link ebooks">📚 Ebooks</a>
+                    <a href="/yoyir/" class="brand-link yoyir">📔 YOYI'R</a>
+                    <a href="/estrategia/" class="brand-link estrategia">⚡ EstrategIA</a>
+                    <a href="/cart" class="cart-link">🛒 Carrito</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Productos Digitales para tu Vida</h1>
+            <p>Explora tres universos únicos diseñados para inspirar, organizar y potenciar tu crecimiento personal</p>
+            <a href="#universos" class="hero-cta">Descubre Más</a>
+        </div>
+    </section>
+
+    <!-- Universos Section -->
+    <section class="universos" id="universos">
+        <div class="universos-container">
+            <div class="section-title">
+                <h2>Tres Universos, Infinitas Posibilidades</h2>
+                <p>Cada universo representa una filosofía diferente, diseñada para satisfacer distintas necesidades de tu vida</p>
+            </div>
+
+            <div class="universos-grid">
+                <!-- Ebooks para la Vida -->
+                <div class="universo-card universo-ebooks">
+                    <div class="universo-header">
+                        <span class="universo-icon">📚</span>
+                        <h3>Ebooks para la Vida</h3>
+                        <p>Historias y conocimiento que transforman. Libros digitales sobre bienestar, desarrollo personal y crecimiento espiritual para enriquecer tu existencia.</p>
+                    </div>
+                    <div class="universo-footer">
+                        <a href="/ebooks/" class="universo-btn">Explorar Catálogo</a>
+                    </div>
+                </div>
+
+                <!-- YOYI'R -->
+                <div class="universo-card universo-yoyir">
+                    <div class="universo-header">
+                        <span class="universo-icon">📔</span>
+                        <h3>YOYI'R</h3>
+                        <p>Tu compañera de organización. Agendas y planners digitales diseñados para que tomes el control de tu tiempo, metas y sueños con estilo.</p>
+                    </div>
+                    <div class="universo-footer">
+                        <a href="/yoyir/" class="universo-btn">Ver Planners</a>
+                    </div>
+                </div>
+
+                <!-- EstrategIA -->
+                <div class="universo-card universo-estrategia">
+                    <div class="universo-header">
+                        <span class="universo-icon">⚡</span>
+                        <h3>EstrategIA</h3>
+                        <p>Herramientas para el futuro. Micro-aplicaciones interactivas y soluciones tecnológicas que te permiten automatizar, analizar y optimizar tu vida.</p>
+                    </div>
+                    <div class="universo-footer">
+                        <a href="/estrategia/" class="universo-btn">Descubrir Tools</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 Productos Digitales para la Vida. Todos los derechos reservados. | <a href="#">Privacidad</a> | <a href="#">Términos</a></p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>
