@@ -187,7 +187,7 @@
           <p class="form-group-title">01 / Identidad</p>
           <div class="form-row">
             <div>
-              <label>Nombre del ebook</label>
+              <label>Título del producto</label>
               <input name="name" required placeholder="Ej: Mente en calma">
             </div>
             <div>
@@ -196,8 +196,14 @@
             </div>
           </div>
           <div class="form-row full">
-            <label>Descripción</label>
+            <label>Subtítulo / descripción corta</label>
+            <textarea name="short_description" rows="3" maxlength="220" placeholder="Resumen breve para las tarjetas del catálogo..."></textarea>
+            <small>Este texto se mostrará en las tarjetas del catálogo. Recomendado: 1 a 3 líneas.</small>
+          </div>
+          <div class="form-row full">
+            <label>Descripción completa</label>
             <textarea name="description" required placeholder="Descripción completa del ebook..."></textarea>
+            <small>Esta descripción se mostrará al abrir la ficha completa del producto.</small>
           </div>
         </div>
 
@@ -489,8 +495,14 @@ function showEditModal(product) {
           <input type="text" name="name" value="${product.name}" required>
         </div>
         <div class="form-group">
-          <label>Descripción</label>
+          <label>Subtítulo / descripción corta</label>
+          <textarea name="short_description" rows="3" maxlength="220">${product.short_description || ''}</textarea>
+          <small>Este texto se mostrará en las tarjetas del catálogo. Recomendado: 1 a 3 líneas.</small>
+        </div>
+        <div class="form-group">
+          <label>Descripción completa</label>
           <textarea name="description" required>${product.description}</textarea>
+          <small>Esta descripción se mostrará al abrir la ficha completa del producto.</small>
         </div>
         <div class="form-group">
           <label>Precio (ARS)</label>

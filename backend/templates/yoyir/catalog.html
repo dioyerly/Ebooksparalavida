@@ -1,16 +1,983 @@
 {% extends "base.html" %}
 
-{% block title %}YOYI'R - Catálogo de Agendas{% endblock %}
+{% block title %}YOYI'R · Planners digitales{% endblock %}
 
-{% block body_class %}theme-yoyir{% endblock %}
+{% block body_class %}yoyir-store{% endblock %}
+
+{% block site_topline %}
+<div class="yr-topline">
+  <div class="yr-shell yr-topline__inner">
+    <span>Descarga inmediata</span>
+    <i></i>
+    <span>Empieza hoy</span>
+    <i></i>
+    <span>Organiza tu vida a tu manera</span>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block site_header %}
+<header class="yr-header">
+  <div class="yr-shell yr-header__inner">
+
+    <a class="yr-brand" href="{{ url_for('yoyir.catalog') }}">
+      <strong>YOYI'R</strong>
+      <small>PLANNERS DIGITALES</small>
+    </a>
+
+    <nav class="yr-nav" aria-label="Navegación principal">
+      <a href="{{ url_for('home') }}">Inicio</a>
+      <a href="{{ url_for('ebooks.catalog') }}">Ebooks</a>
+      <a class="active" href="{{ url_for('yoyir.catalog') }}">YOYI'R</a>
+      <a href="{{ url_for('estrategia.catalog') }}">EstrategIA</a>
+      <a href="{{ url_for('home') }}#faq">Preguntas</a>
+    </nav>
+
+    <a class="yr-cart" href="{{ url_for('cart') }}">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="9" cy="20" r="1"/>
+        <circle cx="19" cy="20" r="1"/>
+        <path d="M3 4h2l2.4 10.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H7"/>
+      </svg>
+
+      <span>Carrito</span>
+      <b>{{ cart_count }}</b>
+    </a>
+
+  </div>
+</header>
+{% endblock %}
+
 
 {% block content %}
-<div class="catalog-container">
-    <h1>Catálogo - YOYI'R</h1>
 
-    <div class="products-grid">
-        <!-- Los productos se cargarán aquí en Fase 5 -->
-        <p class="placeholder">Catálogo de YOYI'R (Agendas y Planners) - Estructura lista</p>
+<div class="yr-page">
+
+  <!-- ==================================================
+       HERO
+  =================================================== -->
+
+  <section class="yr-hero">
+
+    <div class="yr-shell yr-hero__inner">
+
+      <div class="yr-hero__copy">
+
+        <p class="yr-eyebrow">
+          PLANNERS DIGITALES / YOYI'R
+        </p>
+
+        <h1>
+          Organiza tus días.
+          <span>A tu manera.</span>
+        </h1>
+
+        <p class="yr-hero__lead">
+          Planners, agendas y herramientas digitales diseñadas
+          para ayudarte a planificar, enfocarte y vivir con más calma.
+        </p>
+
+        <div class="yr-hero__actions">
+
+          <a class="yr-btn yr-btn--primary"
+             href="#productos">
+            Ver todos los planners
+
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h13"/>
+              <path d="m13 6 6 6-6 6"/>
+            </svg>
+          </a>
+
+          <a class="yr-btn yr-btn--secondary"
+             href="#como-funciona">
+            Cómo funciona
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <div class="yr-hero__visual">
+
+        <div class="yr-hero__paper yr-hero__paper--one"></div>
+        <div class="yr-hero__paper yr-hero__paper--two"></div>
+
+        <div class="yr-device yr-device--desktop">
+
+          <div class="yr-device__camera"></div>
+
+          <div class="yr-planner-screen">
+
+            <aside class="yr-planner-nav">
+
+              <strong>YOYI'R</strong>
+
+              <span class="active">Inicio</span>
+              <span>Plan semanal</span>
+              <span>Plan mensual</span>
+              <span>Hábitos</span>
+              <span>Finanzas</span>
+              <span>Notas</span>
+              <span>Objetivos</span>
+
+            </aside>
+
+            <div class="yr-planner-main">
+
+              <div class="yr-planner-heading">
+                <div>
+                  <small>MI ORGANIZACIÓN</small>
+                  <strong>Mi Plan Semanal</strong>
+                </div>
+
+                <span>MAR 2026</span>
+              </div>
+
+              <div class="yr-week">
+
+                {% for day in ['Lun 7','Mar 8','Mié 9','Jue 10','Vie 11'] %}
+                <div class="yr-day">
+                  <b>{{ day }}</b>
+
+                  {% if loop.index in [1,3,5] %}
+                  <i class="rose"></i>
+                  {% endif %}
+
+                  {% if loop.index in [2,4] %}
+                  <i class="sage"></i>
+                  {% endif %}
+
+                  <i></i>
+                </div>
+                {% endfor %}
+
+              </div>
+
+              <div class="yr-planner-bottom">
+
+                <div>
+                  <small>Prioridades</small>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+
+                <div>
+                  <small>Notas</small>
+                  <p>
+                    Un paso a la vez.<br>
+                    Lo importante también puede ser simple.
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="yr-device yr-device--tablet">
+
+          <div class="yr-tablet-screen">
+
+            <small>MIS HÁBITOS</small>
+            <strong>Mis Hábitos</strong>
+
+            <div class="yr-habit">
+              <span>Ejercicio</span>
+              <i></i><i></i><i class="done"></i><i></i><i></i>
+            </div>
+
+            <div class="yr-habit">
+              <span>Lectura</span>
+              <i class="done"></i><i></i><i></i><i class="done"></i><i></i>
+            </div>
+
+            <div class="yr-habit">
+              <span>Agua</span>
+              <i></i><i class="done"></i><i></i><i></i><i class="done"></i>
+            </div>
+
+            <div class="yr-habit">
+              <span>Meditar</span>
+              <i class="done"></i><i></i><i class="done"></i><i></i><i></i>
+            </div>
+
+            <div class="yr-habit">
+              <span>Estudio</span>
+              <i></i><i></i><i></i><i class="done"></i><i></i>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="yr-hero__quote">
+          <span>Planifica.</span>
+          <span>Enfócate.</span>
+          <strong>Logra.</strong>
+        </div>
+
+        <svg class="yr-botanical yr-botanical--left"
+             viewBox="0 0 130 180"
+             aria-hidden="true">
+          <path d="M65 176C64 121 65 67 72 8"/>
+          <path d="M66 135C43 125 29 107 20 88"/>
+          <path d="M67 113C91 103 104 84 111 64"/>
+          <path d="M69 83C49 72 39 57 33 40"/>
+          <path d="M70 61C88 52 98 38 104 22"/>
+          <ellipse cx="37" cy="111" rx="18" ry="8" transform="rotate(38 37 111)"/>
+          <ellipse cx="94" cy="88" rx="18" ry="8" transform="rotate(-38 94 88)"/>
+          <ellipse cx="46" cy="62" rx="16" ry="7" transform="rotate(38 46 62)"/>
+          <ellipse cx="91" cy="43" rx="16" ry="7" transform="rotate(-38 91 43)"/>
+        </svg>
+
+        <svg class="yr-botanical yr-botanical--right"
+             viewBox="0 0 130 180"
+             aria-hidden="true">
+          <path d="M65 176C64 121 65 67 72 8"/>
+          <path d="M66 135C43 125 29 107 20 88"/>
+          <path d="M67 113C91 103 104 84 111 64"/>
+          <path d="M69 83C49 72 39 57 33 40"/>
+          <path d="M70 61C88 52 98 38 104 22"/>
+          <ellipse cx="37" cy="111" rx="18" ry="8" transform="rotate(38 37 111)"/>
+          <ellipse cx="94" cy="88" rx="18" ry="8" transform="rotate(-38 94 88)"/>
+          <ellipse cx="46" cy="62" rx="16" ry="7" transform="rotate(38 46 62)"/>
+          <ellipse cx="91" cy="43" rx="16" ry="7" transform="rotate(-38 91 43)"/>
+        </svg>
+
+      </div>
+
     </div>
+
+  </section>
+
+
+  <!-- ==================================================
+       HERO META
+  =================================================== -->
+
+  <section class="yr-meta">
+
+    <div class="yr-shell yr-meta__grid">
+
+      <article>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="4" y="5" width="16" height="15" rx="2"/>
+          <path d="M8 3v4M16 3v4M4 10h16"/>
+          <path d="m9 15 2 2 4-4"/>
+        </svg>
+
+        <div>
+          <strong>Diseños funcionales</strong>
+          <small>Pensados para la vida real</small>
+        </div>
+      </article>
+
+      <article>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3v12"/>
+          <path d="m8 11 4 4 4-4"/>
+          <path d="M5 19h14"/>
+        </svg>
+
+        <div>
+          <strong>Uso inmediato</strong>
+          <small>Descarga y empieza hoy</small>
+        </div>
+      </article>
+
+      <article>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="5" y="10" width="14" height="10" rx="2"/>
+          <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+        </svg>
+
+        <div>
+          <strong>Compra segura</strong>
+          <small>Pago protegido</small>
+        </div>
+      </article>
+
+      <article>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="14" rx="2"/>
+          <path d="M8 21h8"/>
+          <path d="M12 19v2"/>
+        </svg>
+
+        <div>
+          <strong>Acceso digital</strong>
+          <small>Consulta compatibilidad por producto</small>
+        </div>
+      </article>
+
+    </div>
+
+  </section>
+
+
+  <!-- ==================================================
+       CATEGORÍAS
+  =================================================== -->
+
+  <section class="yr-categories">
+
+    <div class="yr-shell">
+
+      <div class="yr-section-head">
+
+        <div>
+          <p class="yr-eyebrow">EXPLORA POR NECESIDAD</p>
+          <h2>¿Qué quieres organizar hoy?</h2>
+        </div>
+
+        <p>
+          Distintas áreas. Una misma filosofía:
+          más claridad, más calma.
+        </p>
+
+      </div>
+
+
+      <div class="yr-category-grid">
+
+        <button class="yr-category"
+                data-yoyir-jump="planificacion">
+
+          <div class="yr-category__top">
+
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="16" rx="2"/>
+              <path d="M7 3v4M17 3v4M3 10h18"/>
+              <path d="M7 14h2M11 14h2M15 14h2M7 18h2M11 18h2"/>
+            </svg>
+
+            <span>01</span>
+
+          </div>
+
+          <strong>Planificación diaria</strong>
+
+          <p>
+            Organiza tus días, semanas y meses.
+          </p>
+
+          <small>
+            Explorar
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h13"/>
+              <path d="m13 6 6 6-6 6"/>
+            </svg>
+          </small>
+
+        </button>
+
+
+        <button class="yr-category"
+                data-yoyir-jump="habitos">
+
+          <div class="yr-category__top">
+
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="8"/>
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 12 21 3"/>
+              <path d="M17 3h4v4"/>
+            </svg>
+
+            <span>02</span>
+
+          </div>
+
+          <strong>Hábitos y bienestar</strong>
+
+          <p>
+            Crea rutinas que te hagan bien.
+          </p>
+
+          <small>
+            Explorar
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h13"/>
+              <path d="m13 6 6 6-6 6"/>
+            </svg>
+          </small>
+
+        </button>
+
+
+        <button class="yr-category"
+                data-yoyir-jump="finanzas">
+
+          <div class="yr-category__top">
+
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 20V10h4v10"/>
+              <path d="M10 20V5h4v15"/>
+              <path d="M16 20V2h4v18"/>
+            </svg>
+
+            <span>03</span>
+
+          </div>
+
+          <strong>Finanzas personales</strong>
+
+          <p>
+            Toma control de tu dinero.
+          </p>
+
+          <small>
+            Explorar
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h13"/>
+              <path d="m13 6 6 6-6 6"/>
+            </svg>
+          </small>
+
+        </button>
+
+
+        <button class="yr-category"
+                data-yoyir-jump="proposito">
+
+          <div class="yr-category__top">
+
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>
+            </svg>
+
+            <span>04</span>
+
+          </div>
+
+          <strong>Vida con propósito</strong>
+
+          <p>
+            Define tus metas y disfruta el proceso.
+          </p>
+
+          <small>
+            Explorar
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h13"/>
+              <path d="m13 6 6 6-6 6"/>
+            </svg>
+          </small>
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ==================================================
+       PRODUCTOS
+  =================================================== -->
+
+  <section class="yr-products"
+           id="productos">
+
+    <div class="yr-shell">
+
+      <div class="yr-products__head">
+
+        <div>
+          <p class="yr-eyebrow">PRODUCTOS DESTACADOS</p>
+          <h2>Planners listos para ti.</h2>
+        </div>
+
+        <div class="yr-filters"
+             role="group"
+             aria-label="Filtrar planners">
+
+          <button class="active"
+                  data-yoyir-filter="all">
+            Todos
+          </button>
+
+          <button data-yoyir-filter="agenda">
+            Agenda anual
+          </button>
+
+          <button data-yoyir-filter="planificacion">
+            Planificador mensual
+          </button>
+
+          <button data-yoyir-filter="habitos">
+            Hábitos
+          </button>
+
+          <button data-yoyir-filter="finanzas">
+            Finanzas
+          </button>
+
+        </div>
+
+      </div>
+
+
+      {% if products %}
+
+      <div class="yr-product-grid">
+
+        {% for product in products %}
+
+        {% set product_category =
+          (product.category or '')|lower
+        %}
+
+        <article
+          class="yr-product"
+          data-yoyir-product
+          data-yoyir-category="{{ product_category }}"
+          data-product-id="{{ product.id }}"
+          data-product-name="{{ product.name }}"
+        >
+
+          <div class="yr-product__image">
+
+            <!--
+            CODEX:
+            AQUÍ usa EXACTAMENTE el endpoint real existente
+            para las imágenes de producto.
+            NO inventar endpoint.
+            -->
+
+            <img
+              src="{{ url_for('serve_cover_image', product_id=product.id) }}"
+              alt="{{ product.name }}"
+              loading="lazy"
+            >
+
+          </div>
+
+
+          <div class="yr-product__body">
+
+            <span class="yr-product__category">
+              {{ product.category or "YOYI'R" }}
+            </span>
+
+            <h3>{{ product.name }}</h3>
+
+            {% if product.short_description %}
+            <p class="yr-product__summary">
+              {{ product.short_description }}
+            </p>
+            {% else %}
+            <p class="yr-product__summary yr-product__summary--empty">
+              Descubre todos los detalles de este producto.
+            </p>
+            {% endif %}
+
+            <span class="yr-product__type">
+              {% if product.product_type == 'html_interactive' %}
+                HTML INTERACTIVO
+              {% elif product.product_type == 'downloadable_zip' %}
+                DESCARGA DIGITAL
+              {% elif product.product_type == 'pdf' %}
+                PDF
+              {% else %}
+                {{ product.product_type|upper }}
+              {% endif %}
+            </span>
+
+
+            <div class="yr-product__price">
+              <strong>
+                $ {{ "{:,.0f}".format(product.price_ars).replace(",", ".") }}
+              </strong>
+              <small>ARS</small>
+            </div>
+
+
+            <div class="yr-product__actions">
+              <a class="yr-product__details" href="{{ url_for('product_detail', slug=product.slug) }}">
+                <span>Ver detalles</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 12h13"/>
+                  <path d="m13 6 6 6-6 6"/>
+                </svg>
+              </a>
+
+              <form method="POST" action="{{ url_for('add_to_cart', product_id=product.id) }}">
+                <button type="submit" class="yr-product__buy">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="9" cy="20" r="1"/>
+                    <circle cx="19" cy="20" r="1"/>
+                    <path d="M3 4h2l2.4 10.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H7"/>
+                  </svg>
+                  Agregar al carrito
+                </button>
+              </form>
+            </div>
+
+          </div>
+
+        </article>
+
+        {% endfor %}
+
+      </div>
+
+      {% else %}
+
+      <div class="yr-empty">
+        <span>YOYI'R</span>
+        <h3>Nuevos planners en camino.</h3>
+        <p>
+          Estamos preparando herramientas para ayudarte
+          a organizar tus días con más claridad.
+        </p>
+      </div>
+
+      {% endif %}
+
+    </div>
+
+  </section>
+
+
+  <!-- ==================================================
+       PERSONALIZADO
+  =================================================== -->
+
+  <section class="yr-custom-wrap">
+
+    <div class="yr-shell">
+
+      <div class="yr-custom">
+
+        <div class="yr-custom__copy">
+
+          <p class="yr-eyebrow">
+            ORGANIZACIÓN PERSONALIZADA
+          </p>
+
+          <h2>
+            ¿Necesitas un planner a medida?
+          </h2>
+
+          <p>
+            Si no encuentras exactamente lo que necesitas,
+            puedo crear un planner personalizado para tus
+            objetivos, rutina o proyecto.
+          </p>
+
+          <a
+            class="yr-btn yr-btn--primary"
+            href="mailto:hola@ebooksparalavida.com"
+          >
+
+            <svg viewBox="0 0 24 24"
+                 aria-hidden="true">
+              <rect x="3" y="5" width="18" height="14" rx="2"/>
+              <path d="m3 7 9 6 9-6"/>
+            </svg>
+
+            Contáctame para tu planner
+
+          </a>
+
+        </div>
+
+
+        <div class="yr-custom__visual">
+
+          <div class="yr-mini-device">
+
+            <div class="yr-mini-device__screen">
+
+              <small>YOYI'R</small>
+              <strong>Mi Planner Personal</strong>
+
+              <div class="yr-mini-grid">
+                <i></i><i></i><i></i>
+                <i></i><i></i><i></i>
+              </div>
+
+              <div class="yr-mini-lines">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="yr-custom__list">
+
+          <span>
+            <svg viewBox="0 0 24 24">
+              <rect x="4" y="4" width="16" height="16" rx="2"/>
+              <path d="M8 2v4M16 2v4M4 9h16"/>
+            </svg>
+            Planners personalizados
+          </span>
+
+          <span>
+            <svg viewBox="0 0 24 24">
+              <path d="M12 3 4 7l8 4 8-4-8-4Z"/>
+              <path d="m4 12 8 4 8-4"/>
+              <path d="m4 17 8 4 8-4"/>
+            </svg>
+            Diseños únicos
+          </span>
+
+          <span>
+            <svg viewBox="0 0 24 24">
+              <path d="M4 5h16M4 12h16M4 19h16"/>
+              <circle cx="8" cy="5" r="1"/>
+              <circle cx="15" cy="12" r="1"/>
+              <circle cx="10" cy="19" r="1"/>
+            </svg>
+            Secciones a tu medida
+          </span>
+
+          <span>
+            <svg viewBox="0 0 24 24">
+              <path d="M12 21a9 9 0 1 0-9-9"/>
+              <path d="M3 16v5h5"/>
+              <path d="M12 7v5l3 2"/>
+            </svg>
+            Organización de hábitos
+          </span>
+
+          <span>
+            <svg viewBox="0 0 24 24">
+              <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/>
+            </svg>
+            Soporte y guía
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ==================================================
+       CÓMO FUNCIONA + CONFIANZA
+  =================================================== -->
+
+  <section class="yr-bottom"
+           id="como-funciona">
+
+    <div class="yr-shell yr-bottom__grid">
+
+      <div class="yr-how">
+
+        <h2>Cómo funciona</h2>
+
+        <div class="yr-how__steps">
+
+          <article>
+
+            <div class="yr-step__head">
+              <b>01</b>
+
+              <svg viewBox="0 0 24 24">
+                <circle cx="9" cy="20" r="1"/>
+                <circle cx="19" cy="20" r="1"/>
+                <path d="M3 4h2l2.4 10.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H7"/>
+              </svg>
+            </div>
+
+            <strong>Elige tu planner</strong>
+
+            <p>
+              Explora los productos y selecciona
+              el que necesitas.
+            </p>
+
+          </article>
+
+
+          <span class="yr-step-arrow">
+            <svg viewBox="0 0 24 24">
+              <path d="M5 12h13"/>
+              <path d="m13 6 6 6-6 6"/>
+            </svg>
+          </span>
+
+
+          <article>
+
+            <div class="yr-step__head">
+              <b>02</b>
+
+              <svg viewBox="0 0 24 24">
+                <path d="M12 3v12"/>
+                <path d="m8 11 4 4 4-4"/>
+                <path d="M5 20h14"/>
+              </svg>
+            </div>
+
+            <strong>Compra y recibe acceso</strong>
+
+            <p>
+              Recibe tu planner según la modalidad
+              indicada en el producto.
+            </p>
+
+          </article>
+
+
+          <span class="yr-step-arrow">
+            <svg viewBox="0 0 24 24">
+              <path d="M5 12h13"/>
+              <path d="m13 6 6 6-6 6"/>
+            </svg>
+          </span>
+
+
+          <article>
+
+            <div class="yr-step__head">
+              <b>03</b>
+
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="14" rx="2"/>
+                <path d="M8 21h8M12 18v3"/>
+              </svg>
+            </div>
+
+            <strong>Empieza a organizar</strong>
+
+            <p>
+              Abre tu planner y comienza a usarlo
+              en los dispositivos compatibles.
+            </p>
+
+          </article>
+
+        </div>
+
+      </div>
+
+
+      <aside class="yr-confidence">
+
+        <h2>Compra con confianza</h2>
+
+        <article>
+          <svg viewBox="0 0 24 24">
+            <rect x="5" y="10" width="14" height="10" rx="2"/>
+            <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+          </svg>
+
+          <div>
+            <strong>Compra segura</strong>
+            <p>Proceso de pago protegido.</p>
+          </div>
+        </article>
+
+        <article>
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3v12"/>
+            <path d="m8 11 4 4 4-4"/>
+            <path d="M5 20h14"/>
+          </svg>
+
+          <div>
+            <strong>Acceso según producto</strong>
+            <p>Cada planner explica su modalidad.</p>
+          </div>
+        </article>
+
+        <article>
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="14" rx="2"/>
+            <path d="M8 21h8M12 18v3"/>
+          </svg>
+
+          <div>
+            <strong>Compatibilidad clara</strong>
+            <p>Consulta los dispositivos compatibles.</p>
+          </div>
+        </article>
+
+        <article>
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="5" width="18" height="14" rx="2"/>
+            <path d="m3 7 9 6 9-6"/>
+          </svg>
+
+          <div>
+            <strong>Soporte</strong>
+            <p>Si tienes dudas, puedes contactarnos.</p>
+          </div>
+        </article>
+
+      </aside>
+
+    </div>
+
+  </section>
+
 </div>
+
+{% endblock %}
+
+
+{% block site_footer %}
+
+<footer class="yr-footer">
+
+  <div class="yr-shell yr-footer__inner">
+
+    <a class="yr-footer__brand"
+       href="{{ url_for('yoyir.catalog') }}">
+      <strong>YOYI'R</strong>
+      <small>PLANNERS DIGITALES</small>
+    </a>
+
+    <nav>
+      <a href="{{ url_for('home') }}">Inicio</a>
+      <a href="{{ url_for('ebooks.catalog') }}">Ebooks</a>
+      <a href="{{ url_for('yoyir.catalog') }}">YOYI'R</a>
+      <a href="{{ url_for('estrategia.catalog') }}">EstrategIA</a>
+      <a href="{{ url_for('home') }}#faq">Preguntas</a>
+    </nav>
+
+    <div class="yr-footer__legal">
+      <a href="{{ url_for('terms') }}">Términos</a>
+      <a href="{{ url_for('refund_policy') }}">Reembolsos</a>
+      <a href="mailto:hola@ebooksparalavida.com">Contacto</a>
+    </div>
+
+  </div>
+
+  <div class="yr-shell yr-footer__bottom">
+    <span>© {{ current_year }} YOYI'R</span>
+    <span>Productos digitales para organizar tu vida.</span>
+  </div>
+
+</footer>
+
+{% endblock %}
+
+
+{% block head %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/yoyir.js') }}" defer></script>
 {% endblock %}

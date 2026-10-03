@@ -3,12 +3,12 @@ Blueprint para la marca: EstrategIA
 Rutas: /estrategia/*
 """
 from flask import Blueprint, render_template, session
+from backend.models import Product
 
 estrategia_bp = Blueprint(
     'estrategia',
     __name__,
-    url_prefix='/estrategia',
-    template_folder='../templates/estrategia'
+    url_prefix='/estrategia'
 )
 
 
@@ -21,10 +21,18 @@ def set_brand():
 @estrategia_bp.route('/')
 def catalog():
     """Catálogo de EstrategIA (Herramientas e Interactivos)."""
-    return render_template('catalog.html', brand='estrategia')
+    from sqlalchemy import func
+    products = Product.query.filter(
+        Product.universe == 'estrategia'
+    ).order_by(
+        func.coalesce(Product.sort_order, 999999).asc(),
+        Product.id.asc()
+    ).all()
+
+    return render_template('estrategia/catalog.html', brand='estrategia', products=products)
 
 
 @estrategia_bp.route('/<int:product_id>')
 def product_detail(product_id):
     """Detalle de producto EstrategIA."""
-    return render_template('product.html', brand='estrategia', product_id=product_id)
+    return render_template('estrategia/product.html', brand='estrategia', product_id=product_id)

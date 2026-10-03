@@ -1140,6 +1140,7 @@ def edit_product_form(product_id):
         "id": product.id,
         "name": product.name,
         "slug": product.slug,
+        "short_description": product.short_description or "",
         "description": product.description,
         "price_ars": product.price_ars,
         "category": product.category,
@@ -1169,6 +1170,7 @@ def update_product(product_id):
         return {"error": "El precio debe ser mayor a 0."}, 400
 
     product.name = request.form.get("name", product.name).strip()
+    product.short_description = request.form.get("short_description", "").strip()
     product.description = request.form.get("description", product.description).strip()
     product.price_ars = price_ars
     product.category = request.form.get("category", product.category).strip()
@@ -1467,6 +1469,8 @@ def admin_create_product():
         flash("La descripción es requerida.", "admin-error")
         return redirect(url_for("admin_dashboard"))
 
+    short_description = request.form.get("short_description", "").strip()
+
     category = request.form.get("category", "").strip()
     if not category:
         flash("La categoría es requerida.", "admin-error")
@@ -1486,6 +1490,7 @@ def admin_create_product():
         product = Product(
             slug=slug,
             name=name,
+            short_description=short_description,
             description=description,
             category=category,
             universe=universe,

@@ -3,12 +3,12 @@ Blueprint para la marca: YOYI'R
 Rutas: /yoyir/*
 """
 from flask import Blueprint, render_template, session
+from backend.models import Product
 
 yoyir_bp = Blueprint(
     'yoyir',
     __name__,
-    url_prefix='/yoyir',
-    template_folder='../templates/yoyir'
+    url_prefix='/yoyir'
 )
 
 
@@ -21,10 +21,18 @@ def set_brand():
 @yoyir_bp.route('/')
 def catalog():
     """Catálogo de YOYI'R (Agendas y Planners)."""
-    return render_template('catalog.html', brand='yoyir')
+    from sqlalchemy import func
+    products = Product.query.filter(
+        Product.universe == 'yoyir'
+    ).order_by(
+        func.coalesce(Product.sort_order, 999999).asc(),
+        Product.id.asc()
+    ).all()
+
+    return render_template('yoyir/catalog.html', brand='yoyir', products=products)
 
 
 @yoyir_bp.route('/<int:product_id>')
 def product_detail(product_id):
     """Detalle de producto YOYI'R."""
-    return render_template('product.html', brand='yoyir', product_id=product_id)
+    return render_template('yoyir/product.html', brand='yoyir', product_id=product_id)

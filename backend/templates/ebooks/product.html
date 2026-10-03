@@ -1,16 +1,130 @@
 {% extends "base.html" %}
 
-{% block title %}Producto - Ebooks para la vida{% endblock %}
+{% block title %}{{ product.name }} - Ebooks para la vida{% endblock %}
 
-{% block body_class %}theme-ebooks{% endblock %}
+{% block body_class %}theme-ebooks eb-detail{% endblock %}
+
+{% block site_topline %}<div class="eb-topline"><div class="eb-shell">Recursos digitales para aprender y aplicar a tu vida.</div></div>{% endblock %}
+
+{% block site_header %}<header class="eb-header"><div class="eb-shell eb-header__inner"><a class="eb-brand" href="{{ url_for('ebooks.catalog') }}"><strong>Ebooks</strong><span>para la vida</span></a><nav class="eb-nav"><a href="{{ url_for('home') }}">Inicio</a><a href="{{ url_for('estrategia.catalog') }}">EstrategIA</a><a href="{{ url_for('yoyir.catalog') }}">YOYI'R</a><a class="active" href="{{ url_for('ebooks.catalog') }}">Ebooks</a><a href="{{ url_for('home') }}#faq">Preguntas</a></nav><a class="eb-cart" href="{{ url_for('cart') }}"><svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1"/><circle cx="19" cy="20" r="1"/><path d="M3 4h2l2.4 10.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H7"/></svg>Carrito <b>{{ cart_count|default(0) }}</b></a></div></header>{% endblock %}
 
 {% block content %}
-<div class="product-detail-container">
-    <h1>Detalle de Producto</h1>
-
-    <div class="product-detail">
-        <!-- Contenido del producto se cargará aquí en Fase 5 -->
-        <p class="placeholder">Detalle de producto Ebooks - Estructura lista (Product ID: {{ product_id }})</p>
-    </div>
+<main class="eb-detail__shell">
+<div class="eb-detail__breadcrumb">
+<a href="{{ url_for('home') }}">Inicio</a>
+<span>/</span>
+<a href="{{ url_for('ebooks.catalog') }}">Ebooks</a>
+<span>/</span>
+<span>{{ product.name }}</span>
 </div>
+
+<div class="eb-detail">
+<div class="eb-detail__media">
+<div class="eb-detail__image">
+{% if product.cover_image %}
+<img src="{{ url_for('serve_cover_image', product_id=product.id) }}" alt="{{ product.name }}">
+{% else %}
+<div class="eb-detail__placeholder">{{ product.name }}</div>
+{% endif %}
+</div>
+</div>
+
+<div class="eb-detail__content">
+<div class="eb-detail__intro">
+<p class="eb-detail__category">{{ product.category or 'EBOOK DIGITAL' }}</p>
+<h1>{{ product.name }}</h1>
+<p class="eb-detail__lead">{{ product.short_description or product.description }}</p>
+
+<div class="eb-detail__meta">
+<span class="eb-detail__type">
+{% if product.product_type == 'html_interactive' %}
+HTML INTERACTIVO
+{% elif product.product_type == 'downloadable_zip' %}
+DESCARGA DIGITAL
+{% elif product.product_type == 'pdf' %}
+PDF
+{% else %}
+{{ product.product_type|upper }}
+{% endif %}
+</span>
+<span class="eb-detail__format">Producto digital</span>
+</div>
+
+<div class="eb-detail__purchase">
+<div class="eb-detail__price">
+<strong>$ {{ "{:,.0f}".format(product.price_ars).replace(",", ".") }}</strong>
+<small>ARS</small>
+</div>
+
+<form method="POST" action="{{ url_for('add_to_cart', product_id=product.id) }}" class="eb-detail__buy">
+<button type="submit" class="eb-btn eb-btn--primary">Agregar al carrito</button>
+</form>
+</div>
+
+<div class="eb-detail__trust">
+<article>
+<svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+<div><strong>Compra segura</strong><p>Proceso de pago protegido.</p></div>
+</article>
+<article>
+<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4h3"/></svg>
+<div><strong>Producto digital</strong><p>Acceso inmediato a tu ebook.</p></div>
+</article>
+<article>
+<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></svg>
+<div><strong>Consulta compatibilidad</strong><p>Verificar requisitos antes de comprar.</p></div>
+</article>
+</div>
+</div>
+</div>
+
+{% if product.description %}
+<section class="eb-detail__information">
+<h2>Conoce el ebook</h2>
+<div class="eb-detail__description">
+<div class="eb-detail__description-text">{{ product.description }}</div>
+</div>
+</section>
+{% endif %}
+
+<section class="eb-detail__side-card">
+<h3>Antes de comprar</h3>
+
+<div class="eb-detail__spec">
+<b>Formato</b>
+<span>
+{% if product.product_type == 'html_interactive' %}
+HTML Interactivo
+{% elif product.product_type == 'downloadable_zip' %}
+Descarga digital (ZIP)
+{% elif product.product_type == 'pdf' %}
+PDF
+{% else %}
+{{ product.product_type|upper }}
+{% endif %}
+</span>
+</div>
+
+<div class="eb-detail__spec">
+<b>Entrega</b>
+<span>Digital inmediata</span>
+</div>
+
+<div class="eb-detail__spec">
+<b>Producto físico</b>
+<span>No</span>
+</div>
+
+<div class="eb-detail__spec">
+<b>Categoría</b>
+<span>{{ product.category or 'Ebook Digital' }}</span>
+</div>
+
+<p class="eb-detail__help">¿Preguntas? <a href="mailto:hola@ebooksparalavida.com">Contacta con nosotros</a></p>
+</section>
+</main>
 {% endblock %}
+
+{% block site_footer %}<footer class="eb-footer"><div class="eb-shell eb-footer__grid"><div><a class="eb-footer__brand" href="{{ url_for('ebooks.catalog') }}"><strong>Ebooks</strong><span>para la vida</span></a><p>Recursos digitales para aprender, comprender y aplicar.</p></div><div><b>NAVEGACIÓN</b><a href="{{ url_for('home') }}">Inicio</a><a href="{{ url_for('estrategia.catalog') }}">EstrategIA</a><a href="{{ url_for('yoyir.catalog') }}">YOYI'R</a><a href="{{ url_for('ebooks.catalog') }}">Ebooks</a><a href="{{ url_for('home') }}#faq">Preguntas</a></div><div><b>LEGAL</b><a href="{{ url_for('terms') }}">Términos y condiciones</a><a href="{{ url_for('refund_policy') }}">Política de privacidad</a><a href="{{ url_for('home') }}#faq">Preguntas frecuentes</a><a href="mailto:hola@ebooksparalavida.com">Contacto</a></div></div><div class="eb-shell eb-footer__bottom">© {{ current_year }} Ebooks para la vida</div></footer>{% endblock %}
+
+{% block head %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/theme-ebooks.css') }}">{% endblock %}
